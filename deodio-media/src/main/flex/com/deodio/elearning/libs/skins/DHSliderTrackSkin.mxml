@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Skin xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark">
+	
+	<fx:Metadata>
+		[HostComponent("spark.components.Button")]
+	</fx:Metadata> 
+	
+	<fx:Declarations>
+		<fx:Component className="Tick">
+			<s:Group width="1" height="10">
+				<s:Rect left="0" right="0" top="0" bottom="0">
+					<s:fill>
+						<s:SolidColor color="0xd0d0d0" />
+					</s:fill>
+				</s:Rect>
+			</s:Group>
+		</fx:Component>
+		
+		<fx:Component className="TickLabel">
+			<s:DataRenderer minHeight="24" minWidth="40">
+				<s:Label id="labelDisplay" text="00:00:00"
+						 horizontalCenter="0" verticalCenter="1" textAlign="left" verticalAlign="middle"
+						 fontWeight="normal" color="0xd0d0d0" fontSize="11">
+				</s:Label>
+			</s:DataRenderer>
+		</fx:Component>
+		
+		<fx:Component className="BiggerTick">
+			<s:Group width="1" height="10">
+				<s:Rect left="0" right="0" top="0" bottom="0">
+					<s:fill>
+						<s:SolidColor color="0xd0d0d0" />
+					</s:fill>
+				</s:Rect>
+			</s:Group>
+		</fx:Component>
+		
+		<fx:Component className="SmallTick">
+			<s:Group width="1" height="5">
+				<s:Rect left="0" right="0" top="0" bottom="0">
+					<s:fill>
+						<s:SolidColor color="0xd0d0d0" />
+					</s:fill>
+				</s:Rect>
+			</s:Group>
+		</fx:Component>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			
+			import mx.controls.Alert;
+			
+			import spark.components.Button;
+				
+			/**
+			 * Probably a better way of doing this
+			 */
+			override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void {
+				super.updateDisplayList(unscaledWidth, unscaledHeight);
+//				drawTicks();
+//				drawBiggerTicks();
+//				drawSmallerTicks();
+			}
+			
+			public function drawSmallerTicks():void{
+				
+				// dig up to the custom Slider's skin to find information on the thumbGroup size
+				// and the stepSize, minimum, maximum values of the custom slider
+				var sliderSkin:DHSliderSkin = (this.hostComponent.parentDocument as DHSliderSkin);
+				var stepSize:Number = sliderSkin.hostComponent.stepSize;
+				var numberOfTicks:Number = sliderSkin.hostComponent.maximum - sliderSkin.hostComponent.minimum;
+				var tickSpacing:Number = ((width - sliderSkin.thumb.width) / numberOfTicks) /10;
+//				Alert.show("----------" + stepSize + "--------" + numberOfTicks + "--------" + tickSpacing + "---------" + width + "--------"  + sliderSkin.thumb.width);
+				//				ticksGroup.removeAllElements();
+				ticksGroup.left = 0 ;
+				ticksGroup.right = Math.floor(sliderSkin.thumb.width/2) * 2;
+				for (var i:int = 0; i <= numberOfTicks * 10; i++){
+					var tick:SmallTick = new SmallTick();
+					tick.y = 10;
+					tick.x = i * 11.4;//tickSpacing;
+					ticksGroup.addElement(tick);
+				}
+			}
+			
+			
+			public function drawBiggerTicks():void{
+				// dig up to the custom Slider's skin to find information on the thumbGroup size
+				// and the stepSize, minimum, maximum values of the custom slider
+				var sliderSkin:DHSliderSkin = (this.hostComponent.parentDocument as DHSliderSkin);
+				var stepSize:Number = sliderSkin.hostComponent.stepSize;
+				var numberOfTicks:Number = sliderSkin.hostComponent.maximum - sliderSkin.hostComponent.minimum;
+				var tickSpacing:Number = (width - sliderSkin.thumb.width)  / numberOfTicks;	
+				
+//				ticksGroup.removeAllElements();
+				ticksGroup.left = 0 ;
+				ticksGroup.right = Math.floor(sliderSkin.thumb.width/2) * 2;
+				ticksGroup.width = 0;
+				for (var i:int = 0; i <= numberOfTicks; i++){
+					var tick:BiggerTick = new BiggerTick();
+					tick.y = 5;
+					tick.x = i * 57;
+//					Alert.show("------------" + (i * tickSpacing + tickSpacing/2));
+					ticksGroup.addElement(tick);
+				}
+			}
+			
+			/**
+			 * This is very naive, and it could be made more efficient
+			 */
+			public function drawTicks():void {
+				
+				// dig up to the custom Slider's skin to find information on the thumbGroup size
+				// and the stepSize, minimum, maximum values of the custom slider
+				var sliderSkin:DHSliderSkin = (this.hostComponent.parentDocument as DHSliderSkin);
+				var stepSize:Number = sliderSkin.hostComponent.stepSize;
+				var numberOfTicks:Number = sliderSkin.hostComponent.maximum - sliderSkin.hostComponent.minimum;
+				var tickSpacing:Number = (width - sliderSkin.thumb.width)  / numberOfTicks;
+
+				ticksGroup.removeAllElements();
+				ticksGroup.left = 0 ;
+				ticksGroup.right = Math.floor(sliderSkin.thumb.width/2) * 2;
+				ticksGroup.width = 0;
+				for (var i:int = 0; i <= numberOfTicks; i++){
+					var tick:Tick = new Tick();
+					var tickLabel:TickLabel = new TickLabel();
+					tick.y = 5;
+					tick.x = i * 114;
+					ticksGroup.addElement(tick);
+					
+					tickLabel.y = -14;
+					tickLabel.x = i * 114;
+					tickLabel.labelDisplay.text = CommonUtils.formatTimes(i);
+					ticksGroup.addElement(tickLabel);
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="up" />
+		<s:State name="down" />
+		<s:State name="over" />
+		<s:State name="disabled" />
+	</s:states>
+	<s:Line x="0" y="15" left="0" right="0">
+		<s:stroke>
+			<s:SolidColorStroke color="0xd0d0d0" weight="1"/>
+		</s:stroke>
+	</s:Line>
+	
+	<s:Group id="ticksGroup" height="15" />
+	
+</s:Skin>

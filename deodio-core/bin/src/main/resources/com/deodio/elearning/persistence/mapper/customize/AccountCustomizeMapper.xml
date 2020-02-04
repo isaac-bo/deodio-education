@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.AccountCustomizeMapper">
+ 
+ <select id="getAccountList" parameterType="java.util.Map" resultType="java.util.Map">
+
+SELECT
+	t1.account_id,
+	t3.nick_name,
+ string_agg(DISTINCT t6.name,'#') as role_name
+FROM
+	t_user_account_rel t1,
+	t_account t2,
+	t_user t3,
+	t_group t4,
+	t_group_role_user_rel t5,
+	t_group_role t6
+WHERE
+	t1.account_id = t2. ID
+AND t2.create_id = t3. ID
+AND t1.user_id = #{userId} 
+AND t1.account_id = t4.account_id
+AND t4.id = t5.group_id AND t5.group_role_id = t6.id  group by  t1.account_id,
+	t3.nick_name
+LIMIT  #{end}  OFFSET   #{start}  
+ 
+ </select>
+</mapper>

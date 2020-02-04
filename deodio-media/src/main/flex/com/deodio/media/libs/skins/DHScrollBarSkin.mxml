@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark"
+			 xmlns:fb="http://ns.adobe.com/flashbuilder/2009" minWidth="35" minHeight="15" 
+			 alpha.disabled="0.5" alpha.inactive="0.5">
+	<fx:Metadata>
+		<![CDATA[ 
+		[HostComponent("spark.components.HScrollBar")]
+		]]>
+	</fx:Metadata> 
+	
+		<fx:Script fb:purpose="styling">
+		/* Define the skin elements that should not be colorized. 
+		For scroll bar, the skin itself is colorized but the individual parts are not. */
+		static private const exclusions:Array = ["track", "thumb", "decrementButton", "incrementButton"];
+		
+		override public function get colorizeExclusions():Array {return exclusions;}
+		
+		
+		override protected function initializationComplete():void{
+			useChromeColor = true;
+			super.initializationComplete();
+		}
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="normal" />
+		<s:State name="disabled" />
+		<s:State name="inactive" />
+	</s:states>
+	
+	<!---  滚动条 -->
+	<s:Button id="track" left="16" right="10" height="15" top="0" buttonMode="true" focusEnabled="false" skinClass="com.deodio.media.libs.skins.DHScrollBarTrackSkin"/>
+	
+	<!--- 滑块 -->
+	<s:Button id="thumb" focusEnabled="false" visible.inactive="false" top="2.5" height="10" buttonMode="true" skinClass="com.deodio.media.libs.skins.DHScrollBarThumbSkin"/>
+	
+	<!--- 上按钮 -->
+	<s:Button id="decrementButton" left="1" enabled.inactive="false" rotation="90" bottom="0" width="15" height="15"  buttonMode="true" focusEnabled="false" skinClass="com.deodio.media.libs.skins.DHScrollBarPreSkin"/>
+	
+	<!---  下按钮 -->
+	<s:Button id="incrementButton" right="-5" enabled.inactive="false" rotation="-90" bottom="0" width="15" height="15"  buttonMode="true" focusEnabled="false" skinClass="com.deodio.media.libs.skins.DHScrollBarNextSkin"/>
+</s:SparkSkin>

@@ -1,0 +1,62 @@
+/*-----------------------------------
+Description:    package css
+Author:         liujian
+Date:           2016-10-14
+------------------------------------*/
+/*reset*/
+body{background-color: #f3f3f3;}
+.banner{height: 368px;}
+.content{width:1240px;height:auto;margin:0 auto;background: #fff;}
+.p_border{border:1px solid #cdd5d9;border-radius:3px;margin:-40px auto 20px;position: relative;padding:20px;}
+.p_border .left_show,.p_border .right_show{width:12px;height:172px;background:url('../../../../img/course/packages/show_bg.png') no-repeat;position:absolute;top:39px;}
+.p_border .left_show{left:-12px;}
+.p_border .right_show{right:-12px;background-position: right top;}
+.table_list{display:inline-flex;}
+.table_list .list_box{border-radius:4px;display: inline-block;margin-right: 25px;}
+.table_list .list_box .title{background:#edf7f9;border-radius:4px 4px 0 0;height:45px;line-height: 45px;text-align: center;font-size: 16px;display:block;width:100%;}
+.table_list .list_con{font-size: 12px;padding:20px 10px 0;}
+.table_list .list_con li{height:34px;line-height: 34px;margin-bottom: 20px;border-radius:16px;border:1px solid #e4f3f6;text-indent:10px;position: relative;}
+.table_list .list_con li .l_point,.table_list .list_con li .r_point{width:12px;height:12px;background:#00a0e9;border-radius:6px;border:2px solid #fff;display:inline-block;position: absolute;}
+.table_list .list_con li .l_point{left:-7px;top:9px;}
+.table_list .list_con li .r_point{right:-7px;top:9px;}
+.table_list .list_con li .right_btn{width:48px;height:24px;border-radius:12px;background:#fff;position: absolute;top:3px;right:3px;font-size: 0;overflow: hidden;margin-top: 1px;}
+.table_list .list_con li .right_btn .btn{width:24px;height:24px;background: #fff;padding:0;margin:0;vertical-align: top;float:left;font-size: 12px;}
+.table_list .list_con li .right_btn .add{color:#3faad0;border-right:1px solid #a5d2db !important;}
+.table_list .list_con li .right_btn .minus{color:#f06159;}
+.table_list .list_con li.add_btn{border:1px dashed #b5b5b5;color:#b5b5b5;background: #f9fbfb;font-size: 20px;text-align: center;text-indent: 0;}
+.table_list .list_con li.add_btn button{background: none;display: block;width:100%;}
+.table_list .list_con li input{height: 30px;margin-top: 1px;position: absolute;}
+.table_list .color1{border:1px solid #d5f0f5;}
+.table_list .color1 .title{background:#d5f0f5;}
+.table_list .color1 li{border:1px solid #d5f0f5;}
+.table_list .color2{border:1px solid #bfe1e8;}
+.table_list .color2 .title{background:#bfe1e8;}
+.table_list .color2 li{border:1px solid #bfe1e8;}
+.table_list .color3{border:1px solid #a2d4da;}
+.table_list .color3 .title{background:#a2d4da;}
+.table_list .color3 li{border:1px solid #a2d4da;}
+.table_list .color4{border:1px solid #79c8d2;}
+.table_list .color4 .title{background:#79c8d2;}
+.table_list .color4 li{border:1px solid #79c8d2;}
+.table_list .color5{border:1px solid #4abecd;}
+.table_list .color5 .title{background:#4abecd;}
+.table_list .color5 li{border:1px solid #4abecd;}
+.table_list .color6{border:1px solid #35acbb;}
+.table_list .color6 .title{background:#35acbb;}
+.table_list .color6 li{border:1px solid #35acbb;}
+
+.right{background: #f3f3f3;}
+.popover-title{display:block;}
+.popover-content{background: #fff;height: 100%; overflow: hidden;}
+.popover-content li{height: 30px; line-height: 30px;}
+.popover-content li span{font-size:18px; color:#3faad0;}
+
+.user-item{height: 100px; position: relative; display: inline-block; vertical-align: top;}
+.user-buttons{float: left; margin-left: 5px; }
+.user-buttons span{margin-bottom: 35px; }
+.user-card,.certify,.up_del{height: 32px; padding: 0 15px; color: #fff; }
+.user-card{background-color: #69c9ec; }
+.certify{background-color: #b1cd5c; }
+.up_del{background-color: #ee625d;}
+.update-bar{width:293px; height: 6px; bottom: 0; position: absolute; background-color: #dadada; overflow: hidden; }
+.update-bar .bar{width: 60%; height: 6px; background: #12aece; }

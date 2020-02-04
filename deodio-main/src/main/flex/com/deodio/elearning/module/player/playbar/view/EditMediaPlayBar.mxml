@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<p:IPlayBar xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:s="library://ns.adobe.com/flex/spark" 
+			xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+			xmlns:p="com.deodio.elearning.module.player.playbar.view.*"
+			xmlns:mx="library://ns.adobe.com/flex/mx"
+			width="805" height="50" creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.Media;
+			import com.deodio.elearning.libs.event.CommonEvent;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.libs.skins.DHSoundSliderSkin;
+			import com.deodio.elearning.libs.skins.DProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DProgressTrackSkin;
+			import com.deodio.elearning.libs.skins.DSFProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DSliderSkin;
+			import com.deodio.elearning.libs.skins.DVProgressTrackSkin;
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.AudioModelLocator;
+			import com.deodio.elearning.module.plugin.EditorModelLocator;
+			import com.deodio.elearning.module.plugin.RecordModelLocator;
+			
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			
+			[Bindable]
+			private var _recordFileName:String;
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var _recordLocator:RecordModelLocator = RecordModelLocator.getInstance();
+//			[Bindable]
+//			private var _audioLocator:AudioModelLocator = AudioModelLocator.getInstance();
+			[Bindable]
+			private var _editorLocator:EditorModelLocator = EditorModelLocator.getInstance();
+			
+			override public function init():void{
+				super.slider = this.slider;
+				super.progress = this.progress;
+				super.maxDuration = this.maxDuration;
+				super.currentDuration = this.currentDuration;
+				super.init();
+//				this._recordLocator.setIsRecording(true);
+				this._editorLocator.addEventListener(MediaEvent.MEDIA_IS_EDIT_PLAYBAR,function(event:MediaEvent):void{
+					var media:Media = event.data as Media;
+					if(media != null){
+						dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_VALUE, 0));
+						dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_MAXIMUM, media.mediaEnd - media.mediaStart));
+					}
+				});
+				
+				this.addEventListener(CommonEvent.TRIM_PROGRESSBAR_VALUE,function(event:CommonEvent):void{
+					var duration:Number = event.data as Number;
+					trimStartDuration.text = CommonUtils.formatTimes(duration);
+				});
+				
+				this.addEventListener(CommonEvent.TRIM_END_POSITION,function(event:CommonEvent):void{
+					var duration:Number = event.data as Number;
+					//Trim
+					if(_model.isTrim == true && _model.isPlay == true && duration > trimSlider.values[1] ){
+						_editorLocator.onPauseTrimMedia();
+						return;
+					}
+					
+					//Normal
+					if(_model.isPlay == true && duration > _model.editorMedia.mediaEnd){
+						_editorLocator.onPauseMedia();
+						return;
+					}
+				});
+				
+				this._recordLocator.onRecordSettingMedia();
+			}
+			
+			private function isExistMedia():Boolean{
+				if(this.slider.maximum >0){
+					return true;
+				}
+				Alert.show("Sorry, there is not any media here.");
+				return false;
+			}
+			
+			private function playMedia():void{
+				
+				if(_model.isPlay == false && this._model.isTrim == true && isExistMedia()){
+					this._editorLocator.onPlayTrimMedia(this.trimSlider.values);
+					return;
+				}
+				
+				if(_model.isPlay == false && isExistMedia()){
+					this._editorLocator.onPlayMedia();
+					return;
+				}
+
+			}
+			
+			public function stopMedia():void{
+				if(_model.isPlay == true && _model.isPlayRecord == false && isExistMedia()){
+					this._editorLocator.onStopMedia();
+				}
+			}
+			
+			public function pauseMedia():void{
+				
+				if(_model.isPlay == true && this._model.isTrim == true && isExistMedia()){
+					this._editorLocator.onPauseTrimMedia();
+					return;
+				}
+				
+				
+				if(_model.isPlay == true && _model.isPlayRecord == false && isExistMedia()){
+					this._editorLocator.onPauseMedia();
+					return;
+				}
+			}
+			
+			private function onRecordMedia():void{
+				this._editorLocator.dispatchEvent(new RecordEvent(RecordEvent.REORD_CLICK_RECORD_MEDIA));
+			}
+			
+			public function recordMedia():void{
+				if(_model.isRecord == false && 
+						_recordLocator.recordStream.getIsRecordVideo() == true && 
+							_recordLocator.recordStream.camera != null && 
+								_recordLocator.recordStream.microPhone != null){
+					onRecordSelected();
+					_recordLocator.onRecordMedia();
+				}else if(_model.isRecord == false &&
+						_recordLocator.recordStream.getIsRecordVideo() == false &&
+							_recordLocator.recordStream.microPhone != null){
+					onRecordSelected();
+					_recordLocator.onRecordMedia();
+				}
+			}
+			
+			public function onTrimMedia():void{
+				this.trimSlider.maximum = _model.editorMedia.mediaLength;
+				this.trimSlider.values = [_model.editorMedia.mediaStart,_model.editorMedia.mediaEnd];
+				this.trimStartDuration.text = CommonUtils.formatTimes(this.trimSlider.values[0]);
+				this.trimEndDuration.text = CommonUtils.formatTimes(this.trimSlider.values[1]);
+				this.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_VALUE, 0));
+				this.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_MAXIMUM, _model.editorMedia.mediaLength));
+			}
+			
+			public function stopTrimMedia():void{
+				this.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_VALUE, 0));
+				this.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_MAXIMUM, _model.editorMedia.mediaEnd - _model.editorMedia.mediaStart));
+			}
+			
+			public function recordStop():void{
+				_recordLocator.stopRecordMedia();
+			}
+			
+			private function onRemoveAllRecord():void{
+				_recordLocator.removeAllRecord();
+			}
+			
+			private function onSwitchRecordsPicker():void{
+				_recordLocator.dispatchEvent(new MockEvent(MockEvent.MOCK_CHANGE_RECORD_LAYOUT));
+			}
+			
+			//
+			private function onRecordSelected():void{
+				//				this.btnPlayStroke.color = 0x00a7f5;                                     ;
+				//				this.btnPlayColor.color = 0x00a7f5;  //0x00a7f5;
+			}
+			
+			private function onRecordRelease():void{
+				//				if(this._model.isRecord == false){
+				//					this.btnPlayStroke.color = 0xFFFFFF;
+				//					this.btnPlayColor.color = 0xFFFFFF;
+				//				}
+			}
+			
+			private function onChooseRecordModel():void{
+				if(_model.isRecord== false ){
+					_recordLocator.dispatchEvent(new RecordEvent(RecordEvent.RECORD_SET_MODEL));
+				}
+			}
+			
+			private function trimMedia():void{
+				
+				if(_model.isRecord == false && _model.isSwap == false && isExistMedia()){
+					if(_model.isTrim == true){
+						_editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_TRIM_RESULT,this.trimSlider.values));
+					}else{
+						_editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_TRIM_MEDIA));
+					}
+				}
+			}
+
+			private function swapMedia():void{
+//				if(_model.isRecord == false && _model.isTrim == false && isExistMedia()){
+//					if(_model.isSwap == true){
+//						_editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SWAP_RESULT));
+//					}else{
+						_editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SWAP_MEDIA));
+//					}
+//					
+//				}
+			}
+
+			private function cropMedia():void{
+				if(_model.isRecord == false && isExistMedia()){
+					 
+				}
+			}
+			
+			private function removeMedia():void{
+				if(_model.isRecord == false && isExistMedia()){
+					
+				}
+
+			}
+			
+			private function formatFunction(value:Number):String{
+				return CommonUtils.formatTimes(value);
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	<mx:HBox width="100%" height="100%" backgroundColor="#292929">
+		
+		<mx:HBox id="leftToolBar" width="160" height="100%" verticalAlign="middle" horizontalAlign="center" horizontalGap="0">
+			<s:Group width="10" height="48">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="onRecordMedia()" rollOver="onRecordSelected()" rollOut="onRecordRelease()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/record_active.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="recordStop()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/stop_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="playMedia()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/play_active.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="pauseMedia()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/pause_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group id="frequency_static" width="30" height="48" buttonMode="true">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<mx:Image source="@Embed('/assets/player/record_frequency_static.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group id="frequency_active" width="30" height="48" buttonMode="true" rotation="-90"  visible="false" includeInLayout="false">
+				<s:Line id="f1" width="12" y="7" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f2" width="6" y="11" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f3" width="8" y="15" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f4" width="3" y="19" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f5" width="6" y="23" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+			</s:Group>
+		</mx:HBox>
+		
+		
+		<mx:Canvas width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:ProgressBar id="progress" x="10" y="22" width="390" height="6" label="" labelPlacement="center"
+							barSkin="com.deodio.elearning.libs.skins.DProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DProgressTrackSkin"
+							mode="manual" visible="{!_model.isTrim}"/>
+			<c:DHSlider id="slider" x="10" y="24" width="390" height="12"  minimum="0" maximum="0" snapInterval="0.001" showDataTip="true" allowTrackClick="false"
+						skinClass="com.deodio.elearning.libs.skins.DSliderSkin" change="onProgressChange(this.slider,this.progress)" 
+						click="onProgressClick(this.slider,this.progress)" thumbPress="onProgressThumbPress(this.slider)" 
+						thumbRelease="onProgressThumbRelease(this.slider);" visible="{!_model.isTrim}"/>
+			<mx:Text id="currentDuration" text="{CommonUtils.formatTimes(slider.value)}" color="#ffffff" width="60" x="410" y="17"/>
+			<mx:Text text="/" color="#ffffff" width="10" x="460" y="17"/>
+			<mx:Text id="maxDuration" text="{CommonUtils.formatTimes(this.slider.maximum)}" color="#ffffff"  width="60" x="468" y="17"/>
+		
+			<mx:Text id="trimStartDuration" text="{CommonUtils.formatTimes(trimSlider.values[0])}" color="#ffffff" width="60" x="5" y="17" visible="{_model.isTrim}" includeInLayout="{_model.isTrim}" />
+			<mx:Text text="/" color="#ffffff" width="10" x="55" y="17" visible="{_model.isTrim}" includeInLayout="{_model.isTrim}" />
+			<mx:Text id="trimEndDuration" text="{CommonUtils.formatTimes(trimSlider.values[1])}" color="#ffffff"  width="60" x="63" y="17" visible="{_model.isTrim}" includeInLayout="{_model.isTrim}" />
+			<mx:HSlider id="trimSlider" x="120" y="15" thumbCount="2" dataTipFormatFunction="formatFunction" dataTipStyleName="sToolTip" 
+						values="{[0,45]}" width="280" height="12" minimum="0" maximum="1" snapInterval="0.00001" 
+						showDataTip="true" allowTrackClick="false" buttonMode="true" showTrackHighlight="true" 
+						trackHighlightSkin="com.deodio.elearning.libs.skins.DMXSliderHighlightSkin" visible="{_model.isTrim}" includeInLayout="{_model.isTrim}" 
+						thumbSkin="@Embed('/assets/player/trim_static.png')" sliderThumbClass="com.deodio.elearning.libs.skins.DMXSliderThumbSkin"/>
+		</mx:Canvas>
+		
+		<mx:HBox width="190" height="100%" backgroundColor="#292929" verticalAlign="middle" horizontalAlign="center" horizontalGap="0">
+			<s:Group id="trim_static" width="30" height="48" buttonMode="true" click="trimMedia()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<mx:Image source="@Embed('/assets/player/playbar/trim_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group id="swap_static" width="30" height="48" buttonMode="true" click="swapMedia()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<mx:Image source="@Embed('/assets/player/playbar/crop_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group id="crop_static" width="30" height="48" buttonMode="true" click="cropMedia()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<mx:Image source="@Embed('/assets/player/playbar/swap_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" visible="{!_model.isHeadsetMicroPhone}" includeInLayout="{!_model.isHeadsetMicroPhone}" click="onChooseRecordModel()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/microphone_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" visible="{_model.isHeadsetMicroPhone}" includeInLayout="{_model.isHeadsetMicroPhone}" click="onChooseRecordModel()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/headset_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/sound_default.png')"  buttonMode="true" click="onSetSounding(this.setSounding)"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="removeMedia()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/trash_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="10" height="48" buttonMode="true">
+				
+			</s:Group>
+		</mx:HBox>
+	</mx:HBox>
+	
+	<mx:Canvas id="setSounding" visible="false" includeInLayout="false" x="820" y="-40" backgroundColor="#292929" width="16" height="56">
+		<mx:ProgressBar id="soundProgress"  x="5" y="53" width="50" height="6" label="" labelPlacement="center" rotation="-90"
+						barSkin="com.deodio.elearning.libs.skins.DSFProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DVProgressTrackSkin"
+						mode="manual"/>
+		<c:DHSlider id="soundSlider" x="15" y="53" width="50"  height="6" minimum="0" maximum="1" snapInterval="0.00001" showDataTip="false" allowTrackClick="false"
+					skinClass="com.deodio.elearning.libs.skins.DHSoundSliderSkin" rotation="-90"  change="onSoundProgressChange(this.soundSlider,this.soundProgress)"/>
+	</mx:Canvas>
+	
+</p:IPlayBar>

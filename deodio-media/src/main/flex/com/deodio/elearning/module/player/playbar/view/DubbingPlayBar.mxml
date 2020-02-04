@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<p:IPlayBar xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:p="com.deodio.elearning.module.player.playbar.view.*"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="805" height="50" creationComplete="init()">
+
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.libs.skins.DHSoundSliderSkin;
+			import com.deodio.elearning.libs.skins.DProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DProgressTrackSkin;
+			import com.deodio.elearning.libs.skins.DSFProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DSliderSkin;
+			import com.deodio.elearning.libs.skins.DVProgressTrackSkin;
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.AudioModelLocator;
+			import com.deodio.elearning.module.plugin.RecordModelLocator;
+			
+			import mx.controls.Alert;
+			
+			[Bindable]
+			private var _recordFileName:String;
+			[Bindable]
+			private var _isLayout2:Boolean = false;
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var _recordLocator:RecordModelLocator = RecordModelLocator.getInstance();
+			[Bindable]
+			private var _audioLocator:AudioModelLocator = AudioModelLocator.getInstance();
+			
+			[Bindable]
+			private var _frequencyTimer:Timer = null;
+			
+			override public function init():void{
+				super.slider = this.slider;
+				super.progress = this.progress;
+				super.maxDuration = this.maxDuration;
+				super.currentDuration = this.currentDuration;
+				super.init();
+			}
+			
+			private function audioPlay():void{
+				if(_model.isPlayRecord == false){
+					_audioLocator.onPlay();
+				}
+			}
+			
+			private function audioStop():void{
+				if(_model.isPlay == true && _model.isPlayRecord == false){
+					_audioLocator.onStop();
+				}
+			}
+			
+			private function audioPause():void{
+				if(_model.isPlay == true && _model.isPlayRecord == false){
+					_audioLocator.onPause();
+				}
+			}
+			
+			private function recordPlay():void{
+				if (_model.isRecord == false && _recordLocator.recordStream.microPhone != null) {
+					onRecordSelected();
+					_recordLocator.onRecordDubbing();
+					frequency_static.visible=frequency_static.includeInLayout=false;
+					frequency_active.visible=frequency_active.includeInLayout=true;
+					
+					if(_frequencyTimer != null){
+						_frequencyTimer.stop();
+						_frequencyTimer = null;
+					}
+					
+					_frequencyTimer = new Timer(500);
+					_frequencyTimer.addEventListener(TimerEvent.TIMER,onCalcFrequency);
+					_frequencyTimer.start();
+				} else {
+					//TODO::
+				}
+			}
+			
+			private function recordStop():void{
+				_recordLocator.onStopDubbing();
+				frequency_static.visible=frequency_static.includeInLayout=true;
+				frequency_active.visible=frequency_active.includeInLayout=false;
+				if(_frequencyTimer!=null){
+					_frequencyTimer.stop();
+					_frequencyTimer = null;
+				}
+			}
+			
+			private function onRemoveAllRecord():void{
+				_recordLocator.removeAllRecord();
+			}
+			
+			private function onSwitchRecordsPicker():void{
+				this._isLayout2=!_isLayout2;
+				_recordLocator.dispatchEvent(new MockEvent(MockEvent.MOCK_CHANGE_RECORD_LAYOUT));
+			}
+			
+			//
+			private function onRecordSelected():void{
+//				this.btnPlayStroke.color = 0x00a7f5;                                     ;
+//				this.btnPlayColor.color = 0x00a7f5;  //0x00a7f5;
+			}
+			
+			private function onRecordRelease():void{
+//				if(this._model.isRecord == false){
+//					this.btnPlayStroke.color = 0xFFFFFF;
+//					this.btnPlayColor.color = 0xFFFFFF;
+//				}
+			}
+			
+			private function onChooseRecordModel():void{
+				_recordLocator.dispatchEvent(new RecordEvent(RecordEvent.RECORD_SET_MODEL));
+			}
+			
+			private function onCalcFrequency(event:TimerEvent):void{
+				this.f1.width = Math.round(Math.random()*(12-4))+3;
+				this.f2.width = Math.round(Math.random()*(12-4))+3;
+				this.f3.width = Math.round(Math.random()*(12-4))+3;
+				this.f4.width = Math.round(Math.random()*(12-4))+3;
+				this.f5.width = Math.round(Math.random()*(12-4))+3;
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+
+	<mx:HBox width="100%" height="100%" backgroundColor="#292929">
+		
+		<mx:HBox id="leftToolBar" width="160" height="100%" verticalAlign="middle" horizontalAlign="center" horizontalGap="0">
+			<s:Group width="10" height="48">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="recordPlay()" rollOver="onRecordSelected()" rollOut="onRecordRelease()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/record_active.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="recordStop()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/stop_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="audioPlay()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/play_active.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="audioPause()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/pause_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group id="frequency_static" width="30" height="48" buttonMode="true">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<mx:Image source="@Embed('/assets/player/record_frequency_static.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group id="frequency_active" width="30" height="48" buttonMode="true" rotation="-90"  visible="false" includeInLayout="false">
+				<s:Line id="f1" width="12" y="7" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f2" width="6" y="11" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f3" width="8" y="15" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f4" width="3" y="19" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+				<s:Line id="f5" width="6" y="23" x="-31">
+					<s:stroke>
+						<s:SolidColorStroke color="#d0d0d0" weight="2" caps="square"/>
+					</s:stroke>
+				</s:Line>
+			</s:Group>
+		</mx:HBox>
+		
+		
+		<mx:Canvas width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<!--mx:HRule x="10" y="25" width="460" height="2"/-->
+			<mx:ProgressBar id="progress" x="10" y="22" width="460" height="6" label="" labelPlacement="center"
+							barSkin="com.deodio.elearning.libs.skins.DProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DProgressTrackSkin"
+							mode="manual"/>
+			<c:DHSlider id="slider" x="5" y="24" width="460" height="12"  minimum="0" maximum="20" snapInterval="0.001" showDataTip="true" allowTrackClick="false" enabled="false" 
+						skinClass="com.deodio.elearning.libs.skins.DSliderSkin" change="onProgressChange(this.slider,this.progress)" click="onProgressClick(this.slider,this.progress)" thumbPress="onProgressThumbPress(this.slider)" thumbRelease="onProgressThumbRelease(this.slider);"/>
+			<mx:Text id="currentDuration" text="{CommonUtils.formatTimes(slider.value)}" color="#ffffff" width="60" x="480" y="17"/>
+			<mx:Text text="/" color="#ffffff" width="10" x="530" y="17"/>
+			<mx:Text id="maxDuration" text="{CommonUtils.formatTimes(this.slider.maximum)}" color="#ffffff"  width="60" x="538" y="17"/>
+		</mx:Canvas>
+		
+		<mx:HBox width="130" height="100%" backgroundColor="#292929" verticalAlign="middle" horizontalAlign="center" horizontalGap="0">
+			<s:Group width="30" height="48" buttonMode="true" visible="{!_model.isHeadsetMicroPhone}" includeInLayout="{!_model.isHeadsetMicroPhone}" click="onChooseRecordModel()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/microphone_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" visible="{_model.isHeadsetMicroPhone}" includeInLayout="{_model.isHeadsetMicroPhone}" click="onChooseRecordModel()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/headset_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/sound_default.png')"  buttonMode="true" click="onSetSounding(this.setSounding)"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="onSwitchRecordsPicker()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/1layout_default.png')"  buttonMode="true" visible="{!_isLayout2}" includeInLayout="{!_isLayout2}"/>
+				<s:Image source="@Embed('/assets/player/playbar/2layout_lr_default.png')"  buttonMode="true" visible="{_isLayout2}" includeInLayout="{_isLayout2}"/>
+			</s:Group>
+			<s:Group width="30" height="48" buttonMode="true" click="onRemoveAllRecord()">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('/assets/player/playbar/trash_default.png')"  buttonMode="true"/>
+			</s:Group>
+			<s:Group width="10" height="48">
+				<s:layout>
+					<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+			</s:Group>
+		</mx:HBox>
+	</mx:HBox>
+	
+	<mx:Canvas id="setSounding" visible="false" includeInLayout="false" x="798" y="-50" backgroundColor="#292929" backgroundAlpha="1" width="30" height="65" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<mx:ProgressBar id="soundProgress" x="12" y="58" width="50" height="6" label="" labelPlacement="center" rotation="-90"
+						barSkin="com.deodio.elearning.libs.skins.DSFProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DVProgressTrackSkin"
+						mode="manual"/>
+		<c:DHSlider id="soundSlider" x="22" y="58" width="50" height="6"  minimum="0" maximum="1" snapInterval="0.1" showDataTip="false" allowTrackClick="false"
+					skinClass="com.deodio.elearning.libs.skins.DHSoundSliderSkin" change="onSoundProgressChange(this.soundSlider,this.soundProgress)" rotation="-90"/>
+	</mx:Canvas>
+	
+
+</p:IPlayBar>

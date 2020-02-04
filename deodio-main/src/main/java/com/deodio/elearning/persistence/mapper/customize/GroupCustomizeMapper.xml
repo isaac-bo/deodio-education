@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.deodio.elearning.persistence.mapper.customize.GroupCustomizeMapper">
+
+	<select id="getGroupUserCount" parameterType="java.util.Map"
+		resultType="java.lang.Integer">
+		select count(*)
+		<include refid="commonGroupUserSql"></include>
+
+	</select>
+
+	<select id="getGroupUserList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select grur.id,
+		tu.user_name,
+		tu.nick_name,
+		tu.last_name,
+		tu.first_name,
+		gr.description as name,
+		tu.user_mail,
+		tu.id as userid,
+		grur.create_time,
+		CASE WHEN #{tabValue}=2 then 3 ELSE grur.active_status END 
+		<include refid="commonGroupUserSql"></include>
+		order by
+		create_time desc
+		LIMIT #{end} OFFSET #{start}
+	</select>
+
+	<sql id="commonGroupUserSql">
+		FROM t_group_role_user_rel grur,
+		t_user tu,
+		t_group_role gr
+		WHERE
+		grur.user_id = tu.ID
+		and grur.group_role_id = gr.id
+		and
+		grur.group_id=#{groupId}
+
+		<if test="tabValue==1">
+			and grur.active_status=1
+		</if>
+
+		<if test="tabValue==2">
+			<![CDATA[   
+		   and grur.active_status=2 
+		   and grur.create_time::timestamp + '1 day' <= now()
+		    ]]>
+		</if>
+        <if test="tabValue==0">
+             <![CDATA[and (grur.active_status=2 
+			 and grur.create_time::timestamp + '1 day' > now()]]>
+			 or (grur.active_status !=2))
+		</if>
+		<if test="ativeStatus!=null">
+			and grur.active_status=#{ativeStatus}
+		</if>
+		<if test="roleId!=null">
+			and gr.id=#{roleId}
+		</if>
+		<if test="keywords!=null">
+			and tu.user_name like CONCAT('%','${keywords}','%' )
+		</if>
+		    and grur.creator is not null
+	</sql>
+
+
+	<select id="getMemberCount" parameterType="java.lang.String"
+		resultType="java.util.Map">
+
+		SELECT count(*)
+		FROM t_group_role_user_rel
+		WHERE group_id =#{groupId}
+		and 
+         <![CDATA[(active_status=2 
+			 and create_time::timestamp + '1 day' > now()]]>
+			 or (active_status !=2 ))
+		UNION ALL
+
+		SELECT count(*)
+		FROM t_group_role_user_rel
+		WHERE group_id
+		=#{groupId} AND active_status=1
+
+		UNION ALL
+
+		SELECT count(*)
+		FROM
+		t_group_role_user_rel
+		WHERE
+ 		<![CDATA[  
+ 			   group_id =#{groupId}  
+ 		  AND  active_status=2 and create_time::timestamp + '1 day' <= now()]]>
+	</select>
+
+
+	<select id="getUserInfoFromGroup" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		SELECT ur.id,
+		ur.group_role_id,
+		u.user_name,
+		u.nick_name,
+		u.last_name,
+		u.first_name,
+		u.user_mail,
+		to_char(ur.create_time, 'YYYY-MM-DD HH12:MI:SS') create_time
+		FROM t_group_role_user_rel AS ur
+		,
+		t_user AS u
+		WHERE u.id = ur.user_id AND
+		ur.group_id = #{groupId} and
+		u.id=#{userId}
+	</select>
+
+	<select id="loadGroupListbyContentCreator" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		SELECT
+		t1.id,
+		t1.group_name,
+		t2.attach_url,
+		t2.generate_name,
+		t1.group_description,
+		t3.group_role_id
+		FROM
+		t_group t1
+		LEFT JOIN
+		t_group_role_user_rel t3
+		on t1.id = t3.group_id
+		and t3.user_id =
+		#{userId}
+		LEFT JOIN t_attachment t2 ON t1.id = t2.rel_id
+		where
+		t1.account_id=#{accountId}
+		and (t3.group_role_id = '10000' or
+		t3.group_role_id = '10001')
+		<if test="keyword!=null">
+			AND t1.group_name like CONCAT('%','${keyword}','%' )
+		</if>
+		GROUP BY t1. ID,
+		t1.group_name,
+		t1.group_description,
+		t2.attach_url,
+		t2.generate_name,
+		t3.group_role_id
+		ORDER BY
+		id,
+		group_name
+	</select>
+
+
+	<select id="getGroupChartByCreator" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select T1.create_id,count(1) as value,case when
+		t_user.user_name is null
+		then
+		concat(t_user.first_name,',',t_user.last_name) else
+		t_user.user_name
+		end as name
+		from (
+		SELECT t1.id,
+		t1.group_name,
+		t1.group_description,
+		t2.attach_url,
+		t2.generate_name,
+		t1.create_time,
+		t1.create_id,
+		t1.update_time
+		FROM t_group t1
+		LEFT JOIN t_group_role_user_rel t3
+		on
+		t1.id = t3.group_id
+		and t3.user_id =#{userId}
+		LEFT JOIN t_attachment t2
+		ON t1.id = t2.rel_id
+		where t1.account_id=#{accountId}
+		and
+		t3.group_role_id = '10000'
+		GROUP BY t1. ID,
+		t1.group_name,
+		t1.group_description,
+		t2.attach_url,
+		t2.generate_name,
+		t1.create_time,
+		t1.update_time
+		) T1
+		INNER JOIN t_user
+		on t_user.id = T1.create_id
+		group by
+		T1.create_id,t_user.user_name,t_user.first_name,t_user.last_name
+	</select>
+
+
+	<select id="getGroupListByCreator" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+
+
+		select T1.*,COALESCE(T2.activeCount,0) activeCount
+		from (
+		SELECT t1.id,
+		t1.group_name,
+		t1.group_description,
+		t2.attach_url,
+		t2.generate_name,
+		COUNT (t3.*) allCount,
+		t1.create_time,
+		t1.create_id,
+		t1.update_time
+		FROM t_group t1
+		LEFT JOIN t_group_role_user_rel t3
+		on
+		t1.id = t3.group_id
+		and t3.user_id =#{userId}
+		LEFT JOIN t_attachment t2
+		ON t1.id = t2.rel_id
+		where t1.account_id=#{accountId}
+		and
+		t3.group_role_id = '10000'
+		GROUP BY t1. ID,
+		t1.group_name,
+		t1.group_description,
+		t2.attach_url,
+		t2.generate_name,
+		t1.create_time,
+		t1.update_time
+		) T1
+		LEFT JOIN (
+		select t1.id,
+		count(t3.*) activeCount
+		from
+		t_group t1
+		LEFT JOIN t_group_role_user_rel t3
+		on t1.id = t3.group_id
+		WHERE t3.active_status=1
+		group by t1.id
+		) T2
+		on T1.id = T2.id
+		ORDER BY
+		T1.create_time DESC,T1.id
+
+	</select>
+
+	<select id="findGroupList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		select T1.*,COALESCE(T2.activeCount,0) activeCount,
+		COALESCE (T3.allCount, 0) allCount
+		from (
+		SELECT t1.id,
+		t1.group_name,
+		t1.group_description,
+		t1.cover_img attach_url,
+		t2.generate_name,
+		t1.create_time,
+		t1.update_time,
+		t3.group_role_id
+		FROM t_group t1
+		INNER JOIN t_group_role_user_rel t3
+		on t1.id =
+		t3.group_id
+		and t3.user_id =#{userId}
+		LEFT JOIN t_attachment t2 ON t1.id
+		= t2.rel_id
+		where t1.account_id=#{accountId}
+		and t3.active_status=1
+		<!-- and t3.group_role_id = '10000' 逻辑为 只要为小组内成员，小组均可见 -->
+		GROUP BY t1. ID,
+		t1.group_name,
+		t1.group_description,
+		t2.attach_url,
+		t2.generate_name,
+		t1.create_time,
+		t1.update_time,
+		t3.group_role_id,
+		t1.cover_img
+		) T1
+		LEFT JOIN (
+		select
+		t1.id,
+		'' group_role_id,
+		count(t3.*) activeCount
+		from t_group t1
+		LEFT JOIN
+		t_group_role_user_rel t3
+		on t1.id = t3.group_id
+		WHERE t3.active_status=1
+		and t3.user_id !=#{userId}
+		group by t1.id
+		) T2
+		on T1.id = T2.id
+        LEFT JOIN (
+	    SELECT
+		t1. ID,
+		COUNT (t4.*) allCount,
+		'' group_role_id
+	    FROM
+		t_group t1
+	    LEFT JOIN t_group_role_user_rel t4 ON t1. ID = t4.group_id
+	    WHERE
+        t4.user_id !=#{userId}
+	    GROUP BY t1. ID
+        ) T3 ON T1. ID = T3. ID
+		<if test="keyword!=null">
+			where T1.group_name like CONCAT('%','${keyword}','%' )
+		</if>
+		ORDER BY
+		T1.create_time DESC,T1.id
+	</select>
+
+	<select id="loadGroupCapabilityItems" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select t_group_capability.*,
+		t_account_capability.capability_item,
+		concat(t_account.capability_prefix,t_group_capability.capability_level)
+		as capabilityLevelFull
+		from t_account_capability,
+		t_group_capability,
+		t_account
+		where t_account_capability.id =
+		t_group_capability.capability_id
+		and t_account.id =
+		t_account_capability.account_id
+		and t_group_capability.group_id =
+		#{groupId}
+		and t_account.id = #{accountId}
+		and
+		t_account_capability.capability_type = #{capabilityType}
+		order by
+		t_account_capability.capability_item,t_group_capability.capability_level
+
+
+	</select>
+
+	<select id="loadGroupCapabilityItemsHeader" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select distinct
+		concat(t_account.capability_prefix,t_group_capability.capability_level)
+		as capabilityLevelFull
+		from t_account_capability,
+		t_group_capability,
+		t_account
+		where t_account_capability.id =
+		t_group_capability.capability_id
+		and t_account.id =
+		t_account_capability.account_id
+		and t_group_capability.group_id =
+		#{groupId}
+		and t_account.id = #{accountId}
+		order by capabilityLevelFull
+
+
+	</select>
+
+	<select id="queryGroupListForUser" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		t_group."id",
+		t_group.group_name as name
+		FROM
+		t_group
+		INNER JOIN
+		t_group_role_user_rel on t_group."id" =
+		t_group_role_user_rel.group_id
+		WHERE
+		t_group_role_user_rel.user_id =
+		#{userId} and t_group.account_id =
+		#{accountId}
+		GROUP BY
+		t_group.id,t_group.group_name
+		ORDER BY
+		id
+	</select>
+
+	<select id="queryGroupRoleForUser" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		t_group_role."id",
+		t_group_role."name"
+		FROM
+		t_group_role
+		INNER JOIN
+		t_group_role_user_rel on t_group_role."id" =
+		t_group_role_user_rel.group_role_id
+		INNER JOIN
+		t_group on t_group.id =
+		t_group_role_user_rel.group_id
+		WHERE
+		t_group_role_user_rel.user_id =
+		#{userId} and t_group.account_id = #{accountId}
+		GROUP BY
+		t_group_role.id,t_group_role.name
+		ORDER BY
+		id
+	</select>
+
+
+	<select id="queryGroupFunctionForRole" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		role_id
+		,max(role_name) as role_name
+		<foreach collection="functionIds" item="item" index="index">
+			,max(case
+			when rank_code = ${index + 1} THEN is_checked else '' end) as
+			s_check_${index + 1}
+			,max(case when rank_code = ${index + 1} THEN
+			function_name else '' end) as
+			s_name_${index + 1}
+			,max(case when
+			rank_code = ${index + 1} THEN concat(function_id,'_',role_id)
+			else ''
+			end) as s_id_${index + 1}
+		</foreach>
+
+		<!-- ,max(case when rank_code = '1' THEN is_checked else '' end) as s_1_val, 
+			max(case when rank_code = '1' THEN function_name else '' end) as s_1_name, 
+			max(case when rank_code = '2' THEN is_checked else '' end) as s_2_val, max(case 
+			when rank_code = '2' THEN function_name else '' end) as s_2_name, max(case 
+			when rank_code = '3' THEN is_checked else '' end) as s_3_val, max(case when 
+			rank_code = '3' THEN function_name else '' end) as s_3_name, max(case when 
+			rank_code = '4' THEN is_checked else '' end) as s_4_val, max(case when rank_code 
+			= '4' THEN function_name else '' end) as s_4_name, max(case when rank_code 
+			= '5' THEN is_checked else '' end) as s_5_val, max(case when rank_code = 
+			'5' THEN function_name else '' end) as s_5_name, max(case when rank_code 
+			= '6' THEN is_checked else '' end) as s_6_val, max(case when rank_code = 
+			'6' THEN function_name else '' end) as s_6_name, max(case when rank_code 
+			= '7' THEN is_checked else '' end) as s_7_val, max(case when rank_code = 
+			'7' THEN function_name else '' end) as s_7_name -->
+
+		FROM
+		(
+		SELECT
+		group_function.id as function_id,
+		group_function.name as
+		function_name,
+		group_role.id as role_id,
+		group_role."description" as role_name,
+		CASE WHEN group_role_func_rel."id" IS NULL then '0' else '1' end as
+		is_checked,
+		RANK() OVER (PARTITION BY group_role.id ORDER BY
+		group_function.id ASC) as
+		rank_code
+		FROM
+		(
+		SELECT
+		*
+		FROM
+		t_group_function
+		WHERE id IN
+		<foreach collection="functionIds" item="item" open="("
+			separator="," close=")">
+			#{item}
+		</foreach>
+		<!-- ('10000','10001','10002','10003','10004','10005','10006') -->
+		) group_function
+
+		CROSS JOIN
+		(SELECT id,description from t_group_role
+		<!-- UNION ALL SELECT '1000','title' -->
+		) group_role
+		LEFT JOIN
+		t_group_role_func_rel group_role_func_rel
+		ON
+		group_function.id = group_role_func_rel.function_id
+		AND
+		group_role_func_rel.group_id = #{groupId}
+		AND
+		group_role."id" =
+		group_role_func_rel.group_role_id
+		ORDER BY
+		group_role.id
+		)data_list
+		GROUP
+		BY
+		role_id
+		ORDER BY
+		role_id
+	</select>
+
+
+	<select id="findGroupModelFunction" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		group_function.id
+		,group_function.name
+		,CASE WHEN
+		group_model.group_model_id is not NULL THEN '1' ELSE '0' END as
+		is_checked
+		FROM
+		(SELECT * FROM t_group_function where group_type = '2')
+		group_function
+		LEFT
+		JOIN
+		(
+		SELECT
+		regexp_split_to_table(group_model_fun,',') as group_model_id
+		FROM
+		t_group
+		WHERE
+		id = #{groupId} AND account_id = #{accountId}
+		) group_model
+		ON group_model.group_model_id = group_function.id
+		ORDER BY
+		id
+	</select>
+	<select id="findAccountCapability" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select t.* from t_account_capability t where t.account_id=#{accountId}
+		and
+		t.capability_type=#{capabilityType}
+		AND T."id" not in(
+        select a.capability_id from t_group_capability a
+        where a.group_id=#{groupId}
+        )
+		<if test="keywords!=null">
+			and t.capability_item like CONCAT('%','${keywords}','%' )
+		</if>
+	</select>
+	<select id="getGroupRoleUserOutDate" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		t.*
+		FROM
+		t_group_role_user_rel t
+		WHERE
+		t.group_id =#{groupId}
+		<![CDATA[  
+		AND t.create_time :: TIMESTAMP + '15 day' <= now()
+		]]>
+		AND t.user_id =#{userId}
+		AND t.active_status!=1
+	</select>
+	<select id="getAllGroupByGroupName"  parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select * from t_group t
+		where group_name like CONCAT('%','${groupName}','%' )
+	</select>
+</mapper>

@@ -1,0 +1,712 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.QuizCustomizeMapper">
+ 
+ <insert id="insertQuizSubject" parameterType="java.util.List">
+ 		INSERT INTO t_quiz_subject (id,quiz_subject_name,create_time,create_id,account_id,quiz_subject_type,quiz_subject_from,quiz_subject_score,quiz_bank_id)
+    VALUES 
+    <foreach collection="list" item="item"  separator="," >
+        (#{item.id},#{item.quizSubjectName},#{item.createTime},#{item.createId},#{item.accountId},
+        #{item.quizSubjectType},#{item.quizSubjectFrom},#{item.quizSubjectScore},#{item.quizBankId})
+    </foreach>
+ </insert>
+ 
+  <insert id="insertQuizItems" parameterType="java.util.List">
+ 		INSERT INTO t_quiz_items (id,quiz_item_name,quiz_item_order,create_time,
+ 		create_id,quiz_subject_id,update_id,update_time,is_correct,attach_url)
+    VALUES 
+    <foreach collection="list" item="item"  separator="," >
+        (#{item.id},#{item.quizItemName},#{item.quizItemOrder},#{item.createTime},#{item.createId},
+        #{item.quizSubjectId},#{item.updateId},#{item.updateTime},#{item.isCorrect},#{item.attachUrl})
+    </foreach>
+ </insert>
+ 
+ 
+  <insert id="insertQuizSubjectRel" parameterType="java.util.List">
+ 		INSERT INTO t_quiz_subject_rel (id,quiz_subject_id,quiz_id,
+ 		create_id,account_id,create_time,quiz_subject_order)
+    VALUES 
+    <foreach collection="list" item="item"  separator="," >
+        (#{item.id},#{item.quizSubjectId},#{item.quizId},#{item.createId},#{item.accountId},#{item.createTime},#{item.quizSubjectOrder})
+    </foreach>
+ </insert>
+ <!-- 指定题型分数 -->
+ <select id="getQuizExaminationCountScore" parameterType="java.lang.String" resultType="java.lang.Integer">
+	SELECT SUM
+				( t_quiz_auto_rule_subject.subject_score * t_quiz_auto_rule_subject.subject_items_count ) 
+			FROM
+				t_quiz
+				JOIN t_quiz_auto_rule_subject ON t_quiz.ID = t_quiz_auto_rule_subject.quiz_id 
+			WHERE
+				t_quiz.ID = #{quizId} 
+ </select>
+ 
+ <!-- 题库分数 -->
+ <select id="getQuizBankCountScore" parameterType="java.lang.String" resultType="java.lang.Integer">
+ 	SELECT SUM
+				( quiz_subject_score ) 
+			FROM
+				t_quiz_subject
+				JOIN t_quiz_subject_rel ON t_quiz_subject.ID = t_quiz_subject_rel.quiz_subject_id 
+		WHERE
+				t_quiz_subject_rel.quiz_id = #{quizId} 
+ </select>
+
+ 
+ <select id="getPreviewQuizExamination" parameterType="java.util.Map" resultType="java.util.Map">
+ 
+ SELECT
+ 		t2.id,
+	t2.quiz_subject_type,
+	t2.quiz_subject_name,
+	ars.subject_score,
+	(
+		CASE
+		WHEN t_quiz.create_type = '1' THEN
+			COALESCE (t2.quiz_subject_score, 0)
+		WHEN t_quiz.create_type = '2'
+		AND t_quiz.score_set = '0' THEN
+			COALESCE (ars.subject_score, 0)
+		WHEN t_quiz.create_type = '2'
+		AND t_quiz.score_set = '1' THEN
+			COALESCE (t2.quiz_subject_score, 0)
+		END
+	) AS quiz_subject_score,
+	t1.quiz_subject_order,
+	t2.quiz_bank_id,
+	t1. ID AS quiz_subject_rel_id,
+	string_agg (
+		t3.attach_url,
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS attach_url,
+		string_agg (
+		to_char(t3.is_correct,'FM999MI'),
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS option_answer,
+	string_agg (
+		t3.id,
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS option_answer_id,
+	string_agg (
+		t3.quiz_item_name,
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS item_options
+FROM
+	t_quiz JOIN
+	t_quiz_subject_rel t1 on t_quiz.id=t1.quiz_id
+LEFT JOIN t_quiz_subject t2 ON t2.id = t1.quiz_subject_id
+LEFT JOIN t_quiz_items t3 ON t1.quiz_subject_id = t3.quiz_subject_id
+LEFT JOIN t_quiz_auto_rule_subject ars ON ars.quiz_id = t1.quiz_id AND ars.subject_type = t2.quiz_subject_type
+WHERE
+	t1.quiz_subject_id = t2.id
+        AND t1.quiz_id = #{quizId} 
+<if test="isRequired!=null">
+	AND t1.is_required = #{isRequired} 
+</if>
+GROUP BY
+	t_quiz.id,
+	 t2.id,
+	ars.id,
+	t2.quiz_subject_type,
+	t2.quiz_subject_name,
+	t1.quiz_subject_order,
+	t1.id,
+	ars.subject_type,
+	ars.subject_order,
+	ars.subject_score
+ORDER BY
+    ars.subject_order ASC,
+    t1.is_required DESC,
+    t1.quiz_subject_order ASC
+
+ </select>
+ 
+ 
+ <select id="getClassiFication"  parameterType="java.util.Map" resultType="com.deodio.elearning.persistence.model.Tags">
+ 
+ <!-- SELECT distinct
+	T . ID,
+	T .classification_name AS tagName
+FROM
+	t_quiz_banks,
+	(
+		WITH RECURSIVE cte AS (
+			SELECT
+				t_classification. ID,
+				t_classification.classification_name,
+				t_classification.classification_parent_id
+			FROM
+				t_classification,
+				t_account_classification_rel
+			WHERE
+				t_classification. ID = t_account_classification_rel.classification_id
+			AND t_account_classification_rel.account_id = #{accountId}
+			UNION ALL
+				SELECT
+					t_classification. ID,
+					t_classification.classification_name,
+					t_classification.classification_parent_id
+				FROM
+					t_classification
+				INNER JOIN cte C ON C . ID = t_classification.classification_parent_id
+		) SELECT
+			ID,
+			classification_name
+		FROM
+			cte
+	) T
+WHERE
+	t_quiz_banks.classification_id = T . ID
+UNION 
+	SELECT id,classification_name FROM t_classification WHERE is_default=1 -->
+ SELECT
+	tc.ID,
+	tc.classification_name AS tagname 
+ FROM
+	t_account_classification_rel tacr
+	JOIN t_classification tc ON tacr.classification_id = tc.ID 
+ WHERE
+	tacr.account_id = #{accountId}
+ UNION
+ SELECT ID
+	,
+	classification_name AS tagname 
+ FROM
+	t_classification 
+ WHERE
+	is_default = 1
+ </select>
+ 
+ 
+ <select id="getQuizAutoRuleBankList" parameterType="java.lang.String" resultType="java.util.Map">
+SELECT
+	t2.quiz_bank_name,
+	t2.id
+FROM
+	t_quiz_auto_rule_bank AS t1
+LEFT JOIN
+	t_quiz_banks AS t2 ON t1.bank_id = t2.id
+WHERE
+	t1.quiz_id=#{quizId}
+ </select> 
+ 
+<!--  获取在线考试列表 -->
+ <select id="findQuizList" parameterType="java.util.Map" resultType="java.util.Map">
+SELECT
+	quiz.*,
+	userInfo.nick_name
+FROM
+	t_quiz quiz
+LEFT JOIN t_user userInfo ON userInfo. ID = quiz.create_id
+     where quiz.account_id = #{accountId}
+     and (quiz.quiz_category = 2 or quiz.quiz_category = 3)
+     <if test="keywords!=null">
+		and quiz.quiz_name like CONCAT('%','${keywords}','%')
+	</if>
+</select>
+ <select id="getShowViewQuizExamination" parameterType="java.util.Map" resultType="java.util.Map">
+ 
+ SELECT
+ 		t2.id,
+	t2.quiz_subject_type,
+	t2.quiz_subject_name,
+	t1.quiz_subject_order,
+	string_agg (
+		t3.attach_url,
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS attach_url,
+		string_agg (
+		to_char(t3.is_correct,'FM999MI'),
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS option_answer,
+	string_agg (
+		t3.id,
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS option_answer_id,
+	string_agg (
+		t3.quiz_item_name,
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS item_options
+FROM
+	t_quiz_subject_rel t1,
+	t_quiz_subject t2
+LEFT JOIN t_quiz_items t3 ON t2.id = t3.quiz_subject_id
+WHERE
+	t1.quiz_subject_id = t2.id
+AND t1.quiz_id = #{quizId} 
+<if test="isRequired!=null">
+	and t1.is_required=#{isRequired} 
+</if>
+GROUP BY
+		t2.id,
+	t2.quiz_subject_type,
+	t2.quiz_subject_name,
+	t1.quiz_subject_order
+ORDER BY
+	t1.quiz_subject_order ASC
+ 
+ </select>
+
+	<select id="findQuizExaminationList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+	t_quiz.*, CASE
+WHEN t_user.nick_name IS NULL THEN
+	concat (
+		t_user.first_name,
+		'.',
+		t_user.last_name
+	)
+ELSE
+	t_user.nick_name
+END AS username,
+ COUNT (t_quiz_subject_rel.quiz_id) AS quiznum,
+ (
+	CASE
+	WHEN t_quiz.create_type = '1' THEN
+		COALESCE (
+			SUM (
+				t_quiz_subject.quiz_subject_score
+			),
+			0
+		)
+	WHEN t_quiz.create_type = '2'
+	AND t_quiz.score_set = '0' THEN
+		COALESCE (
+			SUM (
+				t_quiz_auto_rule_subject.subject_score
+			),
+			0
+		)
+	WHEN t_quiz.create_type = '2'
+	AND t_quiz.score_set = '1' THEN
+		COALESCE (
+			SUM (
+				t_quiz_subject.quiz_subject_score
+			),
+			0
+		)
+	END
+) AS score,
+ t_quiz.create_type AS createtype
+FROM
+	t_quiz
+INNER JOIN t_user ON t_user. ID = t_quiz.create_id
+		AND t_quiz.account_id =
+		#{accountId}
+		<if test="quizCategory!=0">
+			and t_quiz.quiz_category=#{quizCategory}
+		</if>
+
+		<if test="keywords!=null">
+			and t_quiz.quiz_name like CONCAT('%','${keywords}','%' )
+		</if>
+		LEFT JOIN t_quiz_subject_rel ON t_quiz. ID =
+		t_quiz_subject_rel.quiz_id
+		LEFT JOIN t_quiz_subject ON t_quiz_subject.
+		ID = t_quiz_subject_rel.quiz_subject_id
+		LEFT JOIN t_quiz_auto_rule_subject ON t_quiz_auto_rule_subject.quiz_id = t_quiz.ID
+		GROUP BY
+		t_quiz. ID,
+		userName
+		ORDER BY t_quiz.quiz_name, t_quiz.create_time DESC
+	</select>
+
+<select id="findQuizExamList" parameterType="java.util.Map"
+	resultType="com.deodio.elearning.persistence.model.customize.QuizBo">
+	
+	SELECT
+		t_quiz.id,
+		t_quiz.quiz_name AS quizName, 
+		t_quiz.quiz_desc AS quizDesc,
+		t_quiz.create_id AS createId,
+		t_quiz.update_id AS updateId,
+		t_quiz.create_time AS createTime,
+		t_quiz.update_time AS updateTime,
+		t_quiz.quiz_category AS quizCategory,
+		t_quiz.create_type AS createType,
+		t_quiz.finish_time AS finishTime,
+		t_quiz.pass_score AS passScore,
+		t_quiz.quiz_max_times AS quizMaxTimes,
+		t_quiz.finally_quiz_result_type AS finallyQuizResultType,
+		t_quiz.publish_result_type AS publishResultType,
+		t_quiz.quiz_content AS quizContent,
+		t_quiz.quiz_safe AS quizSafe,
+		t_quiz.score_set AS scoreSet,
+		t_quiz.is_publish AS isPublish,
+		t_quiz.quiz_owner AS quizOwner,
+		t_quiz.is_edit AS isEdit,
+		gi.group_id AS groupId,
+		CASE WHEN t_user.nick_name IS NULL 
+		THEN CONCAT (t_user.first_name, '.', t_user.last_name)
+		ELSE t_user.nick_name
+		END AS userName,
+ 		COUNT (t_quiz_subject_rel.quiz_id) AS quizNum,
+ 		(CASE WHEN t_quiz.create_type = '1' 
+ 		THEN COALESCE (SUM (t_quiz_subject.quiz_subject_score),0)
+		WHEN t_quiz.create_type = '2'
+		AND t_quiz.score_set = '0' 
+		THEN COALESCE (SUM (t_quiz_auto_rule_subject.subject_score),0)
+		WHEN t_quiz.create_type = '2'
+		AND t_quiz.score_set = '1' 
+		THEN COALESCE (SUM (t_quiz_subject.quiz_subject_score),0)
+		END) AS score,
+ 		t_quiz.create_type AS createType,
+ 		a.id AS attachId,
+ 		a.attach_url AS attachUrl,
+ 		a.generate_name AS generateName,
+ 		(SELECT count(*) FROM (SELECT i.id AS id
+           FROM t_course_online_item i
+           WHERE i.item_id=t_quiz.id
+           UNION 
+           SELECT cq.id AS id
+           FROM t_course_quiz cq
+           WHERE cq.quiz_id=t_quiz.id) T) quoteCount
+ 		
+	FROM t_quiz 
+	LEFT JOIN t_attachment a ON a.rel_id = t_quiz.id
+	LEFT JOIN t_user ON t_user.ID = t_quiz.create_id
+	LEFT JOIN t_quiz_subject_rel ON t_quiz. ID = t_quiz_subject_rel.quiz_id
+	LEFT JOIN t_quiz_subject ON t_quiz_subject.ID = t_quiz_subject_rel.quiz_subject_id
+	LEFT JOIN t_quiz_auto_rule_subject ON t_quiz_auto_rule_subject.quiz_id = t_quiz.ID
+	LEFT JOIN t_group_items gi ON gi.item_id = t_quiz.id AND gi.item_type = 2
+	WHERE (t_quiz.create_id = #{userId} OR t_quiz.quiz_owner = #{userId})
+	AND t_quiz.account_id = #{accountId}
+	AND (a.attach_type = '5' OR a.attach_type IS NULL)
+	<if test="quizCategory != null">
+		AND t_quiz.quiz_category IN 
+		  <foreach collection="quizCategory" index="index" item="item" open="(" separator="," close=")">
+            #{item}       
+        </foreach>
+	</if>
+	<if test="keywords != null and keywords != ''">
+		AND t_quiz.quiz_name LIKE CONCAT('%','${keywords}','%' )
+	</if>
+	<if test="isPublish != null">
+		AND t_quiz.is_publish = #{isPublish}
+	</if>
+    GROUP BY t_quiz.id, userName, a.id, gi.group_id,t_quiz_auto_rule_subject.ID
+    
+	UNION 
+	
+	SELECT
+        t_quiz.id,
+        t_quiz.quiz_name AS quizName, 
+        t_quiz.quiz_desc AS quizDesc,
+        t_quiz.create_id AS createId,
+        t_quiz.update_id AS updateId,
+        t_quiz.create_time AS createTime,
+        t_quiz.update_time AS updateTime,
+        t_quiz.quiz_category AS quizCategory,
+        t_quiz.create_type AS createType,
+        t_quiz.finish_time AS finishTime,
+        t_quiz.pass_score AS passScore,
+        t_quiz.quiz_max_times AS quizMaxTimes,
+        t_quiz.finally_quiz_result_type AS finallyQuizResultType,
+        t_quiz.publish_result_type AS publishResultType,
+        t_quiz.quiz_content AS quizContent,
+        t_quiz.quiz_safe AS quizSafe,
+        t_quiz.score_set AS scoreSet,
+        t_quiz.is_publish AS isPublish,
+        t_quiz.quiz_owner AS quizOwner,
+        t_quiz.is_edit AS isEdit,
+        gi.group_id AS groupId,
+        CASE WHEN t_user.nick_name IS NULL 
+        THEN CONCAT (t_user.first_name, '.', t_user.last_name)
+        ELSE t_user.nick_name
+        END AS userName,
+        COUNT (t_quiz_subject_rel.quiz_id) AS quizNum,
+        (CASE WHEN t_quiz.create_type = '1' 
+        THEN COALESCE (SUM (t_quiz_subject.quiz_subject_score),0)
+        WHEN t_quiz.create_type = '2'
+        AND t_quiz.score_set = '0' 
+        THEN COALESCE (SUM (t_quiz_auto_rule_subject.subject_score),0)
+        WHEN t_quiz.create_type = '2'
+        AND t_quiz.score_set = '1' 
+        THEN COALESCE (SUM (t_quiz_subject.quiz_subject_score),0)
+        END) AS score,
+        t_quiz.create_type AS createType,
+        a.id AS attachId,
+        a.attach_url AS attachUrl,
+        a.generate_name AS generateName,
+        (SELECT count(*) FROM (SELECT i.id AS id
+           FROM t_course_online_item i
+           WHERE i.item_id=t_quiz.id
+           UNION 
+           SELECT cq.id AS id
+           FROM t_course_quiz cq
+           WHERE cq.quiz_id=t_quiz.id) T ) quoteCount
+    FROM t_quiz 
+    LEFT JOIN t_attachment a ON a.rel_id = t_quiz.id
+    LEFT JOIN t_user ON t_user.ID = t_quiz.create_id
+    LEFT JOIN t_quiz_subject_rel ON t_quiz. ID = t_quiz_subject_rel.quiz_id
+    LEFT JOIN t_quiz_subject ON t_quiz_subject.ID = t_quiz_subject_rel.quiz_subject_id
+    LEFT JOIN t_quiz_auto_rule_subject ON t_quiz_auto_rule_subject.quiz_id = t_quiz.ID
+    LEFT JOIN t_group_items gi ON gi.item_id = t_quiz.id AND gi.item_type = 2
+    WHERE t_quiz.create_id != #{userId}
+    AND t_quiz.quiz_owner != #{userId}
+    AND t_quiz.account_id = #{accountId}
+    AND t_quiz.is_publish = 1
+    AND (a.attach_type = '5' OR a.attach_type IS NULL)
+    <if test="quizCategory != null">
+       AND t_quiz.quiz_category IN 
+          <foreach collection="quizCategory" index="index" item="item" open="(" separator="," close=")">
+                #{item}       
+        </foreach>
+    </if>
+    <if test="keywords != null and keywords != ''">
+        AND t_quiz.quiz_name LIKE CONCAT('%','${keywords}','%' )
+    </if>
+	GROUP BY t_quiz.id, userName, a.id, gi.group_id,t_quiz_auto_rule_subject.ID
+
+	ORDER BY createTime DESC
+	</select>
+
+	<select id="getQuizExaminationInfo" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		quiz. ID,
+		quiz.quiz_name,
+		quiz.quiz_desc,
+		quiz.create_id,
+		quiz.create_time,
+		quiz.update_id,
+		quiz.update_time,
+		quiz.account_id,
+		quiz.create_type,
+		quiz.quiz_category,
+		quiz.is_publish,
+		quiz.finish_time,
+		quiz.pass_score,
+		quiz.quiz_max_times,
+		quiz.finally_quiz_result_type,
+		quiz.publish_result_type,
+		quiz.quiz_content,
+		quiz.quiz_safe,
+		quiz.score_set,
+		(
+		SELECT
+		string_agg (tgs.tag_name, ',')
+		FROM
+		t_tags tgs
+		WHERE
+		tgs. ID IN (
+		SELECT
+		tgsrel.tags_id
+		FROM
+		t_tags_items_rel tgsrel
+		WHERE
+		tgsrel.item_id = quiz. ID
+		AND tgsrel.item_type = 5
+		)
+		) tag_name
+		FROM
+		t_quiz quiz
+		where 1=1
+ 			<if test="quizId!=null and quizId!=''">
+	      	and quiz.id = #{quizId}
+	      </if>
+	</select>
+
+ 	<select id="getQuizInfoById" 
+ 		resultType="com.deodio.elearning.persistence.model.customize.QuizBo">
+		SELECT
+			quiz.id,
+			quiz.quiz_name AS quizName,
+			quiz.quiz_desc AS quizDesc,
+			quiz.create_id AS createId,
+			quiz.create_time AS createTime,
+			quiz.update_id AS updateId,
+			quiz.update_time AS updateTime,
+			quiz.account_id AS accountId,
+			quiz.create_type AS createType,
+			quiz.quiz_category AS quizCategory,
+			quiz.is_publish AS isPublish,
+			quiz.finish_time AS finishTime,
+			quiz.pass_score AS passScore,
+			quiz.quiz_max_times AS quizMaxTimes,
+			quiz.finally_quiz_result_type AS finallyQuizResultType,
+			quiz.publish_result_type AS publishResultType,
+			quiz.quiz_content AS quizContent,
+			quiz.quiz_safe AS quizSafe,
+			quiz.score_set AS scoreSet,
+			(
+			SELECT
+				string_agg (tgs.tag_name, ',')
+			FROM
+				t_tags tgs
+			WHERE
+				tgs. ID IN (
+				SELECT
+					tgsrel.tags_id
+				FROM
+					t_tags_items_rel tgsrel
+				WHERE
+					tgsrel.item_id = quiz. ID
+				AND tgsrel.item_type = 5
+				)
+			) tagName,
+			a.id AS attachId,
+            a.attach_url AS attachUrl,
+            a.generate_name AS generateName
+			FROM t_quiz quiz
+            LEFT JOIN t_attachment a ON a.rel_id = quiz.id
+			<where>
+				<if test="quizId!=null and quizId!=''">
+		      		AND quiz.id = #{quizId, jdbcType=VARCHAR}
+		    	</if>
+			</where>
+	</select>
+	
+	<!-- 获取被引用的综合试卷 -->
+	<select id="findQuoteQuizList" parameterType="java.util.Map" resultType="java.util.Map">  
+    SELECT 
+    	i.course_id AS course_id,
+    	i.item_id AS item_id,
+		c.course_name AS course_name,
+		c.is_public AS is_public,
+		c.course_type AS course_type,
+		c.is_publish AS is_publish,
+		'course' as quoted_type,
+		u.nick_name AS nick_name,
+		u.user_mail AS user_mail
+	FROM t_course_online_item i
+	LEFT JOIN t_course c ON i.course_id = c.id 
+	LEFT JOIN t_user u ON u.id = c.create_id
+	WHERE i.item_id=#{quizId, jdbcType=VARCHAR}
+	
+	UNION 
+	
+	SELECT 
+        cq.course_id AS course_id,
+        cq.quiz_id AS item_id,
+        c.course_name AS course_name,
+        c.is_public AS is_public,
+        c.course_type AS course_type,
+        c.is_publish AS is_publish,
+        'course_manager' as quoted_type,
+        u.nick_name AS nick_name,
+        u.user_mail AS user_mail
+    FROM t_course_quiz cq
+    LEFT JOIN t_course c ON cq.course_id = c.id 
+    LEFT JOIN t_user u ON u.id = c.create_id
+    WHERE cq.quiz_id=#{quizId, jdbcType=VARCHAR}
+	</select>
+	
+	<select id="queryCourseIsPublishByQuizId" resultType="java.lang.Integer">
+		SELECT 
+		COUNT(*)
+		FROM
+		t_course_quiz cq
+		LEFT JOIN t_course c ON c.id = cq.course_id
+		WHERE cq.quiz_id = #{quizId, jdbcType=VARCHAR}
+		AND c.is_publish = 1
+	</select>
+	
+	<select id="insertBatchQuizAutoRuleBank" parameterType="java.util.List">
+		INSERT INTO t_quiz_auto_rule_bank
+		(id, bank_id, quiz_id, create_time, create_id, update_time, update_id)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.bankId},#{item.quizId},#{item.createTime},#{item.createId},
+			#{item.updateTime},#{item.updateId})
+		</foreach>
+	</select>
+	
+	<select id="insertBatchQuizAutoRuleSubject" parameterType="java.util.List">
+		INSERT INTO t_quiz_auto_rule_subject
+		(id, quiz_id, subject_type, subject_order, subject_score, subject_items_count, subject_remark)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.quizId},#{item.subjectType},#{item.subjectOrder},
+			#{item.subjectScore},#{item.subjectItemsCount},#{item.subjectRemark})
+		</foreach>
+	</select>
+	
+	<select id="findContentExamList" parameterType="java.util.Map"
+    resultType="com.deodio.elearning.persistence.model.customize.QuizBo">
+    SELECT
+        t_quiz.id,
+        t_quiz.quiz_name AS quizName, 
+        t_quiz.quiz_desc AS quizDesc,
+        t_quiz.create_id AS createId,
+        t_quiz.create_time AS createTime,
+        t_quiz.update_time AS updateTime,
+        t_quiz.quiz_category AS quizCategory,
+        t_quiz.is_publish AS isPublish,
+        t_quiz.quiz_owner AS quizOwner,
+        t_quiz.is_edit AS isEdit,
+        CASE WHEN t_user.nick_name IS NULL 
+        THEN CONCAT (t_user.first_name, '.', t_user.last_name)
+        ELSE t_user.nick_name
+        END AS userName,
+        COUNT (t_quiz_subject_rel.quiz_id) AS quizNum,
+        (CASE WHEN t_quiz.create_type = '1' 
+        THEN COALESCE (SUM (t_quiz_subject.quiz_subject_score),0)
+        WHEN t_quiz.create_type = '2'
+        AND t_quiz.score_set = '0' 
+        THEN COALESCE (SUM (t_quiz_auto_rule_subject.subject_score),0)
+        WHEN t_quiz.create_type = '2'
+        AND t_quiz.score_set = '1' 
+        THEN COALESCE (SUM (t_quiz_subject.quiz_subject_score),0)
+        END) AS score,
+        t_quiz.create_type AS createType,
+        a.id AS attachId,
+        a.attach_url AS attachUrl,
+        a.generate_name AS generateName
+    FROM t_quiz 
+    LEFT JOIN t_attachment a ON a.rel_id = t_quiz.id
+    LEFT JOIN t_user ON t_user.ID = t_quiz.create_id
+    LEFT JOIN t_quiz_subject_rel ON t_quiz. ID = t_quiz_subject_rel.quiz_id
+    LEFT JOIN t_quiz_subject ON t_quiz_subject.ID = t_quiz_subject_rel.quiz_subject_id
+    LEFT JOIN t_quiz_auto_rule_subject ON t_quiz_auto_rule_subject.quiz_id = t_quiz.ID
+    WHERE t_quiz.account_id = #{accountId}
+        AND t_quiz.is_publish = 1
+        AND (t_quiz.quiz_category = 1 OR t_quiz.quiz_category = 3)
+    <if test="keywords != null and keywords != ''">
+        and t_quiz.quiz_name like CONCAT('%','${keywords}','%' )
+    </if>
+    <if test="list != null">
+		AND t_quiz.id not IN 
+		<foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+          	 #{item}       
+       	</foreach>
+	</if>
+    GROUP BY t_quiz.id, userName, a.id
+
+    ORDER BY createTime DESC
+    </select>
+    
+    <select id="queryQuizSubjectList" resultType="java.util.Map">
+        SELECT 
+            qsr.*,
+            qs.*
+        FROM 
+            t_quiz_subject_rel qsr
+        LEFT JOIN 
+            t_quiz_subject qs ON qs.id = qsr.quiz_subject_id
+        LEFT JOIN
+            t_quiz_items qi ON qi.quiz_subject_id = qsr.quiz_subject_id
+        WHERE 
+            qsr.quiz_id = #{quizId, jdbcType=VARCHAR}
+            <if test="isRequired != null">
+                AND qsr.is_required = #{isRequired}
+            </if>
+    </select>
+</mapper>

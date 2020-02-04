@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.PresentationDiscussionCustomizeMapper">
+  
+	 <resultMap id="BasePdcResultMap" type="com.deodio.elearning.persistence.model.customize.PresentationDiscussionDto"
+		 extends="com.deodio.elearning.persistence.mapper.PresentationDiscussionMapper.BaseResultMap" >
+	 	
+	 		<id column="pdId" jdbcType="VARCHAR" property="id" />
+	 		<result column="user_name" property="userName" />
+	 	<collection property="pdrlist" ofType="com.deodio.elearning.persistence.model.customize.PresentationDiscussionReplyDto" column="pdId" 
+	 	select="com.deodio.elearning.persistence.mapper.customize.PresentationDiscussionCustomizeMapper.getPresentationDiscussionReply"/>
+	 </resultMap>
+	 
+	 
+	 
+	 
+	 <select id="getPresentationDiscussion" resultMap="BasePdcResultMap" parameterType="java.lang.String" >
+	 		select 
+	 			t1.id as pdId,
+	 			t1.discussion_content,
+	 			t1.create_date,
+	 			t1.create_id,
+	 			t1.reply_count,
+	 			t1.like_count,
+	 			t2.user_name 
+	 		from 
+	 			t_presentation_discussion t1,
+	 			t_user t2 
+	 		where t1.create_id =  t2.id and t1.presentation_id=#{value}
+	 			
+	 
+	 </select>
+	 
+		 <select id="getPresentationDiscussionReply" resultType="com.deodio.elearning.persistence.model.customize.PresentationDiscussionReplyDto"
+		 	 parameterType="java.lang.String" >
+	 		select 
+	 			t1.id as id,
+	 			t1.reply_content as replyContent,
+	 			t1.reply_date replyDate,
+	 			t2.user_name userName
+	 		from 
+	 			t_presentation_discussion_reply t1, 
+	 			t_user t2 
+	 		where t1.reply_user_id =  t2.id and  t1.presentation_dis_id=#{value}
+	 			
+	 
+	 </select> 
+	 
+	 
+	 
+	 
+</mapper>

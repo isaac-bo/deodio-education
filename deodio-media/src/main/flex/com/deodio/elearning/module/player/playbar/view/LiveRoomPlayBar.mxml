@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<p:IPlayBar implements="com.deodio.elearning.module.player.playbar.ac.IPlayBar" 
+			xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			xmlns:s="library://ns.adobe.com/flex/spark" 
+			xmlns:p="com.deodio.elearning.module.player.playbar.view.*"
+			xmlns:mx="library://ns.adobe.com/flex/mx"
+			xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+			creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.event.CommonEvent;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.libs.skins.DCMbButtonSkin;
+			import com.deodio.elearning.libs.skins.DCMcButtonSkin;
+			import com.deodio.elearning.libs.skins.DHSoundSliderSkin;
+			import com.deodio.elearning.libs.skins.DProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DProgressTrackSkin;
+			import com.deodio.elearning.libs.skins.DSFProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DVProgressTrackSkin;
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.LiveRecordModelLocator;
+			import com.deodio.elearning.module.plugin.RecordModelLocator;
+			import com.deodio.elearning.service.MessageService;
+			
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var _liveRecordLocator:LiveRecordModelLocator = LiveRecordModelLocator.getInstance();
+			
+			[Bindable]
+			private var _messageService:MessageService = new MessageService();
+			
+			[Bindable]
+			public var _isStandardPlayPanel :Boolean = false;
+			
+			[Bindable]
+			public var _monitor:Timer;
+			
+			override public function init():void{
+				
+				//				this.addChildAt(this.setSounding,this.numElements + 1);
+				this.soundSlider.value = this._model.sound;
+				this.soundProgress.setProgress(soundSlider.value,soundSlider.maximum);
+				super.slider = this.slider;
+				super.progress = this.progress;
+				super.maxDuration = this.maxDuration;
+				super.currentDuration = this.currentDuration;
+				super.init();
+				
+			}
+			
+			private function setProgressValue(event:CommonEvent):void{
+				
+			}
+			
+			public function onPlay():void{
+				
+				if(this.liveSelfRecordBtn.label == "申请连接"){
+					_messageService.executeRequestLiveRoom(_model.presentationId,_model.userId,function(event:ResultEvent):void{
+						liveSelfRecordBtn.label = "连接中..";
+						_monitor = new Timer(3000);
+						_monitor.addEventListener(TimerEvent.TIMER,function(event:TimerEvent):void{
+							_messageService.getMemcacheValue(_model.presentationId+"_current_user",function(event:ResultEvent):void{
+								var currentUserId : String = event.result as String;
+								if(currentUserId == _model.userId){
+									liveSelfRecordBtn.label = "断开";
+									dispatchEvent(new RecordEvent(RecordEvent.RECORD_START_SELF_MEDIA));
+								}
+							});
+						});
+						_monitor.start();
+					});
+				}
+				
+				
+//				if(this.liveSelfRecordBtn.label == "连接"){
+//					this.liveSelfRecordBtn.label = "断开";
+//					this.dispatchEvent(new RecordEvent(RecordEvent.RECORD_START_SELF_MEDIA));
+//				}else{
+//					this.liveSelfRecordBtn.label = "连接";
+//					this.dispatchEvent(new RecordEvent(RecordEvent.RECORD_STOP_SELF_MEDIA));
+//				}
+//				
+				
+			}
+			
+			public function onPause():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PAUSE));
+			}
+			
+			public function onStop():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_STOP));
+			}
+			
+			public function onForward():void{
+				
+			}
+			
+			public function onBackward():void{
+				
+			}
+			
+			//			public function onSetSounding():void{
+			//				this.fullScreen.visible = !this.fullScreen.visible;
+			//				this._model.isSettingSound = this.setSounding.visible = this.setSounding.includeInLayout = !this.fullScreen.visible;
+			//			}
+			//			
+			public function onSwitchScreen():void{
+				this.setSounding.visible = this.setSounding.includeInLayout = false;
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SCREEN_FULL_SCREEN));
+			}
+			
+			public function onChooseLayout():void{
+				this.setSounding.visible = this.setSounding.includeInLayout = false;
+				this.dispatchEvent(new MockEvent(MockEvent.MOCK_CHANGE_LAYOUT));
+			}
+			
+			override public function onSoundProgressChange(soundSlider:DHSlider,soundProgress:ProgressBar):void{
+				super.onSoundProgressChange(soundSlider,soundProgress);
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_VOLUMN_CHANGE));
+			}
+			
+			private function onChooseRecordModel():void{
+				_liveRecordLocator.dispatchEvent(new RecordEvent(RecordEvent.RECORD_SET_MODEL));
+			}
+			
+		]]>	
+	</fx:Script>
+	
+	<s:Rect x="0" y="0" height="100%" width="100%">
+		<s:fill>
+			<s:BitmapFill source="@Embed('/assets/player/playbar_full_screen.png')"/>
+		</s:fill>
+	</s:Rect>
+	
+	<mx:HBox id="playBar" width="100%" height="100%" backgroundColor="{_isStandardPlayPanel?0x292929:0x292929}" backgroundAlpha="{_model.isFullScreen?0:1}">
+		
+		<mx:HBox id="leftToolBar" width="310" height="100%" backgroundColor="#292929" backgroundAlpha="{_model.isFullScreen?0:1}" verticalAlign="middle" horizontalAlign="center" horizontalGap="0">
+			<s:ToggleButton icon="@Embed('/assets/player/playbar/introduce.png')" label="内容介绍" width="100" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMButtonSkin"/>
+			<s:ToggleButton icon="@Embed('/assets/player/playbar/share.png')" label="分享" width="80" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMButtonSkin"/>
+			<s:ToggleButton icon="@Embed('/assets/player/playbar/report.png')" label="报告问题" width="100" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMButtonSkin"/>
+		</mx:HBox>
+		
+		<mx:Canvas width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:ProgressBar visible="false" id="progress" x="{_isStandardPlayPanel?2:-2}" y="{_isStandardPlayPanel?22:-2}" width="{_isStandardPlayPanel?612:this.width+10}" height="{_isStandardPlayPanel?6:10}" label="" labelPlacement="center"
+							barSkin="{!_isStandardPlayPanel?com.deodio.elearning.libs.skins.DSFProgressBarSkin:com.deodio.elearning.libs.skins.DProgressBarSkin}" trackSkin="{!_isStandardPlayPanel?com.deodio.elearning.libs.skins.DSFProgressTrackSkin:com.deodio.elearning.libs.skins.DProgressTrackSkin}"
+							mode="manual"/>
+			<c:DHSlider id="slider" visible="false" x="{_isStandardPlayPanel?2:0}" y="{_isStandardPlayPanel?25:0}" width="{_isStandardPlayPanel?608:this.width+10}" height="{_isStandardPlayPanel?12:20}"  minimum="0" maximum="20" snapInterval="0.001" showDataTip="true" allowTrackClick="false"
+						skinClass="{!_isStandardPlayPanel?com.deodio.elearning.libs.skins.DSFSliderSkin:com.deodio.elearning.libs.skins.DSliderSkin}" change="onProgressChange(this.slider,this.progress)" click="onProgressClick(this.slider,this.progress)" thumbPress="onProgressThumbPress(this.slider)" thumbRelease="onProgressThumbRelease(this.slider);"/>
+			
+		</mx:Canvas>
+		
+		<mx:HBox width="480" height="100%" backgroundColor="#292929" backgroundAlpha="{_model.isFullScreen?0:1}" verticalAlign="middle" horizontalAlign="center" horizontalGap="15">
+			<mx:Text id="currentDuration" text="{CommonUtils.formatTimes(slider.value)}" color="#d0d0d0" width="60" visible="true" includeInLayout="true"/>
+			
+			
+			<s:ToggleButton icon="@Embed('/assets/player/playbar/question.png')" label="有疑问" width="80" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMcButtonSkin"/>
+			<s:ToggleButton icon="@Embed('/assets/player/playbar/important.png')" label="重要" width="80" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMcButtonSkin"/>
+			
+			<s:Image source="@Embed('/assets/player/playbar/microphone_default.png')"  buttonMode="true"  visible="{!_model.isHeadsetMicroPhone}" includeInLayout="{!_model.isHeadsetMicroPhone}" click="onChooseRecordModel()"/>
+			<s:Image source="@Embed('/assets/player/playbar/headset_default.png')"  buttonMode="true" visible="{_model.isHeadsetMicroPhone}" includeInLayout="{_model.isHeadsetMicroPhone}" click="onChooseRecordModel()"/>
+			
+			<s:Image source="@Embed('/assets/player/playbar/sound_default.png')"  buttonMode="true" click="onSetSounding(this.setSounding)"/>
+			<s:Image id="fullScreen" source="@Embed('/assets/player/playbar/zoomout_default.png')"  buttonMode="true" click="onSwitchScreen()"/>
+			
+			<mx:Canvas width="100" height="100%">
+				<s:ToggleButton id="liveSelfRecordBtn" label="申请连接" width="80" height="28" x="10" y="10" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMbButtonSkin" click="onPlay()"/>
+			</mx:Canvas>
+		</mx:HBox>
+		
+	</mx:HBox>
+	
+	<mx:Canvas id="setSounding" visible="false" includeInLayout="false" x="{this.width - 160}" y="-55" backgroundColor="#292929" backgroundAlpha="1" width="30" height="65" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<mx:ProgressBar id="soundProgress" x="12" y="58" width="50" height="{_model.isFullScreen?6:6}" label="" labelPlacement="center" rotation="-90"
+						barSkin="com.deodio.elearning.libs.skins.DSFProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DVProgressTrackSkin"
+						mode="manual"/>
+		<c:DHSlider id="soundSlider" x="22" y="58" width="50" height="{_model.isFullScreen?6:6}"  minimum="0" maximum="1" snapInterval="0.1" showDataTip="false" allowTrackClick="false"
+					skinClass="com.deodio.elearning.libs.skins.DHSoundSliderSkin" change="onSoundProgressChange(this.soundSlider,this.soundProgress)" rotation="-90"/>
+	</mx:Canvas>
+	
+</p:IPlayBar>

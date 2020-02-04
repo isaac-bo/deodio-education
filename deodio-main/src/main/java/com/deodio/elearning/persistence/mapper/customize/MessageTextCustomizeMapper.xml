@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.MessageTextCustomizeMapper">
+
+      <select id="findMessageTextList" parameterType="java.util.Map" resultType="java.util.Map">
+    
+            SELECT
+	          tm.message_id,
+	          tm.send_id,
+	          tm.rec_id,
+	          tm.message_text_id,
+	          tm.view_status,
+	          tm.view_date,
+	          tm.create_date AS tm_create_date,
+	          tmt.title,
+	          tmt.TEXT,
+	          tmt.status,
+	          tmt.send_date,
+	          tmt.create_date AS tmt_create_date,
+	          tmt.create_by,
+	          tmt.update_date,
+	          tmt.update_by,
+	          tmt.rec_type,
+	          tmt.delete_flag,
+	          tmt.img_url
+            FROM
+	          t_message tm
+            LEFT JOIN t_message_text tmt ON tm.message_text_id = tmt.message_text_id
+            where 1=1 and 
+            tm.rec_id in (select tus.user_mail from t_user  tus where tus.id=#{userId})
+            and tmt.message_type='1' or tm.rec_id =#{userId}
+      
+      </select>
+
+
+</mapper>

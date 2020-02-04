@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:media="com.deodio.elearning.module.player.screen.view.*" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:playbar="com.deodio.elearning.module.player.playbar.view.*"
+		 xmlns:container="com.deodio.elearning.libs.containers.*"
+		 xmlns:tools="com.deodio.elearning.module.player.toolbar.view.*" creationComplete="init()" initialize="initApplication()">	
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.customize.PresentationBo;
+			import com.deodio.elearning.libs.effects.FadeEffect;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.libs.skins.DListSkin;
+			import com.deodio.elearning.libs.skins.DQuizListSkin;
+			import com.deodio.elearning.libs.skins.DTabBarSkin;
+			import com.deodio.elearning.libs.stream.VideoStreamController;
+			import com.deodio.elearning.libs.utils.MediaUtils;
+			import com.deodio.elearning.libs.utils.RecordUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.CommandModelLocator;
+			import com.deodio.elearning.module.plugin.LiveRecordModelLocator;
+			import com.deodio.elearning.module.plugin.ProgressBarModelLocator;
+			import com.deodio.elearning.module.plugin.ScreenModelLocator;
+			import com.deodio.elearning.service.MessageService;
+			import com.deodio.elearning.service.PresentationService;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.DragEvent;
+			import mx.events.FlexEvent;
+			import mx.messaging.Producer;
+			import mx.messaging.events.MessageAckEvent;
+			import mx.messaging.events.MessageFaultEvent;
+			import mx.messaging.messages.AsyncMessage;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			public var lessonId:String = "";
+			[Bindable]
+			public var _timer:Timer;
+			[Bindable]
+			public var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			public var _parameterMap:Dictionary = new Dictionary();
+			[Bindable]
+			public var _screenLocator:ScreenModelLocator = ScreenModelLocator.getInstance();
+			[Bindable]
+			public var _liveRecordLocator:LiveRecordModelLocator = LiveRecordModelLocator.getInstance();
+			[Bindable]
+			public var _commandLocator:CommandModelLocator = CommandModelLocator.getInstance();
+			[Bindable]
+			private var _presentation:PresentationBo = new PresentationBo();
+			
+			[Bindable]
+			private var _presentationService:PresentationService = new PresentationService();
+			
+			[Bindable]
+			private var _messageService:MessageService = new MessageService();
+			
+			private var _monitor:Timer;
+			
+			[Bindable]
+			private var _LIVE_SHOW_JOINED_USERS:ArrayCollection = new ArrayCollection();
+			
+			private function init():void{
+				//				lessonId=Application.application.parameters.lessonId;
+				//				_presentationService.getPresentation(lessonId,getPresentationFunc);
+				_model.userId = "123456";
+				_model.presentationId = "abcdefg";
+				_model.presentationCreator = "987654";
+				initModelLocators();
+				
+				initMonitorAttendees();
+			}
+			
+			private function initMonitorAttendees():void{
+				_monitor = new Timer(3000);
+				_monitor.addEventListener(TimerEvent.TIMER,function(event:TimerEvent):void{
+					_messageService.getMemcacheValue(_model.presentationId+"_liveroom",function(event:ResultEvent):void{
+						_LIVE_SHOW_JOINED_USERS = event.result as ArrayCollection;
+//						Alert.show("-------" +_LIVE_SHOW_JOINED_USERS.length);
+//						for(var index:int = 0; index < users.length;index++){
+//							Alert.show("-------" + users.getItemAt(index));
+//						}
+					});
+				});
+				_monitor.start();
+			}
+			
+			private function initApplication():void{
+				//				initEvents();
+			}
+			
+			private function initModelLocators():void{
+				this.initProgressBarLocator();//.initScreenLocator();
+				
+			}
+			private function initProgressBarLocator():LiveStudio{
+				
+				//INFO: Init the events for _progressBarLocator.
+//				_liveRecordLocator.addEventListener(MediaEvent.MEDIA_CREATE_MEDIA_ITEM,function(event:MediaEvent):void{
+//					
+//					for (var index:Number = 0; index< mediaScreen.liveCanvas.videoDisplay.numChildren;index++){
+//						if(mediaScreen.liveCanvas.videoDisplay.getChildAt(index) as Video){
+//							mediaScreen.liveCanvas.videoDisplay.removeChildAt(index);
+//						}
+//					}
+//					var media:Video=event.data as Video;
+//					media.name="live-name";
+//					var object:Object=MediaUtils.middlePosition(750, 452, mediaScreen.liveCanvas.width - 4, mediaScreen.liveCanvas.height - 4);
+//					media.x=object.x;
+//					media.y=object.y;
+//					media.width=object.width;
+//					media.height=object.height;
+//					media.smoothing = true;
+//					mediaScreen.liveCanvas.videoDisplay.addChild(media);
+//					
+//					//					mediaScreen.liveCanvas.createMedia(stream,false);
+//				});
+				
+				//				_progressBarLocator.addEventListener(MediaEvent.MEDIA_CREATE_MEDIA_COVER,function(event:MediaEvent):void{
+				//					if (mediaScreen.clipsCanvas.clipsImage.data == null) {
+				//						var coverUrl:String = event.data as String;
+				//						mediaScreen.clipsCanvas.createImage(coverUrl,false);
+				//					}
+				//				});
+				
+				//				_progressBarLocator.addEventListener(MediaEvent.MEDIA_EXEC_COMMAND,function(event:MediaEvent):void{
+				//					_commandLocator.executeCommand(_parameterMap,event.data as Number);
+				//				});
+				//				
+				//				_liveRecordLocator.addEventListener(MediaEvent.MEDIA_SCREEN_FULL_SCREEN,onMouseSwitchFullScreen);
+				//				
+				//				_liveRecordLocator.addEventListener(MediaEvent.MEDIA_VOLUMN,function(event:MediaEvent):void{
+				//					//					_progressBarLocator.videoStream.setSound(_model.sound);
+				//				});
+				
+				_liveRecordLocator.addEventListener(RecordEvent.RECORD_START_MEDIA,function(event:RecordEvent):void{
+					if(event.data is Video){
+						mediaScreen.playIcon.visible = mediaScreen.playIcon.includeInLayout = false;
+						var media:Video = event.data as Video;
+						media.name = "live-media";
+						var object:Object = MediaUtils.middlePosition(media.width,media.height,mediaScreen.liveCanvas.width,mediaScreen.liveCanvas.height);
+						media.x = object.x;
+						media.y = object.y;
+						media.width = object.width;
+						media.height = object.height;
+						mediaScreen.liveCanvas.videoDisplay.addChild(media);
+						_messageService.executeLiveStudio(_model.presentationId,_model.presentationCreator,function(event:ResultEvent):void{
+						
+						});
+					}
+				});
+				
+				
+				_liveRecordLocator.addEventListener(RecordEvent.RECORD_STOP_MEDIA,function(event:RecordEvent):void{
+					mediaScreen.playIcon.visible = mediaScreen.playIcon.includeInLayout = true;
+					for (var index:Number = 0; index< mediaScreen.liveCanvas.videoDisplay.numChildren;index++){
+						if(mediaScreen.liveCanvas.videoDisplay.getChildAt(index) as Video){
+							(mediaScreen.liveCanvas.videoDisplay.getChildAt(index) as Video).attachCamera(null);
+							mediaScreen.liveCanvas.videoDisplay.removeChildAt(index);
+						}
+					}
+					_messageService.stopLiveStudio(_model.presentationId,_model.presentationCreator,function(event:ResultEvent):void{
+						
+					});
+					
+				});
+				
+				_liveRecordLocator.addEventListener(RecordEvent.RECORD_SET_MODEL,function(event:RecordEvent):void{
+					recordSettings.onShowRecordSettings();
+				});
+				
+				this.mediaScreen.addEventListener(RecordEvent.RECORD_START_LIVE_MEDIA,function(event:RecordEvent):void{
+					playBar.startLive();
+					_liveRecordLocator.onRecordStartLiveMedia(event);
+				});
+				
+				this.mediaScreen.addEventListener(MediaEvent.MEDIA_PLAY,function(event:MediaEvent):void{
+					_liveRecordLocator.onPlayLiveMedia(RecordUtils.getLiveMedia4Trainer(_model.presentationCreator,_model.presentationId)+".flv");
+				});
+				
+				playBar.addEventListener(MediaEvent.MEDIA_VOLUMN_CHANGE,function(event:MediaEvent):void{
+					
+				});
+				_liveRecordLocator.initMedia(this.playBar);
+				return this;
+			}
+			
+			private function initScreenLocator():LiveStudio{
+				
+				_screenLocator.mediaScreen = this.mediaScreen;
+				_screenLocator.initScreen();
+				return this;
+			}
+			
+			private function getPresentationFunc(event:ResultEvent):void{
+				_presentation = event.result as PresentationBo;
+				initModelLocators();
+			}
+			
+			
+			public function getLiveContainer():Group {
+				return this.mediaScreen.liveCanvas;
+			}
+			
+			public function onMouseSwitchFullScreen(event:MediaEvent):void{
+				if(this._model.isFullScreen){
+					this.closeFullScreen();
+					if(_timer){
+						_timer.stop();
+					}
+					this.currentState = "showState";
+				}else{
+					//					this.showFullScreen(this..isMedia());
+				}
+			}
+			
+			public function showFullScreen(isMedia:Boolean):void {
+				_model.isFullScreen=true;
+				
+				for (var index:Number=0; index < mediaplayer.numElements; index++) { // 
+					if (!(mediaplayer.getElementAt(index) is LiveStudioScreen) && !(mediaplayer.getElementAt(index) is LiveStudioPlayBar)) {
+						mediaplayer.getElementAt(index).visible=!_model.isFullScreen;
+						mediaplayer.getElementAt(index).includeInLayout=!_model.isFullScreen;
+					}
+				}
+				
+				this._screenLocator.switchScreen(isMedia);
+				this._screenLocator.resizePlayIcon();
+				
+				isMedia?this.width=mediaScreen.clipsCanvas.width=mediaScreen.clipsCanvas.width=flash.system.Capabilities.screenResolutionX:this.width=mediaScreen.liveCanvas.width=mediaScreen.liveCanvas.width=flash.system.Capabilities.screenResolutionX;
+				isMedia?this.height=mediaScreen.clipsCanvas.height=mediaScreen.clipsCanvas.height=flash.system.Capabilities.screenResolutionY:this.height=mediaScreen.liveCanvas.height=mediaScreen.liveCanvas.height=flash.system.Capabilities.screenResolutionY;
+				
+				this.playBar.x=(flash.system.Capabilities.screenResolutionX - this.playBar.width) / 2;
+				this.playBar.y=flash.system.Capabilities.screenResolutionY - 40 - this.playBar.height;
+				this.playBar.visible = this.playBar.includeInLayout = true;
+				this.stage.addEventListener(FullScreenEvent.FULL_SCREEN, onKeyBoardSwitchFullScreen);
+				this.stage.displayState=StageDisplayState.FULL_SCREEN;
+			}
+			
+			public function closeFullScreen():void {
+				_model.isFullScreen=false;
+				if(_timer){
+					_timer.stop();
+				}
+				
+				for (var index:Number=0; index < mediaplayer.numChildren; index++) {
+					mediaplayer.getElementAt(index).visible=!_model.isFullScreen;
+					mediaplayer.getElementAt(index).includeInLayout=!_model.isFullScreen;
+				}
+				this.width=this.width - 195;
+				this.height=this.height;
+				this._screenLocator.resumeScreen();
+				this._screenLocator.resizePlayIcon();
+				this.playBar.x=0;
+				this.playBar.y=227;
+				this.playBar.visible = playBar.includeInLayout = true;
+				this.playBar.alpha = 1;
+				this.stage.removeEventListener(FullScreenEvent.FULL_SCREEN, onKeyBoardSwitchFullScreen);
+				this.stage.displayState=StageDisplayState.NORMAL;
+				
+				
+			}
+			
+			public function onKeyBoardSwitchFullScreen(event:FullScreenEvent):void{
+				//IINFO: 0 point can't be do any thing.
+				if (event.fullScreen) {
+					/* Do something specific here if we switched to full screen mode. */
+					//					this.showFullScreen(this._liveRecordLocator.isMedia());
+				} else {
+					/* Do something specific here if we switched to normal mode. */
+					this.closeFullScreen();
+					if(_timer){
+						_timer.stop();
+					}
+					//					this.currentState = "showState";
+				}
+			}
+			
+			public function onSelectUsers(event:MouseEvent):void{
+				
+				var currentUserId :String = this.userList.selectedItem as String;
+				_messageService.executeCurrentLiveUser(_model.presentationId,currentUserId,function(event:ResultEvent):void{
+					
+				});
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<!--container:DVDividedBox width="1000" height="100%" dividerThickness="8" resizeToContent="true" dividerColor="#a3a3a3"-->
+	<mx:VBox width="{this.width}" height="{this.height}" verticalScrollPolicy="off" horizontalScrollPolicy="off" verticalGap="2" backgroundColor="#a3a3a3">
+		<s:Group id="mediaplayer" x="2">
+			<media:LiveStudioScreen id="mediaScreen" _width="{this.width}" _height="{this.height-55}" width="100%" height="100%"/>
+			<mx:VBox id="userPicker" y="{(this.width*0.25-3)*9/16 + 2}" x="{this.width*0.75 + 2}" width="{this.width*0.25 - 3}"  height="{this.height - 58 - (this.width*0.25 - 3)*9/16}" backgroundColor="#292929" visible="true" includeInLayout="true" horizontalScrollPolicy="off">
+			
+				<s:TabBar id="userPickerTabBar" labelField="label" fontFamily="yahei" skinClass="com.deodio.elearning.libs.skins.DTabBarSkin"  dataProvider="{viewstack}"/>
+				
+				<mx:ViewStack id="viewstack" creationPolicy="all" backgroundColor="#292929">
+					<s:NavigatorContent width="100%" height="100%" label="Users">
+						<s:List id="userList" width="{this.width*0.25 - 3 - 20}" height="{this.height - 58 - (this.width*0.25 - 3)*9/16 -40}" x="0" skinClass="com.deodio.elearning.libs.skins.DLiveUsersSkin" verticalScrollPolicy="on" dataProvider="{_LIVE_SHOW_JOINED_USERS}" allowMultipleSelection="false" click="onSelectUsers(event)"/>
+					</s:NavigatorContent>
+					<!--s:NavigatorContent width="100%" height="100%" label="Comments">
+						<s:List id="commentList" width="180" height="{this.height - 58 - (this.width*0.25 - 3)*9/16}" x="15" y="45" skinClass="com.deodio.elearning.libs.skins.DQuizListSkin" verticalScrollPolicy="on" allowMultipleSelection="false"/>
+					</s:NavigatorContent-->
+				</mx:ViewStack>
+			</mx:VBox>
+			<playbar:LiveStudioPlayBar id="playBar" y="{this.height - 55 + 7}"  width="{this.width}" height="48"/>
+		</s:Group>
+	</mx:VBox>
+	<tools:RecordSettingToolBar id="recordSettings" visible="false" includeInLayout="false" x="{(900 -270 + 200)/2}" y="{(500 - 260 )/2}" />
+	
+	
+	<!--/container:DVDividedBox-->
+</s:Group>

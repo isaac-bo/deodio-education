@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:screen="com.deodio.media.module.player.screen.view.*"
+		 xmlns:c="com.deodio.media.module.player.cover.view.*" width="802" height="255" creationComplete="init()" mouseOver="this.currentState='showState'" mouseOut="this.currentState='hideState'" >
+	<fx:Declarations>
+		
+		
+	</fx:Declarations>
+	
+	<s:transitions>
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0.7"/>
+				</s:Parallel>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" widthFrom="0" widthTo="86" />
+					<s:Move target="{toolbar}" xFrom="798" xTo="712"/>
+				</s:Parallel>
+				
+				<!--s:Move target="{toolbar}" xFrom="996" xTo="910"/-->
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" widthFrom="86" widthTo="0" />
+					<s:Move target="{toolbar}" xFrom="712" xTo="798"/>
+				</s:Parallel>
+				
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0"/>
+				</s:Parallel>
+				<!--s:Move target="{toolbar}" xFrom="996" xTo="910"/-->
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions>
+	<fx:Script>
+		<![CDATA[
+			
+			import com.deodio.media.model.ModelLocator;
+			
+			[Bindable]
+			public var _isShowMedia:Boolean=false;
+			
+			[Bindable]
+			private var _model:ModelLocator=ModelLocator.getInstance();
+			
+			public function init():void{
+				this.currentState = "hideState";
+			}
+			
+			public function showMedia():void {
+				_isShowMedia=true;
+			}
+			
+			public function showCover():void {
+				_isShowMedia=false;
+			}
+			
+			public function showCoverDetail():void {
+				
+			}
+			
+//			public function doubleShow():void{
+//				this.currentState = "initState";
+//				this.currentState = "doubleShowState";
+//			}
+//			
+//			public function slideShow():void{
+//				this.currentState = "initState";
+//				this.currentState = "slideShowState";
+//			}
+//			
+//			public function mediaShow():void{
+//				this.currentState = "initState";
+//				this.currentState = "mediaShowState";
+//			}
+//			
+//			public function endMedia():void{
+//				this.currentState = "initState";
+//			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="hideState"/>
+		<s:State name="showState"/>
+	</s:states>
+	
+	<!--s:transitions>
+		<s:Transition fromState="initState" toState="doubleShowState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{fontCover}" alphaTo="0"/>
+				</s:Parallel>
+				<s:RemoveAction target="{fontCover}"/>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Fade targets="{[slidesCanvas,clipsCanvas]}" alphaTo="100"/>
+					<s:Move target="{slidesCanvas}" xFrom="250" xTo="0"/>
+					<s:Move target="{clipsCanvas}" xFrom="250" xTo="500"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="doubleShowState" toState="initState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Move target="{slidesCanvas}" xFrom="0" xTo="250"/>
+					<s:Move target="{clipsCanvas}" xFrom="500" xTo="250"/>
+				</s:Parallel>
+				<s:Parallel>
+					<s:Fade targets="{[slidesCanvas,clipsCanvas]}" alphaTo="0"/>
+					<s:AddAction />
+					<s:Fade target="{fontCover}"/>
+				</s:Parallel>
+				<s:RemoveAction targets="{[slidesCanvas,clipsCanvas]}"/>
+			</s:Sequence>
+		</s:Transition>
+		
+		<s:Transition fromState="initState" toState="slideShowState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{fontCover}" alphaTo="0"/>
+				</s:Parallel>
+				<s:RemoveAction target="{fontCover}"/>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Fade target="{slidesCanvas}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="slideShowState" toState="initState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{slidesCanvas}" alphaTo="0"/>
+				</s:Parallel>
+				<s:RemoveAction target="{slidesCanvas}"/>
+				<s:Parallel target="{fontCover}">
+					<s:Fade/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		
+		<s:Transition fromState="initState" toState="mediaShowState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{fontCover}" alphaTo="0"/>
+				</s:Parallel>
+				<s:RemoveAction target="{fontCover}"/>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Fade target="{clipsCanvas}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="mediaShowState" toState="initState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{clipsCanvas}" alphaTo="0"/>
+				</s:Parallel>
+				<s:RemoveAction target="{clipsCanvas}"/>
+				<s:Parallel target="{fontCover}">
+					<s:Fade/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		
+	</s:transitions-->
+	
+	
+
+	
+	<screen:Screen id="slidesCanvas" _height="225" _width="400" _title="SLIDES SHOW" x="0" y="0"/>
+	<screen:Screen id="clipsCanvas" _height="225" _width="400" _title="MULTIMEDIA" x="402" y="0" _isSlide="true"/>
+	
+	<mx:VBox id="toolbar" x.showState="712" x.hideState="798" y="5" width.showState="86" width.hideState="0" alpha="0.7"
+			 height="216" backgroundColor="#00a7f5" verticalAlign="middle" horizontalAlign="center" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<s:Image source="@Embed('assets/player/slides_edit.png')" alpha="2"/>
+		<mx:Text text="编辑Slides" fontWeight="bold" color="#FFFFFF" alpha="1.5"/>
+		<s:Image source="@Embed('assets/player/media_edit.png')" alpha="2"/>
+		<mx:Text text="编辑Media" fontWeight="bold" color="#FFFFFF" alpha="1.5"/>
+		<s:Image source="@Embed('assets/player/quiz_edit.png')" alpha="2"/>
+		<mx:Text text="编辑测试" fontWeight="bold" color="#FFFFFF" alpha="1.5"/>
+	</mx:VBox>
+	
+	<s:Image source="@Embed('assets/player/play_icon_btn.png')" x="359.5" y="71.5"/>
+	
+	<!--c:FrontCover id="fontCover" width="500" height="{30 + this.slidesCanvas._width*9/16}" 
+				  x.initState="250" 
+				  x.doubleShowState="250" 
+				  x.mediaShowState="250" 
+				  x.slideShowState="250" 
+				  visible.doubleShowState="false" 
+				  includeInLayout.doubleShowState="false"
+				  visible.slideShowState="false" 
+				  includeInLayout.slideShowState="false"
+				  visible.mediaShowState="false" 
+				  includeInLayout.mediaShowState="false" 
+				  y="0"/>
+	
+	<s:Button label="DoubleShow" click="doubleShow()" x="0" y="500"/>
+	<s:Button label="SlideShow" click="slideShow()" x="100" y="500"/>
+	<s:Button label="MediaShow" click="mediaShow()" x="200" y="500"/>
+	<s:Button label="结束" click="endMedia()" x="300" y="500"/-->
+</s:Group>

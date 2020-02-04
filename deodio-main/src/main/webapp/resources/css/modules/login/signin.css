@@ -1,0 +1,64 @@
+body{
+	background: url(../../../img/banner-2.jpg) no-repeat center 0;
+	background-size: cover;
+}
+.body-bg{
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	z-index: -1;
+}
+
+.header{
+	height: 230px;
+	background-image: url(../../../img/header-img-2.jpg);
+	background-position: left center;
+}
+
+.content .tab-item{
+	height:390px;
+}
+
+.content .tab-item ul li .tab-detail {
+	height:390px;
+}
+
+.content .tab-item .register-finish{
+	width: 440px;
+	height: 358px;
+	background: rgba(255,255,255,0.2);
+	position: absolute;
+	right: 0;
+	top: 0;
+	border-radius: 5px;
+}
+.content .tab-item .register-finish .h1{
+	text-align: center;
+	font-size: 30px;
+}
+.content .tab-item .register-finish .p{
+	font-size: 18px;
+	line-height: 30px;
+	
+}
+
+.btn{
+	width: 100%;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

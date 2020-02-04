@@ -1,0 +1,39 @@
+/*-----------------------------------
+Description:    trainersҳ��CSS
+Author:         liujian
+Date:           2016-05-23
+------------------------------------*/
+/*reset*/
+.hdn{overflow: hidden;}
+.clb{clear: both;}
+.m10{margin: 10px;} .m20{margin: 20px;} .p10{padding: 10px;} .p20{padding: 20px;} .ml10{margin-left: 10px;} .ml20{margin-left: 20px;} .mt10{margin-top: 10px;} .mt20{margin-top: 20px;} .mr10{margin-right: 10px;} .mr20{margin-right: 20px;} .mb10{margin-bottom: 10px;} .mb20{margin-bottom: 20px;} .pl10{padding-left: 10px;} .pl20{padding-left: 20px;} .pt10{padding-top: 10px;} .pt20{padding-top: 20px;} .pr10{padding-right: 10px;} .pr20{padding-right: 20px;} .pb10{padding-bottom:10px;} .pb20{padding-bottom:20px;} .pt6{padding-top: 6px;}
+.pt7{padding-top: 7px;}
+.w240{width: 240px;display: inline-block;vertical-align: middle;}
+.w240 .form-control{border:1px solid #d4d4d4 !important;}
+
+body{background-color: #f3f3f3;}
+.b_top{border-top: 1px solid #e3e3e3;}
+.icon_1,.icon_2,.icon_3{width:26px;height: 26px;background:url('../../../img/edit_btn.png') no-repeat;vertical-align: middle;}
+.icon_1{background-position:3px 3px}/*�༭*/
+.icon_2{background-position:3px -27px}/*ɾ��*/
+.icon_3{background-position:3px -57px}/*Ԥ��*/
+.w240 .btn36{width: 36px;height: 36px;background:url('../../../img/search_36.png') no-repeat;position: relative;float: right;}
+.w240 .search_input{padding-right:38px;width:100%;}
+.w240 .search_input input{height: 36px;border-radius:2px !important;}
+
+
+.shezhi{padding:0 0 20px 0;border-bottom: 1px solid #e3e3e3;overflow: hidden;}
+.b_none{border-bottom: 0;}
+.shezhi li{margin:15px 0 0 0;overflow: hidden;}
+.shezhi li .r_con{width:400px;float:left;}
+.shezhi li .r_con2{padding-left: 150px;font-size: 14px;line-height: 22px;}
+.shezhi li .text{background: #f6f6f6;padding:0 15px;border:1px solid #b5b5b5;border-radius: 2px !important;height:22px;width:50px;display: inline-block;margin:0 3px;}
+.shezhi li .w140{width:140px;}
+.shezhi li .w400{width:400px;}
+.form_line2{height: 5px;font-size: 1px;overflow: hidden;background: #f7f7f7;margin:40px 0 20px 0;}
+.btn_box{text-align:center;padding:20px 0 40px 0;}
+.btn{width: 160px;height: 36px;color: #fff;}
+.submit{background-color: #3faad0; }
+.cancel{background-color: #a6c3cd; }
+.preview{background-color: #b1cd5c; }
+.con800{width: 800px;margin:0 auto;}

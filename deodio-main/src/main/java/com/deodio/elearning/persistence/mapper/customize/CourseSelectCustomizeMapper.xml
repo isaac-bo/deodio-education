@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.CourseSelectCustomizeMapper" >
+	<select id="findCourseSelectList" parameterType="java.util.Map" resultType="java.util.Map">
+	SELECT
+	course.id,
+	course.course_name,
+	course.course_description,
+	course.update_time,
+	att.id AS attachment_id,
+	att.attach_dir,
+	att.attach_url,
+	att.rel_id,
+	att.attach_name,
+	att.attach_ext,
+	att.attach_type,
+	att.generate_name,
+	(
+        SELECT
+            string_agg(tgs.tag_name,',')
+        FROM
+            t_tags tgs
+        WHERE
+            tgs. ID IN (
+                SELECT
+                    tgsrel.tags_id
+                FROM
+                    t_tags_items_rel tgsrel
+                WHERE
+                    tgsrel.item_id = course.ID
+                AND tgsrel.item_type = #{itemType}
+            )
+    ) tag_name,
+	userInfo.nick_name
+	FROM
+	t_course course
+	LEFT JOIN 
+	t_attachment att ON course.id = att.rel_id
+	LEFT JOIN 
+	t_user userInfo ON course.create_id = userInfo.id
+	WHERE
+	course.course_type = #{courseType}
+    <if test="accountId != null">
+        and course.account_id = #{accountId,jdbcType=VARCHAR}
+    </if>
+    <if test="classificationIdList != null">
+        and course.ID IN (
+            SELECT
+                cla.item_id
+            FROM
+                t_classification_items_rel cla
+            WHERE
+                cla.classification_id in 
+            <choose>
+                <when test="classificationIdList.length == 1">
+                    <foreach collection="classificationIdList" item="item" open="(" separator=","  close=")">
+                        #{item}
+                    </foreach>
+                    and cla.item_type = #{itemType}
+                </when>
+                <when test="classificationIdList.length != 1">
+                    <foreach collection="classificationIdList" item="item" open="(" separator=","  close=")" index="idx">
+                        #{item}
+                    </foreach>
+                    and cla.item_type = #{itemType}
+                    group by cla.item_id having count(cla.item_id) > #{idx}
+                </when>
+            </choose>    
+        )
+    </if>
+    <if test="tagIdList != null">
+        and course.ID IN (
+            SELECT
+                tag.item_id
+            FROM
+                t_tags_items_rel tag
+            WHERE
+                tag.tags_id in 
+            <choose>
+                <when test="tagIdList.length == 1">
+                    <foreach collection="tagIdList" item="item" open="(" separator=","  close=")">
+                        #{item}
+                    </foreach>
+                    and tag.item_type = #{itemType}
+                </when>
+                <when test="tagIdList.length != 1">
+                    <foreach collection="tagIdList" item="item" open="(" separator=","  close=")" index="idx">
+                        #{item}
+                    </foreach>
+                    and tag.item_type = #{itemType}
+                    group by tag.item_id having count(tag.item_id) > #{idx}
+                </when>
+            </choose>    
+            )
+    </if>
+    <where>
+        <if test="courseName != '' and courseName != null">
+            and course.course_name like concat(concat('%',#{courseName}),'%')
+        </if>
+    </where>
+	<choose>
+    	<when test="tabType != null and tabType == 'newest'">
+            ORDER BY course.update_time DESC
+    	</when>
+    	<when test="tabType != null and tabType == recommended">
+            ORDER BY 
+        </when>
+        <when test="tabType != null and tabType == hot">
+            ORDER BY 
+        </when>
+    	<otherwise>
+            ORDER BY course.create_time DESC
+    	</otherwise>
+  	</choose>
+	</select>
+</mapper>

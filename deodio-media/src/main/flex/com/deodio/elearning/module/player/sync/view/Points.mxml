@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="114" height="70" creationComplete="init()" mouseMove="onMouseMove(event)" rollOut="onRollOut()">
+	<s:states>
+		<s:State name="hideState"/>
+		<s:State name="showState"/>
+	</s:states>
+	<s:transitions>
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0.7"/>
+				</s:Parallel>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" heightFrom="0" heightTo="25"/>
+					<s:Move target="{toolbar}" yFrom="{this.height}" yTo="{this.height - 25}"/>
+				</s:Parallel>
+				
+				<!--s:Move target="{toolbar}" xFrom="996" xTo="910"/-->
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" heightFrom="25" heightTo="0" />
+					<s:Move target="{toolbar}" yFrom="{this.height - 25}" yTo="{this.height}"/>
+				</s:Parallel>
+				
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0"/>
+				</s:Parallel>
+				<!--s:Move target="{toolbar}" xFrom="996" xTo="910"/-->
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.event.PointsEvent;
+			import com.deodio.elearning.libs.utils.MediaUtils;
+			import com.deodio.elearning.service.SystemService;
+			
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			public var url:String;
+			
+			[Bindable]
+			public var isRecord:Boolean = false;
+			
+			[Bindable]
+			private var _isClick:Boolean = false;
+			
+			[Bindable]
+			public var isMicphone:Boolean = false;
+			
+			[Bindable]
+			public var isMultipleQuizs:Boolean = false;
+			
+			[Bindable]
+			private var _timer:Timer;
+			
+			[Bindable]
+			private var _systemService:SystemService;
+			
+			private function init():void{
+				this.currentState = StateEnum.HIDE_STATE;
+				this._systemService = new SystemService();
+				this._systemService.getImageServerUrl(function(event:ResultEvent){
+					var systemUri:String = event.result as String;
+					if(url&&url.length>0){
+						var loader:Loader = new Loader();
+						url = systemUri +url;
+						var urlRequest:URLRequest = new URLRequest(url);
+						loader.load(urlRequest,new LoaderContext(true));
+						loader.contentLoaderInfo.addEventListener(Event.COMPLETE,function(e:Event):void{
+							var bitmap:Bitmap=Bitmap(e.target.content);
+							var object:Object=MediaUtils.middlePosition(bitmap.width,bitmap.height,sync.parent.width - 2, sync.parent.height - 2);   
+							bitmap.x=object.x;
+							bitmap.y=object.y;
+							bitmap.width=object.width;
+							bitmap.height=object.height;
+							bitmap.smoothing = true;
+							sync.addChild(bitmap);
+						});
+					}
+				});
+				
+				this.addEventListener(MouseEvent.MOUSE_UP, onMouseUp);
+				this.addEventListener(MouseEvent.MOUSE_DOWN, onMouseDown);
+			}
+//			
+//			public function onDragEnter(event:DragEvent):void{
+//				Alert.show(this + "--------onDragEnter---------");
+//				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_DRAG_ENTER));
+//			}
+//			
+//			public function onDragComplete(event:DragEvent):void{
+//				Alert.show(this + "--------onDragComplete---------");
+//				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_DRAG_COMPLETE));
+//			}
+//			
+			public function onMouseUp(event:MouseEvent):void{
+				trace(this + "--------onMouseUp---------");
+				this._isClick = false;
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_MOUSE_UP));
+			}
+			
+			public function onMouseDown(event:MouseEvent):void{
+				trace(this + "------onMouseDown-----------");
+				this.currentState = "hideState";
+				this._isClick = true;
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_MOUSE_DOWN));
+			}
+			
+			public function onMouseMove(event:MouseEvent):void{
+				trace(this + "------onMouseMove-----------");
+				if(!this._isClick){
+					currentState = StateEnum.SHOW_STATE;
+					if(currentState == StateEnum.SHOW_STATE){
+						if(_timer){
+							_timer.stop();
+						}
+						_timer = new Timer(3000);
+						_timer.start();
+						_timer.addEventListener(TimerEvent.TIMER,function(event:TimerEvent):void{
+							currentState = StateEnum.HIDE_STATE;
+						});					
+					}
+				}
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_MOUSE_MOVE));
+			}
+			
+			public function onRollOut():void{
+				trace(this + "------onRollOut-----------");
+				this.currentState = StateEnum.HIDE_STATE;
+				if(_timer){
+					_timer.stop();
+				}
+//				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_MOUSE_UP));
+			}
+			
+			public function onDeleteHandler():void{
+				trace(this + "------onDeleteHandler-----------");
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_REMOVE_POINT));
+			}
+			
+			public function onMicHandler():void{
+				trace(this + "------onMicHandler-----------");
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_MICPHONE_POINT));
+			}
+			
+			public function onPreview():void{
+				trace(this + "------onPreview-----------");
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_PRVIEW_POINT));
+			}
+			
+			public function onPrevious():void{
+				trace(this + "------onPrevious-----------");
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_PREVIOUS_POINT));
+			}
+			
+			public function onNext():void{
+				trace(this + "------onPrevious-----------");
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_NEXT_POINT));
+			}
+			
+			
+		]]>
+	</fx:Script>
+	<s:Rect width="100%" height="100%">
+		<s:stroke> 
+			<s:SolidColorStroke color="0xffffff" weight="1"/> 
+		</s:stroke> 
+		<!--s:fill>
+			<s:SolidColor color="#FFFFFF"/>
+		</s:fill-->
+	</s:Rect>
+	
+	<mx:Image id="sync"/>
+	
+	<mx:Text id="quizName" fontFamily="yahei" fontSize="10" color="#526c8d" x="10" y="5"/>
+	<mx:Text id="quizDesc" fontFamily="yahei" fontSize="8" color="#a3a3a3" x="60" y="20" width="50"/>
+	
+	<mx:HBox id="toolbar" y.showState="{this.height - 25}" y.hideState="{this.height}" height.showState="25" height.hideState="0" width="112" x="1" backgroundAlpha="0.7" 
+			 	backgroundColor="#292929" verticalAlign="middle" horizontalAlign="right" horizontalGap="5">
+		<mx:Text id="btnDur" fontSize="12" color="#FFFFFF" visible="false" includeInLayout="false"/>
+		<s:Image id="btnPrevious" source="@Embed('/assets/common/previous.png')" buttonMode="true" visible="false" includeInLayout="false" click="onPrevious()"/>
+		<mx:Text id="btnPage" fontSize="12" color="#FFFFFF" visible="false" includeInLayout="false" text="0/0"/>
+		<s:Image id="btnNext" source="@Embed('/assets/common/next.png')" buttonMode="true" visible="false" includeInLayout="false" click="onNext()"/>
+		<s:Group id="btnGro" width="100%" height="100%" visible="false" includeInLayout="false"/>
+		<s:Image id="btnMic" source="@Embed('/assets/common/microphone.png')" buttonMode="true" visible="{isMicphone}" includeInLayout="{isMicphone}" click="onMicHandler()"/>
+		<s:Image id="btnPre" source="@Embed('/assets/common/preview.png')" buttonMode="true" visible="false" includeInLayout="false" click="onPreview()"/>
+		<s:Image id="btnRec" source="@Embed('/assets/common/record.png')" visible="{isRecord}" includeInLayout="{isRecord}" buttonMode="true"/>
+		<s:Image id="btnDel" source="@Embed('/assets/common/close.png')" buttonMode="true" click="onDeleteHandler()"/>
+		<mx:Canvas width="3" height="25"/>
+	</mx:HBox>
+	
+</s:Group>

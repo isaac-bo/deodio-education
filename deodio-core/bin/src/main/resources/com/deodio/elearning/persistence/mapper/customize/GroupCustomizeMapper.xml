@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.GroupCustomizeMapper">
+ 	
+	<select id="getGroupUserCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+			select count(*) <include refid="commonGroupUserSql"></include>
+	
+	</select>
+	
+	 <select id="getGroupUserList" parameterType="java.util.Map" resultType="java.util.Map">
+		select 	grur.id,
+				tu.user_name,
+				tu.last_name,
+				tu.first_name,
+				gr.name,
+				tu.user_mail,
+				tu.id as userid,
+				grur.create_time,
+				grur.active_status 
+				<include refid="commonGroupUserSql"></include>
+				LIMIT  #{end}  OFFSET   #{start}  
+	</select>
+	
+	<sql id="commonGroupUserSql">
+			FROM t_group_role_user_rel grur,
+			 t_user tu,
+			 t_group_role gr
+	   WHERE grur.user_id = tu.ID 
+	     and grur.group_role_id = gr.id  
+	     and grur.group_id=#{groupId} 
+	
+		<if test="tabValue==1">
+	   	  and grur.active_status=1
+		</if>
+	
+		<if test="tabValue==2">
+			<![CDATA[   
+		   and grur.active_status=0 
+		   and grur.create_time::timestamp + '15 day' <= now()
+		    ]]>
+		</if>
+	
+		<if test="ativeStatus!=null">
+		   and grur.active_status=#{ativeStatus} 
+		</if>
+		<if test="roleId!=null">
+		   and gr.id=#{roleId}  
+		</if>
+		<if test="keywords!=null">
+		   and tu.user_name like CONCAT('%','${keywords}','%' )  
+		</if>
+	</sql>
+ 
+ 
+ 	<select id="getMemberCount" parameterType="java.lang.String"  resultType="java.util.Map">
+ 
+ 		SELECT count(*)
+		  FROM t_group_role_user_rel 
+		 WHERE group_id =#{groupId} 
+
+	 UNION ALL
+
+		SELECT count(*)
+		  FROM t_group_role_user_rel 
+		 WHERE group_id =#{groupId}  AND active_status=1
+
+	  UNION ALL
+
+		SELECT count(*)
+		  FROM t_group_role_user_rel 
+		 WHERE
+ 		<![CDATA[  
+ 			   group_id =#{groupId}  
+ 		  AND  active_status=0 and create_time::timestamp + '15 day' <= now()]]>
+ 	</select>
+ 
+ 
+	<select id="getUserInfoFromGroup" parameterType="java.util.Map"  resultType="java.util.Map">
+	 	
+		 SELECT ur.id,
+				ur.group_role_id,
+				u.user_name,
+				u.last_name,
+				u.first_name,
+				u.user_mail,
+				u.create_time
+		   FROM t_group_role_user_rel AS ur ,
+				t_user AS u
+		  WHERE u.id = ur.user_id AND
+				ur.group_id = #{groupId} and u.id=#{userId}
+	 </select>
+ 
+	 <select id="findGroupList" parameterType="java.util.Map"  resultType="java.util.Map">
+
+		select T1.*,COALESCE(T2.activeCount,0) activeCount 
+		  from (
+				 SELECT t1.id,
+						t1.group_name,
+						t1.group_description,
+						t2.attach_url,
+						t2.generate_name,	
+						COUNT (t2.*) allCount,
+						t1.create_time,
+						t1.update_time
+				   FROM t_group t1  
+			  LEFT JOIN t_group_role_user_rel t3 
+					 on t1.id = t3.group_id  
+			  LEFT JOIN t_attachment t2  ON t1.id = t2.rel_id  
+			      where t1.account_id=#{accountId}  
+			        and t1.create_id = #{userId} 
+			   GROUP BY t1. ID,
+						t1.group_name,
+						t1.group_description,
+						t2.attach_url,
+						t2.generate_name,
+						t1.create_time,
+						t1.update_time
+				) T1 
+	  LEFT JOIN (
+	  			 select t1.id,
+	  			 		count(t3.*) activeCount 
+	  			   from t_group t1  
+			  LEFT JOIN t_group_role_user_rel t3  	
+			         on t1.id = t3.group_id  
+			      WHERE t3.active_status=1 
+			   group by  t1.id 
+			     ) T2 
+			  on T1.id = T2.id 
+				
+		<if test="keyword!=null">	
+			where T1.group_name like CONCAT('%','${keyword}','%' )  
+		</if>		
+	</select>
+
+</mapper>

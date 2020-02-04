@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx" 
+			   xmlns:media="com.deodio.elearning.module.player.*" creationComplete="init()" maxWidth="1000"
+			   minHeight="600">
+	 
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@namespace media "com.deodio.elearning.module.player.*";
+	
+		s|VScrollBar{
+			skinClass:ClassReference("com.deodio.elearning.libs.skins.DVScrollBarSkin");
+		}
+		
+		s|HScrollBar{
+			skinClass:ClassReference("com.deodio.elearning.libs.skins.DHScrollBarSkin");
+		}
+		
+		
+	</fx:Style>
+	<!--
+	@font-face{
+	src:url('assets/fonts/microsoftyahei.ttf');
+	font-family:yahei;
+	}
+	-->
+	<s:Group width="100%" height="150" id="topImage" visible="false" includeInLayout="false"> 
+		<s:Rect width="100%"
+				height="100%"> 
+			<s:fill> 
+				<s:BitmapFill fillMode="scale" source="@Embed(source='/assets/common/004.png')"/> 
+			</s:fill> 
+		</s:Rect> 
+	</s:Group> 
+	<s:Group width="100%" height="150" id="bottomImage" visible="false" includeInLayout="false"> 
+		<s:Rect width="100%"
+				height="100%"> 
+			<s:fill> 
+				<s:BitmapFill fillMode="scale" source="@Embed(source='/assets/common/003.png')"/> 
+			</s:fill> 
+		</s:Rect> 
+	</s:Group> 
+	<media:SyncMedia width="100%" height="100%"/>
+	
+</s:Application>

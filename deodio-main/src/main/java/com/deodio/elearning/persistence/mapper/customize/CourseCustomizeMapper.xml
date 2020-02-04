@@ -1,0 +1,1611 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper
+	namespace="com.deodio.elearning.persistence.mapper.customize.CourseCustomizeMapper">
+
+	<!-- 判断课程名称是否存在 -->
+	<select id="isExistName" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT id from t_course where course_name = #{courseName}
+		<if test="courseId != null and courseId != '' ">
+			and id != #{courseId}
+		</if>
+		<if test="courseType != null and courseType != '' ">
+			and course_type = #{courseType}
+		</if>
+	</select>
+	
+	<select id="findCourseOfflineItems" parameterType="java.util.Map" resultType="java.util.Map">
+	
+		SELECT t_course.id,
+		   t_course_model_offline.course_train_times,
+		   t_course_model_offline.course_trainee_num,
+		   t_course_offline_item.*
+      FROM t_course
+INNER JOIN t_course_model_offline 
+        ON t_course_model_offline.course_id = t_course. ID
+ LEFT JOIN t_course_offline_item
+        ON t_course_offline_item.course_id = t_course.id
+     WHERE t_course.id = #{courseId}
+  ORDER BY t_course_offline_item.item_step_no,t_course_offline_item.start_time
+  
+	</select>
+	
+	<select id="findCourseHomeworkQuiz" parameterType = "java.util.Map" resultType="java.util.Map">
+	
+<!-- 	select * from (
+
+select homework_name as item_name,
+	   id as item_id,
+	   1 as item_type
+  from t_course_homework
+ where course_id = #{courseId}
+
+union
+
+select quiz_name as item_name,
+	   quiz_id as item_id,
+	   2 as item_type
+  from t_course_quiz
+ where course_id = #{courseId}
+ UNION
+select survey_name as item_name,
+	   survey_id as item_id,
+	   3 as item_type
+  from t_course_survey 
+ where course_id =  #{courseId} ) t -->
+ SELECT
+	*
+FROM
+	(
+		SELECT
+			homework_name AS item_name,
+			t_course_homework."id" AS item_id,
+			60 AS item_type,
+			att.attach_url,
+			att.generate_name
+		FROM
+			t_course_homework
+		LEFT JOIN t_attachment att ON t_course_homework."id" = att.rel_id
+		WHERE
+			course_id = #{courseId}
+		UNION
+			SELECT
+				quiz_name AS item_name,
+				t_course_quiz.quiz_id AS item_id,
+				61 AS item_type,
+				att.attach_url,
+				att.generate_name
+			FROM
+				t_course_quiz
+			LEFT JOIN t_attachment att ON t_course_quiz."id" = att.rel_id
+			WHERE
+				course_id = #{courseId}
+			UNION
+				SELECT
+					survey_name AS item_name,
+					survey_id AS item_id,
+					62 AS item_type,
+					att.attach_url,
+					att.generate_name
+				FROM
+					t_course_survey
+				LEFT JOIN t_attachment att ON t_course_survey. ID = att.rel_id
+				WHERE
+					course_id = #{courseId}
+				UNION
+					SELECT
+						material_name AS item_name,
+						t_course_material.ID AS item_id,
+						63 AS item_type,
+						att.attach_url,
+						att.generate_name
+					FROM
+						t_course_material
+					LEFT JOIN t_attachment att ON t_course_material. ID = att.rel_id
+					WHERE
+						course_id = #{courseId}
+	) T 
+	</select>
+
+	<!-- 通过关键字查询课程信息 -->
+	<select id="findCourseDataListByKeywords" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		course.*,
+		att.ID attachment_id,
+		att.attach_dir,
+		att.attach_url,
+		att.rel_id,
+		att.attach_name,
+		att.attach_ext,
+		att.attach_type,
+		att.generate_name,
+		userInfo.nick_name
+		FROM
+		t_course course
+		LEFT JOIN
+		t_user userInfo on course.create_id = userInfo.id
+		LEFT JOIN
+		t_attachment att on course.id = att.rel_id
+		WHERE
+		1 = 1
+		<if test="courseType != null">
+			and course.course_type = #{courseType}
+		</if>
+		<if test="isPublish != null">
+			and course.is_public = #{isPublish}
+		</if>
+		<if test="isNotEdit != null">
+			and course.is_edit = #{isNotEdit}
+		</if>
+		<if test="keywords != null">
+			and course.course_name like CONCAT('%',#{keywords},'%' )
+
+		</if>
+		<!-- <if test="accountId != null"> and course. account_id = #{accountId,jdbcType=VARCHAR} 
+			</if> -->
+		order by course.create_time DESC
+	</select>
+
+	<!-- 设置course信息 - 获取详细信息（关联查询图片路径） -->
+	<select id="findCourseList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		course.*,
+		(SELECT count(*) FROM t_course_online_item tcoi WHERE tcoi.course_id =
+		course.id) quote_num,
+		(SELECT count(*) FROM t_trainee_course tc WHERE tc.item_id = course.id AND
+		tc.item_type = 1) student_num,
+		att.ID attachment_id,
+		att.attach_dir,
+		att.attach_url,
+		att.rel_id,
+		att.attach_name,
+		att.attach_ext,
+		att.attach_type,
+		att.generate_name,
+		(
+		SELECT
+		string_agg(tgs.tag_name,',')
+		FROM
+		t_tags tgs
+		WHERE
+		tgs. ID IN (
+		SELECT
+		tgsrel.tags_id
+		FROM
+		t_tags_items_rel tgsrel
+		WHERE
+		tgsrel.item_id = course.ID
+		and tgsrel.item_type = #{itemType}
+		)
+		) tag_name,
+		userInfo.nick_name
+		FROM
+		t_course course
+		LEFT JOIN t_user userInfo on course.create_id = userInfo.id
+		LEFT JOIN
+		t_attachment att on course.id = att.rel_id
+		WHERE
+		course.course_type = #{courseType}
+		AND (course.create_id = #{userId} OR course.course_owner = #{userId})
+		AND course.account_id = #{accountId, jdbcType=VARCHAR}
+		AND (att.attach_type = '5' OR att.attach_type IS NULL)
+		<if test="classificationIdList != null">
+			AND course.ID IN (
+			SELECT
+			rel.item_id
+			FROM
+			t_classification_items_rel rel
+			WHERE
+			rel.classification_id in
+			<foreach collection="classificationIdList" item="item" open="("
+				separator="," close=")">
+				#{item}
+			</foreach>
+			and rel.item_type = #{itemType}
+			)
+		</if>
+		<if test="tagIdList != null">
+			AND course.ID IN (
+			SELECT
+			tag.item_id
+			FROM
+			t_tags_items_rel tag
+			WHERE
+			tag.tags_id in
+			<foreach collection="tagIdList" item="item" open="("
+				separator="," close=")">
+				#{item}
+			</foreach>
+			and tag.item_type = #{itemType}
+			)
+		</if>
+		<if test="keyword != null and keyword != ''">
+			and course.course_name like CONCAT('%',#{keyword},'%')
+		</if>
+        AND course.group_id = #{groupId,jdbcType=VARCHAR}
+		UNION
+
+		SELECT
+		course.*,
+		(SELECT count(*) FROM t_course_online_item tcoi where tcoi.course_id =
+		course.id) quote_num,
+		(SELECT count(*) FROM t_trainee_course tc WHERE tc.item_id = course.id AND
+		tc.item_type = 1) student_num,
+		att.ID attachment_id,
+		att.attach_dir,
+		att.attach_url,
+		att.rel_id,
+		att.attach_name,
+		att.attach_ext,
+		att.attach_type,
+		att.generate_name,
+		(
+		SELECT
+		string_agg(tgs.tag_name,',')
+		FROM
+		t_tags tgs
+		WHERE
+		tgs. ID IN (
+		SELECT
+		tgsrel.tags_id
+		FROM
+		t_tags_items_rel tgsrel
+		WHERE
+		tgsrel.item_id = course.ID
+		and tgsrel.item_type = #{itemType}
+		)
+		) tag_name,
+		userInfo.nick_name
+		FROM t_course course
+		LEFT JOIN t_user userInfo ON course.create_id = userInfo.id
+		LEFT JOIN t_attachment att ON course.id = att.rel_id
+		WHERE course.course_type = #{courseType}
+		AND course.create_id != #{userId}
+		AND course.course_owner != #{userId}
+		AND course.group_id = #{groupId,jdbcType=VARCHAR}
+		AND course.account_id = #{accountId,jdbcType=VARCHAR}
+		AND course.is_publish = 1
+		AND (att.attach_type = '5' OR att.attach_type IS NULL)
+		<if test="classificationIdList != null">
+			AND course.ID IN (
+			SELECT
+			rel.item_id
+			FROM
+			t_classification_items_rel rel
+			WHERE
+			rel.classification_id in
+			<foreach collection="classificationIdList" item="item" open="("
+				separator="," close=")">
+				#{item}
+			</foreach>
+			and rel.item_type = #{itemType}
+			)
+		</if>
+		<if test="tagIdList != null">
+			and course.ID IN (
+			SELECT
+			tag.item_id
+			FROM
+			t_tags_items_rel tag
+			WHERE
+			tag.tags_id in
+			<foreach collection="tagIdList" item="item" open="("
+				separator="," close=")">
+				#{item}
+			</foreach>
+			and tag.item_type = #{itemType}
+			)
+		</if>
+		<if test="keyword != null and keyword != ''">
+			and course.course_name like CONCAT('%',#{keyword},'%')
+		</if>
+
+		order by create_time DESC
+	</select>
+
+	<!-- 发布课程 -->
+	<update id="publishCourse" parameterType="java.util.Map">
+		update
+		t_course
+		set
+		is_publish = 1
+		where
+		id = #{courseId}
+	</update>
+	<!-- 取消发布课程 -->
+	<update id="cancelPublishCourse" parameterType="java.util.Map">
+		update
+		t_course
+		set
+		is_publish = 0
+		where
+		id = #{courseId}
+	</update>
+	<!-- 查询课程作业信息 -->
+	<select id="findCourseHomeworkList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		*,
+		userInfo.nick_name
+		FROM
+		t_course_homework homework
+		LEFT JOIN
+		t_user userInfo on homework.create_id = userInfo.id
+		WHERE
+		homework.course_id = #{courseId}
+		<if test="keyword!=null">
+			and homework.homework_name like CONCAT('%',#{keyword},'%'
+			)
+		</if>
+		ORDER BY homework.homework_name,homework.create_time DESC
+	</select>
+	<!-- 查询课程作业管理信息 -->
+	<select id="findCourseHomeworkManagerList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		ttch.id,tu.user_name,ttch.create_time,ttch.attach_upload,ttch.remark
+		FROM t_trainee_course_homework ttch
+		INNER JOIN t_user tu on
+		ttch.trainee_id =tu.id
+		WHERE ttch.homework_id=#{homeworkId}
+		and ttch.course_id = #{courseId}
+		<if test="keyword!=null">
+			and tu.user_name like CONCAT('%',#{keyword},'%' )
+			or
+			ttch.attach_upload like CONCAT('%',#{keyword},'%' )
+		</if>
+		ORDER BY ttch.create_time DESC
+	</select>
+
+	<!-- 查询指定课程作业信息 -->
+	<select id="queryCourseHomeworkById" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		*,
+		att.ID attachment_id,
+		att.attach_dir,
+		att.attach_url,
+		att.rel_id,
+		att.attach_name,
+		att.attach_ext,
+		att.attach_type,
+		att.generate_name
+		FROM
+		t_course_homework homework
+		LEFT JOIN
+		t_attachment att on homework.id = att.rel_id and homework.homework_attach =
+		att.generate_name
+		WHERE
+		homework.id = #{homeworkId}
+	</select>
+
+	<update id="updateCourseHomeworkByPrimaryKey"
+		parameterType="com.deodio.elearning.persistence.model.CourseHomework">
+		update t_course_homework
+		<set>
+			<if test="courseId != null">
+				course_id = #{courseId,jdbcType=VARCHAR},
+			</if>
+			<if test="homeworkName != null">
+				homework_name = #{homeworkName,jdbcType=VARCHAR},
+			</if>
+			<if test="homeworkEndTime != null">
+				homework_end_time = #{homeworkEndTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="homeworkIsDelay != null">
+				homework_is_delay = #{homeworkIsDelay,jdbcType=SMALLINT},
+			</if>
+			<if test="homeworkAccessAuth != null">
+				homework_access_auth = #{homeworkAccessAuth,jdbcType=SMALLINT},
+			</if>
+			<if test="homeworkRequire != null">
+				homework_require = #{homeworkRequire,jdbcType=VARCHAR},
+			</if>
+			<if test="homeworkAttach != null">
+				homework_attach = #{homeworkAttach,jdbcType=VARCHAR},
+			</if>
+			<if test="homeworkIsPublish != null">
+				homework_is_publish = #{homeworkIsPublish,jdbcType=SMALLINT},
+			</if>
+			<if test="createId != null">
+				create_id = #{createId,jdbcType=VARCHAR},
+			</if>
+			<if test="updateId != null">
+				update_id = #{updateId,jdbcType=VARCHAR},
+			</if>
+			<if test="createTime != null">
+				create_time = #{createTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="updateTime != null">
+				update_time = #{updateTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="accountId != null">
+				account_id = #{accountId,jdbcType=VARCHAR},
+			</if>
+			<if test="homeworkIsPublish == 1">
+				homework_publish_time = #{homeworkPublishTime,jdbcType=TIMESTAMP},
+			</if>
+			<if test="homeworkIsPublish != 1">
+				homework_publish_time = null,
+			</if>
+		</set>
+		where id = #{id,jdbcType=VARCHAR}
+	</update>
+
+	<!-- 查询课程消息信息 -->
+	<select id="findCourseNoticeList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		*,
+		userInfo.nick_name
+		FROM
+		t_course_notice notice
+		LEFT JOIN
+		t_user userInfo on notice.create_id = userInfo.id
+		WHERE
+		notice.course_id = #{courseId}
+		<if test="keyword!=null">
+			and notice.notice_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		ORDER BY notice.notice_name,notice.create_time DESC
+	</select>
+
+	<!-- 查询指定课程作业信息 -->
+	<select id="queryCourseNoticeById" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		*
+		<!-- , userInfo.nick_name -->
+		FROM
+		t_course_notice notice
+		<!-- LEFT JOIN t_user userInfo on notice.create_id = userInfo.id -->
+		WHERE
+		notice.id = #{noticeId}
+	</select>
+
+	<!-- 查询课程附件信息 -->
+	<select id="findCourseMaterialList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		*,
+		userInfo.nick_name
+		FROM
+		t_course_material material
+		LEFT JOIN
+		t_user userInfo on material.create_id = userInfo.id
+		WHERE
+		material.course_id = #{courseId}
+		<if test="keyword!=null">
+			and material.material_name like CONCAT('%',#{keyword},'%'
+			)
+		</if>
+		ORDER BY material.material_name,material.create_time DESC
+	</select>
+
+	<!-- 查询课程测验信息 -->
+	<select id="findCourseTestQuizList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		tcoi.ID,
+		tq.quiz_name,
+		COUNT ( tqsr.ID ) AS couse_num,
+		COALESCE ( SUM ( tqs.quiz_subject_score ), 0 ) AS score,
+		( SELECT COUNT ( ID ) FROM t_trainee_exam_record WHERE course_id =
+		tcoi.course_id AND exam_id = tcoi.ID AND is_pass = 1 ) AS
+		test_pass_num,
+		( SELECT COUNT ( ID ) FROM t_trainee_exam_record WHERE course_id =
+		tcoi.course_id AND exam_id = tcoi.ID ) AS test_num
+		FROM
+		t_course_online_item tcoi
+		JOIN t_quiz tq ON tq.ID = tcoi.item_id
+		JOIN t_quiz_subject_rel tqsr ON tqsr.quiz_id = tq.
+		ID JOIN t_quiz_subject tqs ON tqs.ID = tqsr.quiz_subject_id
+		WHERE
+		tcoi.course_id = #{courseId}
+		AND tcoi.item_type = 1
+		<if test="keyword!=null">
+			and tq.quiz_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		GROUP BY tcoi.ID, tq.quiz_name, test_pass_num, test_num
+		ORDER BY
+		tcoi.create_time DESC
+
+	</select>
+	<!-- 查询课程考试信息 -->
+	<select id="findCourseQuizList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		quiz.*,
+		COUNT (rel.quiz_id) AS quiz_num,
+		COALESCE (SUM (subject.quiz_subject_score),0) AS score,
+		userInfo.nick_name,
+		(select count(*) from t_trainee_course WHERE item_id = #{courseId}
+		and account_id = #{accountId}) as course_num,
+		(SELECT COUNT(tter.id)
+		FROM t_trainee_exam_record tter LEFT JOIN t_user tu
+		ON tter.trainee_id =
+		tu.id WHERE
+		tter.course_id = #{courseId} and tter.exam_id = quiz.id
+		AND tu.user_name is not null) as exam_num,
+		(SELECT 
+			case when 
+				attach_url is null then ''
+			else 
+				attach_url 
+			end 
+		FROM t_attachment WHERE rel_id=quiz.quiz_id) as attach_url,
+		(SELECT 
+			case when 
+				generate_name is null then ''
+			else 
+				generate_name 
+			end 
+		FROM t_attachment WHERE rel_id=quiz.quiz_id) as generate_name
+		FROM
+		t_course_quiz quiz
+		LEFT JOIN
+		t_user userInfo on quiz.create_id = userInfo.id
+		LEFT JOIN
+		t_quiz_subject_rel rel ON quiz.quiz_id = rel.quiz_id
+		LEFT JOIN
+		t_quiz_subject subject ON subject. ID = rel.quiz_subject_id
+		WHERE
+		quiz.course_id = #{courseId} and quiz.account_id = #{accountId}
+		<if test="keyword!=null">
+			and quiz.quiz_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		GROUP BY
+		quiz. ID,userInfo.nick_name
+		ORDER BY quiz.create_time DESC
+
+	</select>
+	<!-- 查询已添加课程考试信息 -->
+	<select id="getCourseQuizList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		quiz.*,
+		COUNT (rel.quiz_id) AS quiz_num,
+		COALESCE (SUM (subject.quiz_subject_score),0) AS score,
+		userInfo.nick_name,
+		(select count(*) from t_trainee_course WHERE item_id = #{courseId}
+		and account_id = #{accountId}) as course_num,
+		(SELECT COUNT(tter.id)
+		FROM t_trainee_exam_record tter LEFT JOIN t_user tu
+		ON tter.trainee_id =
+		tu.id WHERE
+		tter.course_id = #{courseId} and tter.exam_id = quiz.id
+		AND tu.user_name is not null) as exam_num,
+		(SELECT 
+			case when 
+				attach_url is null then ''
+			else 
+				attach_url 
+			end 
+		FROM t_attachment WHERE rel_id=quiz.quiz_id) as attach_url,
+		(SELECT 
+			case when 
+				generate_name is null then ''
+			else 
+				generate_name 
+			end 
+		FROM t_attachment WHERE rel_id=quiz.quiz_id) as generate_name
+		FROM
+		t_course_quiz quiz
+		LEFT JOIN
+		t_user userInfo on quiz.create_id = userInfo.id
+		LEFT JOIN
+		t_quiz_subject_rel rel ON quiz.quiz_id = rel.quiz_id
+		LEFT JOIN
+		t_quiz_subject subject ON subject. ID = rel.quiz_subject_id
+		WHERE
+		quiz.course_id = #{courseId} and quiz.account_id = #{accountId}
+		<if test="keyword!=null">
+			and quiz.quiz_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		GROUP BY
+		quiz. ID,userInfo.nick_name
+		ORDER BY quiz.create_time DESC
+
+	</select>
+	<!-- 查询课程考试成绩信息 -->
+	<select id="findCourseQuizManagerList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		tter.is_pass,tter.status,tter.score,tu.user_name,tter.trainee_id
+		FROM t_trainee_exam_record tter LEFT JOIN t_user tu
+		ON tter.trainee_id =
+		tu.id WHERE
+		tter.course_id = #{courseId} and tter.exam_id = #{quizId}
+
+		<if test="is_pass !=null">
+			and tter.is_pass=#{is_pass}
+		</if>
+		<if test="status !=null">
+			and tter.status=#{status}
+		</if>
+		<if test="keyword!=null">
+			and tu.user_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		<if test="scoreWord!=null">
+			or tter.score =#{scoreWord}
+		</if>
+
+		AND tu.user_name is not null
+	</select>
+
+	<!-- 查询课程问卷调查信息 -->
+	<select id="findCourseSurveyList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select
+		survey.*,
+		userInfo.nick_name,
+		COUNT (*) AS survey_num,
+		(SELECT 
+			case when 
+				attach_url is null then ''
+			else 
+				attach_url 
+			end 
+		FROM t_attachment WHERE rel_id=survey.survey_id) as attach_url,
+		(SELECT 
+			case when 
+				generate_name is null then ''
+			else 
+				generate_name 
+			end 
+		FROM t_attachment WHERE rel_id=survey.survey_id) as generate_name
+		FROM
+		t_course_survey survey
+		LEFT JOIN
+		t_user userInfo ON userInfo. ID = survey.create_id AND survey.account_id =
+		#{accountId}
+		LEFT JOIN
+		t_survey_subject subject ON survey.survey_id = subject.survey_id
+		WHERE
+		survey.course_id = #{courseId}
+		<if test="keyword!=null">
+			and survey.survey_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		GROUP BY
+		survey.ID,nick_name
+		ORDER BY
+		survey.create_time DESC
+
+	</select>
+	<!-- 查询课程问卷调查信息 -->
+	<select id="getCourseSurveyList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select
+		survey.*,
+		userInfo.nick_name,
+		COUNT (subject.survey_id) AS survey_num,
+		(SELECT 
+			case when 
+				attach_url is null then ''
+			else 
+				attach_url 
+			end 
+		FROM t_attachment WHERE rel_id=survey.survey_id) as attach_url,
+		(SELECT 
+			case when 
+				generate_name is null then ''
+			else 
+				generate_name 
+			end 
+		FROM t_attachment WHERE rel_id=survey.survey_id) as generate_name
+		FROM
+		t_course_survey survey
+		LEFT JOIN
+		t_user userInfo ON userInfo. ID = survey.create_id AND survey.account_id =
+		#{accountId}
+		LEFT JOIN
+		t_survey_subject subject ON survey.survey_id = subject.survey_id
+		WHERE
+		survey.course_id = #{courseId}
+		<if test="keyword!=null">
+			and survey.survey_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		GROUP BY
+		survey.ID,nick_name
+		ORDER BY
+		survey.create_time DESC
+
+	</select>
+	<!-- 查询课程问卷调查结果信息 -->
+	<select id="findCourseSurveyManagerList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT tu.user_name,tter.create_time FROM t_course_survey tcs
+		INNER
+		JOIN t_trainee_exam_record tter ON tcs.id=exam_id
+		INNER JOIN t_user tu
+		on tu.id=tter.trainee_id
+		WHERE tcs.id = #{surveyId}
+		<if test="keyword!=null">
+			and tu.user_name like CONCAT('%',#{keyword},'%' )
+		</if>
+		ORDER BY
+		tter.create_time DESC
+	</select>
+
+	<!-- 查询课程关联列表 -->
+	<select id="getCourseRelatedList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		course.*,
+		related.course_related_type,
+		related.id as related_id,
+		userInfo.nick_name,
+
+		att.ID attachment_id,
+		att.attach_dir,
+		att.attach_url,
+		att.rel_id,
+		att.attach_name,
+		att.attach_ext,
+		att.attach_type,
+		att.generate_name
+		FROM
+		t_course_related related
+		INNER JOIN
+		t_course course ON course.id = related.related_course_id
+		LEFT JOIN
+		t_user userInfo ON userInfo. ID = course.create_id
+		LEFT JOIN t_attachment att
+		on course.id = att.rel_id
+		WHERE
+		related.course_id = #{courseId}
+		<if test="keywords!=null">
+			and course.course_name like CONCAT('%',#{keywords},'%' )
+		</if>
+		<if test="relatedType != null">
+			and related.course_related_type =
+			#{relatedType,jdbcType=SMALLINT}
+		</if>
+		ORDER BY
+		course.course_name,course.create_time DESC
+	</select>
+
+	<!-- 查询相关课程详细信息 -->
+	<select id="queryCourseRelatedById" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		course.*,
+		related.course_related_type,
+		related.id as related_id,
+		userInfo.nick_name
+		FROM
+		t_course_related related
+		INNER JOIN
+		t_course course ON course.id = related.related_course_id
+		LEFT JOIN
+		t_user userInfo ON userInfo. ID = course.create_id
+		WHERE
+		related.id = #{relatedId}
+	</select>
+
+	<select id="numCourseTrainee" parameterType="java.util.Map"
+		resultType="java.lang.Integer">
+		SELECT
+		COUNT(temp_info.id)
+		FROM(
+		SELECT
+		userInfo.id
+		FROM
+		t_user userInfo
+		INNER JOIN
+		t_course_user_rel user_rel on user_rel.user_mail = userInfo.user_mail
+		WHERE
+		user_rel.course_id = #{courseId}
+		<if test="userStatus != null">
+		AND user_rel.user_status=#{userStatus}
+		</if>
+		<if test="itemId != null">
+			AND user_rel.item_id = #{itemId}
+		</if>
+		GROUP BY
+		userInfo.id
+		)temp_info
+	</select>
+
+
+	<select id="numCourseTraineeUserStatus" parameterType="java.util.Map"
+		resultType="java.lang.Integer">
+		SELECT
+		COUNT(temp_info.id)
+		FROM(
+		SELECT
+		userInfo.id
+		FROM
+		t_user userInfo
+		INNER JOIN
+		t_course_user_rel user_rel on user_rel.user_mail = userInfo.user_mail
+		WHERE
+		user_rel.course_id = #{courseId}
+		<if test="itemId != null">
+			AND user_rel.item_id = #{itemId}
+		</if>
+		<if test="userStatus != null">
+			AND user_rel.user_status = #{userStatus}
+		</if>
+		GROUP BY
+		userInfo.id
+		)temp_info
+	</select>
+
+	<!-- 查询在线课程相关内容：名字等 -->
+	<select id="findOnlineCourseList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		course.course_name,
+		course.course_description,
+		course.create_id,
+		to_char(course.start_time,'yyyy-mm-dd') start_time,
+		to_char(course.expire_time,'yyyy-mm-dd') expire_time,
+		userInfo.nick_name,
+		att.attach_url,
+		att.generate_name,
+		course.is_publish,
+		(SELECT count(*) FROM t_course_online_item tcoi where tcoi.item_type = 0 and
+		tcoi.course_id = course.id) presentation,
+		(SELECT count(*) FROM t_course_online_item tcoi where tcoi.item_type = 1 and
+		tcoi.course_id = course.id) examination,
+		(SELECT count(*) FROM t_course_online_item tcoi where tcoi.item_type = 2 and
+		tcoi.course_id = course.id) questionnaire_investigation
+		FROM
+		t_course course
+		LEFT JOIN t_user userInfo on userInfo.id=course.create_id
+		LEFT join t_attachment att on att.generate_name=course.course_cover_img
+		and att.rel_id=course.id
+		WHERE
+		course.course_type = '1'
+		and course.account_id = #{accountId}
+		<if test="keywords!=null">
+			and course.course_name like CONCAT('%','${keywords}','%')
+		</if>
+	</select>
+
+	<!-- 查询线下课程相关内容：名字等 -->
+	<select id="findOfflineCourseList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		course.course_name,
+		course.course_description,
+		course.create_id,
+		to_char(course.start_time,'yyyy-mm-dd') start_time,
+		to_char(course.expire_time,'yyyy-mm-dd') expire_time,
+		userInfo.nick_name,
+		att.attach_url,
+		att.generate_name,
+		course.is_publish,
+		(SELECT count(*) FROM t_course_online_item tcoi where tcoi.item_type = 0 and
+		tcoi.course_id = course.id) presentation,
+		(SELECT count(*) FROM t_course_online_item tcoi where tcoi.item_type = 1 and
+		tcoi.course_id = course.id) examination,
+		(SELECT count(*) FROM t_course_online_item tcoi where tcoi.item_type = 2 and
+		tcoi.course_id = course.id) questionnaire_investigation
+		FROM
+		t_course course
+		LEFT JOIN t_user userInfo on userInfo.id=course.create_id
+		LEFT join t_attachment att on att.generate_name=course.course_cover_img
+		and att.rel_id=course.id
+		WHERE
+		course.course_type = '2'
+		and course.account_id = #{accountId}
+		<if test="keywords!=null">
+			and course.course_name like CONCAT('%','${keywords}','%')
+		</if>
+	</select>
+
+
+	<!-- 查询课程关联列表 -->
+	<select id="findCourseShortcutList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		DISTINCT
+		<if test='groupRole == "10002"'>
+			case when t_trainee_course.id is not null then '1' else '0' end as
+			is_select,
+		</if>
+		course."id" as course_id,	<!-- 课程编号 -->
+		course.course_name,			<!-- 课程名称 -->
+		course.cover_img,	<!-- 课程封面 -->
+		course.course_type,			<!-- 课程类型 -->
+		course.is_publish,			<!-- 课程是否发布 -->
+		groups."id" as group_id,	<!-- 小组编号 -->
+		groups.group_name,		<!-- 小组名称 -->
+		users.nick_name,		<!-- 课程创建人 -->
+		course.create_time,		<!-- 课程创建时间 -->
+		items."id" as group_course_rel_id,
+		group_role.id as group_role_id
+		FROM
+		(
+		SELECT
+		id,course_name,create_id,create_time,course_cover_img as cover_img,course_description as
+		course_desc,is_publish,course_type,account_id
+		FROM
+		t_course where account_id = #{accountId}
+		UNION
+		SELECT
+		id,package_name,create_id,create_time,package_cover_img,package_desc,is_publish,'4'
+		as course_type,account_id
+		FROM t_course_package where account_id = #{accountId}
+		)
+		course
+		INNER JOIN
+		t_group_items items on course."id" = items.item_id and
+		LTRIM(TO_CHAR(items.item_type,'9999')) LIKE '4%'
+		INNER JOIN
+		t_group groups on items.group_id = groups."id"
+		INNER JOIN
+		t_group_role_user_rel group_role_user on groups."id" =
+		group_role_user.group_id and group_role_user.active_status = 1
+		INNER JOIN
+		t_group_role group_role on group_role_user.group_role_id = group_role."id"
+		INNER
+		JOIN
+		t_user users on course.create_id = users."id"
+
+		<!-- 小组角色为学员，获取该课程是否已经被选中 -->
+		<if test='groupRole == "10002"'>
+			LEFT JOIN
+			t_trainee_course on t_trainee_course.item_id = course."id" and
+			t_trainee_course.account_id = #{accountId}
+			and t_trainee_course.trainee_id = #{userId}
+
+		</if>
+
+		WHERE
+		1 = 1
+		AND group_role.id = #{groupRole}
+		<!-- and course.account_id = #{accountId} -->
+		<!-- Group Leader -->
+		<!-- <if test="groupRole == '10000'"> </if> -->
+		<!-- Content Creator -->
+		<if test="groupRole != '10001'">
+			AND group_role_user.user_id = #{userId}
+		</if>
+		<!-- Viewer <if test="groupRole == '10002'"> AND users.id = #{userId} AND 
+			group_role.id = #{groupRole} </if> AND users.id = #{userId} AND group_role.id 
+			= #{groupRole} -->
+
+		<if test="groupId != null and groupId != ''">
+			and items.group_id = #{groupId}
+		</if>
+
+		<if test="keywords != null and keywords != ''">
+			AND (course.course_name like CONCAT('%',#{keywords},'%' )
+			OR groups.group_name like CONCAT('%',#{keywords},'%' ))
+		</if>
+		ORDER BY
+		create_time DESC,course_id
+	</select>
+
+	<!-- 查询小组课程列表 -->
+	<select id="findGroupCourseList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		t_course.*,
+		t_course.id as course_id,
+		t_group_items.id as rel_id,
+		'' as course_start,
+		case when userInfo.nick_name is null then
+		concat(userInfo.first_name,'.',userInfo.last_name)
+		else userInfo.nick_name end as nick_name,
+		CONCAT(t_attachment.attach_dir,t_attachment.generate_name) as
+		cover_img
+		FROM
+		t_group
+		INNER JOIN t_group_items
+		ON t_group."id" = t_group_items.group_id AND
+		LTRIM(TO_CHAR(t_group_items.item_type,'9999')) LIKE '4%'
+		INNER JOIN (
+		SELECT
+		id,course_name,create_id,create_time,course_cover_img as cover_img,course_description as course_desc,is_publish,course_type
+		FROM
+		t_course where account_id = #{accountId}
+		UNION
+		SELECT
+		id,package_name,create_id,create_time,package_cover_img,package_desc,is_publish,'4'
+		as course_type
+		FROM t_course_package where account_id = #{accountId}
+		) t_course
+		ON t_group_items.item_id = t_course."id"
+		<!-- AND t_course.is_publish = '1' 已发布课程，直接增加小组课程关联，此条件非必须 -->
+		LEFT JOIN
+		t_attachment on t_course.id = t_attachment.rel_id and t_course.cover_img =
+		t_attachment.generate_name
+		LEFT JOIN
+		t_user userInfo on t_course.create_id = userInfo.id
+		WHERE
+		t_group.account_id = #{accountId} AND t_group.id = #{groupId}
+		ORDER BY
+		create_time DESC,course_id
+	</select>
+	<!-- 查询小组课程已选列表 -->
+	<select id="findGroupCourseSelectList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		t_course.*,
+		t_course.id as course_id,
+		t_group_course.id as rel_id,
+		'' as course_start,
+		case when userInfo.nick_name is null then
+		concat(userInfo.first_name,'.',userInfo.last_name)
+		else userInfo.nick_name end as nick_name,
+		CONCAT(t_attachment.attach_dir,t_attachment.generate_name) as
+		cover_img
+		FROM
+		t_group
+		INNER JOIN t_group_course
+		ON t_group."id" = t_group_course.group_id AND
+		LTRIM(TO_CHAR(t_group_course.item_type,'9999')) LIKE '4%'
+		INNER JOIN (
+		SELECT
+		id,course_name,create_id,create_time,course_cover_img as cover_img,course_description as course_desc,is_publish,course_type
+		FROM
+		t_course where account_id = #{accountId}
+		<if test="courseNameKeyWord != null and courseNameKeyWord != ''">
+			AND course_name like concat('%',#{courseNameKeyWord},'%')
+		</if>	
+		<if test="courseType != null and courseType != '' or courseType==0">
+			AND course_type=#{courseType}
+		</if>	
+		UNION
+		SELECT
+		id,package_name,create_id,create_time,package_cover_img,package_desc,is_publish,'4'
+		as course_type
+		FROM t_course_package where account_id = #{accountId}
+		) t_course
+		ON t_group_course.item_id = t_course."id"
+		<!--AND t_course.is_publish = '1'  已发布课程，直接增加小组课程关联，此条件非必须 -->
+		LEFT JOIN
+		t_attachment on t_course.id = t_attachment.rel_id and t_course.cover_img =
+		t_attachment.generate_name
+		LEFT JOIN
+		t_user userInfo on t_course.create_id = userInfo.id
+		WHERE
+		t_group.account_id = #{accountId} AND t_group.id = #{groupId}
+		ORDER BY
+		create_time DESC,course_id
+	</select>
+
+	<!-- 查询小组未选择的课程列表 -->
+	<select id="findUnSelectedGroupCourseList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		WITH course as (
+		SELECT
+		id,course_name,create_id,create_time,course_cover_img as cover_img,course_description as
+		course_desc,is_publish,course_type,is_public,account_id
+		FROM
+		t_course
+		where t_course.is_edit=0
+		and t_course.is_publish=1
+		UNION
+		SELECT
+		id,package_name,create_id,create_time,package_cover_img,package_desc,is_publish,'4'
+		as course_type,'1' is_public,account_id
+		FROM
+		t_course_package
+
+		),items as(
+		SELECT
+		item_id
+		FROM
+		t_group_items
+		INNER JOIN
+		t_group ON t_group_items.group_id = t_group."id" AND t_group.account_id =
+		#{accountId} AND t_group.id = #{groupId}
+		),group_teachers as(
+		SELECT
+		user_id
+		FROM
+		t_group_role_user_rel
+		INNER JOIN
+		t_group ON t_group_role_user_rel.group_id = t_group."id" AND
+		t_group.account_id = #{accountId}
+		AND t_group.id = #{groupId} AND t_group_role_user_rel.group_role_id =
+		'10001' AND active_status = '1'
+		)
+		(SELECT course.*,
+		course.id as course_id,
+		userInfo.nick_name
+		FROM course
+		INNER JOIN items on course.id=items.item_id
+		LEFT JOIN
+		t_user userInfo on course.create_id = userInfo.id
+		WHERE NOT EXISTS(
+		SELECT item_id FROM t_group_course WHERE item_id = course.id AND group_id =
+		#{groupId}
+		)
+		<if test="keywords != null and keywords != ''">
+			AND course_name like CONCAT('%',#{keywords},'%' )
+		</if>
+		ORDER BY
+		create_time DESC,course_id)
+		UNION (SELECT course.*,
+		course.ID AS course_id,
+		userInfo.nick_name
+		FROM
+		course
+		LEFT JOIN t_group ON t_group.account_id=course.account_id AND t_group.id =#{groupId} 
+		LEFT JOIN t_user userInfo ON course.create_id = userInfo."id"
+		WHERE 
+		NOT EXISTS (
+			SELECT
+				item_id
+			FROM
+				t_group_course
+			WHERE
+				item_id = course. ID
+			AND group_id = #{groupId}
+		)
+		AND  course.is_public=0 AND course.account_id=#{accountId}
+		<if test="keywords != null and keywords != ''">
+			AND course_name like CONCAT('%',#{keywords},'%' )
+		</if>
+		ORDER BY
+		create_time DESC,
+		course_id
+		)
+	</select>
+
+
+
+	<select id="getItemsByCreator" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		SELECT
+		ID,
+		course_name AS item_name,
+		course_description AS item_desc,
+		is_public,
+		course_cover_img AS item_cover_img,
+		create_id,
+		update_id,
+		create_time,
+		update_time,
+		course_type as item_type
+		FROM
+		t_course
+		WHERE
+		account_id = #{accountId}
+		AND create_id = #{userId}
+		UNION
+		SELECT
+		ID,
+		package_name AS item_name,
+		package_infomartion AS item_desc,
+		is_publish,
+		package_cover_img AS item_cover_img,
+		create_id,
+		update_id,
+		create_time,
+		update_time,
+		4 item_type
+		FROM
+		t_course_package
+		WHERE
+		account_id = #{accountId}
+		AND create_id = #{userId}
+
+	</select>
+
+
+	<select id="getItemsChartByCreator" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+
+		select case t.item_type
+		when 1 then '在线课程'
+		when 2 then '线下课程'
+		when 3 then '直播课程'
+		when 4 then '课程包' end as name,
+		count(t.item_type) as value,
+		t.item_type from (
+		SELECT
+		ID,
+		course_name AS item_name,
+		course_description AS item_desc,
+		is_public,
+		course_cover_img AS item_cover_img,
+		create_id,
+		update_id,
+		create_time,
+		update_time,
+		course_type as item_type
+		FROM
+		t_course
+		WHERE
+		account_id = #{accountId}
+		AND create_id = #{userId}
+
+		UNION
+		SELECT
+		ID,
+		package_name AS item_name,
+		package_infomartion AS item_desc,
+		is_publish,
+		package_cover_img AS item_cover_img,
+		create_id,
+		update_id,
+		create_time,
+		update_time,
+		4 item_type
+		FROM
+		t_course_package
+		WHERE
+		account_id = #{accountId}
+		AND create_id = #{userId}
+
+
+		) t group by t.item_type
+
+	</select>
+
+
+	<select id="findCourseViewerList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		SELECT
+		tc.course_name,
+		tc.course_cover_img,
+		ttc.chapter_count,
+		ttc.chapter_finish,
+		tc.id,
+		tc.group_id,
+		tc.course_type
+		FROM
+		t_trainee_course ttc
+		LEFT JOIN t_course tc ON tc.ID = ttc.item_id
+		where ttc.trainee_id=#{userId} and ttc.account_id=#{accountId} and
+		ttc.item_type='1'
+		<!--是否付费 -->
+		<if test="isCharge != null and isCharge != '' ">
+			and ttc.is_charge=1
+		</if>
+		<!--即将过期 -->
+		<if test="deadlineTime != null and deadlineTime != '' ">
+			and (deadline_time - interval '5 day') &lt; current_date and
+			current_date &lt;= deadline_time
+		</if>
+		<!--按学习时间排序 -->
+		<if test="studyTime != null and studyTime != '' ">
+			order by ttc.study_time desc
+		</if>
+		<!--按加入时间排序 -->
+		<if test="purchaseTime != null and purchaseTime != '' ">
+			order by ttc.purchase_time desc
+		</if>
+
+	</select>
+
+
+	<!-- 查询学员指定课程信息 -->
+	<select id="queryTraineeCourseInfo" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		<!-- SELECT t_course.* ,count(t_discussion."id") as comment_num FROM t_trainee_course 
+			INNER JOIN t_course ON t_course."id" = t_trainee_course.item_id LEFT JOIN 
+			t_discussion ON t_discussion.course_id = t_course."id" WHERE t_trainee_course.trainee_id 
+			= #{userId} and t_trainee_course.account_id = #{accountId} and t_course.id 
+			= #{courseId} GROUP BY t_course."id" -->
+		<!-- 该页面变更为学员选择与否均可查看的页面 -->
+		SELECT
+		t_course.*
+		,count(t_discussion."id") as comment_num,
+		ta.attach_url,ta.generate_name
+		FROM
+		t_course
+		LEFT JOIN
+		t_discussion ON t_discussion.course_id = t_course."id"
+		LEFT JOIN
+		t_attachment ta ON ta.rel_id=t_course.id
+		WHERE
+		t_course.account_id = #{accountId} and t_course.id = #{courseId}
+		GROUP BY
+		t_course."id",ta.attach_url,ta.generate_name
+	</select>
+	<!-- 查询课程章节数 -->
+	<select id="queryCourseItemNum" parameterType="java.util.Map"
+		resultType="java.lang.Integer">
+		SELECT
+		count( distinct course_item.id)
+		FROM
+		t_course
+		INNER JOIN
+		<if test="courseType == 1">
+			t_course_online_item course_item on course_item.course_id
+			= t_course."id"
+		</if>
+		<if test="courseType == 2">
+			t_course_offline_item course_item on course_item.course_id
+			= t_course."id"
+		</if>
+		<if test="courseType == 3">
+			t_course_onlive_item course_item on course_item.course_id
+			= t_course."id"
+		</if>
+		WHERE
+		t_course.id = #{courseId}
+	</select>
+
+	<!-- 查询学员课程已完成章节数 -->
+	<select id="queryTraineeCompleteCourseItemNum" parameterType="java.util.Map"
+		resultType="java.lang.Integer">
+		SELECT
+		COUNT (DISTINCT t_trainee_course_record.course_item_id)
+		FROM
+		t_trainee_course_record
+		INNER JOIN
+		<if test="courseType==1">
+			t_course_online_item course_item
+			on t_trainee_course_record.course_id = course_item.course_id
+			AND t_trainee_course_record.course_item_id = course_item.item_id
+		</if>
+		<if test="courseType==2">
+			t_course_offline_item course_item
+			on t_trainee_course_record.course_id = course_item.course_id
+			AND t_trainee_course_record.course_item_id = course_item.id and
+			course_item.item_type = '0' <!-- 线下课程内容 -->
+		</if>
+		<if test="courseType==3">
+			t_course_onlive_item course_item
+			on t_trainee_course_record.course_id = course_item.course_id
+			AND t_trainee_course_record.course_item_id = course_item.id and
+			course_item.item_type = '0'  <!-- 直播课程内容 -->
+		</if>
+		<!-- t_course_online_item course_item on t_trainee_course_record.course_id 
+			= course_item.course_id AND t_trainee_course_record.course_item_id = course_item.item_id 
+			and course_item.item_type = '1' -->
+		WHERE
+		t_trainee_course_record.course_id = #{courseId}
+		AND
+		t_trainee_course_record.trainee_id = #{userId}
+		AND
+		t_trainee_course_record.account_id = #{accountId}
+		AND
+		t_trainee_course_record.is_pass = '1'  <!-- 完成判断条件 1：已完成 -->
+	</select>
+
+	<!-- 查询课程属相信息 -->
+	<select id="queryCourseModelInfo" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		course_model.*,
+		<if test="courseType == 1">
+			1 as has_video
+		</if>
+		<if test="courseType == 2">
+			0 as has_video
+		</if>
+		<if test="courseType == 3">
+			course_model.has_video
+		</if>
+		FROM
+		<if test="courseType == 1">
+			t_course_model_online course_model
+		</if>
+		<if test="courseType == 2">
+			t_course_model_offline course_model
+		</if>
+		<if test="courseType == 3">
+			t_course_model_onlive course_model
+		</if>
+		WHERE
+		course_model.course_id = #{courseId}
+	</select>
+
+	<!-- 查询学员课程章节信息 -->
+	<select id="queryTraineeCourseItemInfo" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		<if test="courseType==1">
+			course_item.id,
+			course_item.item_id,
+			course_item.item_type,
+			course_item.item_sort,
+			case course_item.item_type WHEN 0 THEN t_presentation.presentation_model
+			when 1 THEN 50 ELSE 51 END as item_type_detail,
+			case course_item.item_type WHEN 0 THEN t_presentation.presentation_name
+			when 1 THEN t_quiz.quiz_name ELSE t_survey.survey_name END as
+			item_name,
+			case course_item.item_type WHEN 0 THEN
+			t_trainee_course_record.percent_complete when 1 THEN
+			t_trainee_course_record.course_score ELSE
+			t_trainee_course_record.is_pass END as item_info,
+			t_trainee_course_record.is_pass,
+			course_item.is_required
+		</if>
+
+		<if test="courseType==2">
+			course_item.id,
+			course_item.id as item_id,
+			'0' as item_type,
+			course_item.item_step_no as item_sort,
+			'0' item_type_detail,
+			CONCAT('第',course_item.item_step_no,'次') as item_name,
+			t_trainee_course_record.percent_complete as item_info,
+			t_trainee_course_record.is_pass,
+			'0' as is_required
+		</if>
+
+		<if test="courseType==3">
+			course_item.id,
+			course_item.id as item_id,
+			'0' as item_type,
+			course_item.item_step_no as item_sort,
+			'0' item_type_detail,
+			course_item.item_name,
+			t_trainee_course_record.percent_complete as item_info,
+			t_trainee_course_record.is_pass,
+			'0' as is_required
+		</if>
+		FROM
+		<if test="courseType==1">
+			t_course_model_online course_model
+			INNER JOIN
+			t_course_online_item course_item on course_item.course_id =
+			course_model.course_id
+			LEFT JOIN
+			t_presentation ON t_presentation."id" = course_item.item_id
+			LEFT JOIN
+			t_quiz on t_quiz.id = course_item.item_id
+			LEFT JOIN
+			t_survey ON t_survey.id = course_item.item_id
+			LEFT JOIN
+			t_trainee_course_record on t_trainee_course_record.course_id =
+			course_model.course_id AND t_trainee_course_record.course_item_id =
+			course_item.item_id
+			AND t_trainee_course_record.trainee_id = #{userId} AND
+			t_trainee_course_record.account_id = #{accountId}
+		</if>
+		<if test="courseType==2">
+			t_course_model_offline course_model
+			INNER JOIN
+			t_course_offline_item course_item on course_item.course_id =
+			course_model.course_id and course_item.item_type = '0'
+			LEFT JOIN
+			t_trainee_course_record on t_trainee_course_record.course_id =
+			course_model.course_id AND t_trainee_course_record.course_item_id =
+			course_item.id
+			AND t_trainee_course_record.trainee_id = #{userId} AND
+			t_trainee_course_record.account_id = #{accountId}
+		</if>
+
+		<if test="courseType==3">
+			t_course_model_onlive course_model
+			INNER JOIN
+			t_course_onlive_item course_item on course_item.course_id = course_model.course_id and
+			course_item.item_type = '0'
+			<!-- LEFT JOIN t_presentation ON t_presentation."id" = course_item.id 
+				LEFT JOIN t_quiz on t_quiz.id = course_item.id LEFT JOIN t_survey ON t_survey.id 
+				= course_item.item_id -->
+			LEFT JOIN
+			t_trainee_course_record on t_trainee_course_record.course_id = course_model.course_id AND
+			t_trainee_course_record.course_item_id = course_item.id
+			AND t_trainee_course_record.trainee_id = #{userId} AND
+			t_trainee_course_record.account_id = #{accountId}
+		</if>
+		<!-- t_course_model_online course_model INNER JOIN t_course_online_item 
+			course_item on course_item.course_id = course_model.course_id LEFT JOIN t_presentation 
+			ON t_presentation."id" = course_item.item_id LEFT JOIN t_quiz on t_quiz.id 
+			= course_item.item_id LEFT JOIN t_survey ON t_survey.id = course_item.item_id 
+			LEFT JOIN t_trainee_course_record on t_trainee_course_record.course_id = 
+			course_model.course_id AND t_trainee_course_record.course_item_id = course_item.item_id 
+			AND t_trainee_course_record.trainee_id = #{userId} AND t_trainee_course_record.account_id 
+			= #{accountId} -->
+		WHERE
+		course_model.course_id = #{courseId}
+		<if test="courseType==1">
+			ORDER BY course_item.item_sort
+		</if>
+		<if test="courseType==2">
+			ORDER BY course_item.item_step_no,course_item.start_time
+		</if>
+		<if test="courseType==3">
+			ORDER BY course_item.item_step_no
+		</if>
+	</select>
+
+	<select id="findPackageCourseList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		SELECT
+		tc.package_name,
+		tc.package_cover_img,
+		ttc.chapter_count,
+		ttc.chapter_finish,
+		tc.id,
+		tc.package_desc
+		FROM
+		t_trainee_course ttc
+		INNER JOIN t_course_package tc ON tc.ID = ttc.item_id
+		where ttc.trainee_id=#{userId} and ttc.account_id=#{accountId} and
+		ttc.item_type='2'
+		<!--是否付费 -->
+		<if test="isCharge != null and isCharge != '' ">
+			and ttc.is_charge=1
+		</if>
+		<!--即将过期 -->
+		<if test="deadlineTime != null and deadlineTime != '' ">
+			and (deadline_time - interval '5 day') &lt; current_date and
+			current_date &lt;= deadline_time
+		</if>
+		<!--按学习时间排序 -->
+		<if test="studyTime != null and studyTime != '' ">
+			order by ttc.study_time desc
+		</if>
+		<!--按加入时间排序 -->
+		<if test="purchaseTime != null and purchaseTime != '' ">
+			order by ttc.purchase_time desc
+		</if>
+
+	</select>
+
+	<!-- 查询学员课程章节次序信息 -->
+	<select id="queryTraineeCourseItemSortInfo" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		MAX (item_sort) AS max_sort,
+		MIN (item_sort) AS min_sort,
+		MAX (current_sort) AS current_sort
+		FROM
+		(
+		SELECT
+		item_sort,
+		CASE WHEN item_id = #{itemId} THEN item_sort ELSE 0 END AS current_sort
+		FROM
+		t_course_online_item
+		WHERE
+		course_id = #{courseId}
+		) temp_data
+	</select>
+
+	<!-- 查询学员课程章节次序信息 -->
+	<select id="queryCourseItemOffset" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		*
+		FROM
+		t_course_online_item
+		WHERE
+		course_id = #{courseId}
+
+		<if test="isPre != null and isPre == true">
+			AND <![CDATA[item_sort < #{itemSort}]]>
+			ORDER BY
+			item_sort DESC
+		</if>
+
+		<if test="isNext != null and isNext == true">
+			AND <![CDATA[item_sort > #{itemSort}]]>
+			ORDER BY
+			item_sort asc
+		</if>
+
+		<if test="offset != null">
+			AND <![CDATA[item_sort = (#{itemSort} - #{offset} )]]>
+		</if>
+
+		LIMIT 1
+	</select>
+
+    	<!-- 查询课程作业信息 -->
+	<select id="findCourseHomeworkInfo" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		homework.*,
+		atta.attach_url,
+        atta.generate_name,
+        atta.attach_ext
+		FROM
+		t_course_homework homework
+		LEFT JOIN
+		t_attachment atta on homework."id" = atta.rel_id
+		WHERE
+		homework."id" = #{homeworkId}
+	</select>
+</mapper>

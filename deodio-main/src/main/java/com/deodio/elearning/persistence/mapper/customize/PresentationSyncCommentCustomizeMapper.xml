@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.PresentationSyncCommentCustomizeMapper">
+
+	<!-- 设置Presentation信息 - 获取详细信息（关联查询图片路径） -->
+	 <select id="getCommentList" parameterType="java.util.Map"  resultType="java.util.Map">
+		    select t_presentation_sync_comments.*,
+				   CASE WHEN 
+						t_user.nick_name IS NULL THEN concat (t_user.first_name, '.', t_user.last_name)
+					ELSE
+						t_user.nick_name
+					END AS username,
+					concat (t_attachment.attach_url,'/', t_user.user_icon) user_icon
+			  from t_presentation_sync_comments,
+			       t_user,
+				   t_attachment
+			 where t_presentation_sync_comments.presentation_id = #{presentationId,jdbcType=VARCHAR}
+			   and t_presentation_sync_comments.create_id = t_user.id
+			   and t_user.user_icon = t_attachment.generate_name
+		  order by t_presentation_sync_comments.create_time desc 
+	 </select>
+	 
+	 
+	 <select id="getCommentItemList" parameterType="java.util.Map"  resultType="java.util.Map">
+select * 
+  from (
+
+		select t_presentation_sync_comments_item.*,
+			   CASE WHEN 
+					t_user.nick_name IS NULL THEN concat (t_user.first_name, '.', t_user.last_name)
+				ELSE
+					t_user.nick_name
+				END AS username,
+				concat (t_attachment.attach_url,'/', t_user.user_icon) user_icon
+		   from t_presentation_sync_comments_item
+		inner join t_presentation_sync_comments
+		        on t_presentation_sync_comments.id = t_presentation_sync_comments_item.comment_id
+		inner join t_user
+		        on t_presentation_sync_comments.create_id = t_user.id
+		 left join t_attachment
+		        on t_user.user_icon = t_attachment.generate_name
+		      where t_presentation_sync_comments.presentation_id = #{presentationId,jdbcType=VARCHAR}
+		order by t_presentation_sync_comments_item.comment_id,  t_presentation_sync_comments_item.create_time asc
+		) t1
+ left join (
+		SELECT t_presentation_sync_comments_follow.comment_item_id,
+			   count(t_presentation_sync_comments_follow.comment_item_id) as follows_num
+          FROM  t_presentation_sync_comments_item
+	  LEFT JOIN t_presentation_sync_comments_follow 
+             ON t_presentation_sync_comments_follow.comment_item_id = t_presentation_sync_comments_item.id
+		group by t_presentation_sync_comments_follow.comment_item_id
+			) t2
+        on t2.comment_item_id = t1.id
+	 </select>
+
+	
+</mapper>

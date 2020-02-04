@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+	   xsi:schemaLocation="http://activemq.apache.org/schema/core 
+      					http://activemq.apache.org/schema/core/activemq-core-5.5.0.xsd
+      					http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-4.0.xsd
+						http://www.springframework.org/schema/jee
+						http://www.springframework.org/schema/jee/spring-jee-4.0.xsd
+						http://www.springframework.org/schema/tx
+						http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+						http://www.springframework.org/schema/jms 
+						http://www.springframework.org/schema/jms/spring-jms-4.0.xsd
+  						http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd"
+	   default-autowire="byName" default-lazy-init="true">
+	   
+	   
+	<!--aop:config proxy-target-class="true">
+		 <aop:pointcut id="pc" expression="execution(* com..service..*.*(..))" />
+		<aop:advisor pointcut-ref="pc" advice-ref="txAdvice" />
+	</aop:config>
+	
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="save*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="add*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="doAdd*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="update*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="doUpdate*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="remove*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="doRemove*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="del*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="doDel*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="copy*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="cancel*" propagation="REQUIRED" isolation="READ_COMMITTED" rollback-for="Throwable" />
+			<tx:method name="*" propagation="SUPPORTS" read-only="true" rollback-for="Throwable" />
+		</tx:attributes>
+	</tx:advice>
+	<bean id="transactionManager" class="org.springframework.transaction.jta.WebLogicJtaTransactionManager">
+		<property name="transactionManagerName" value="javax.transaction.TransactionManager" />
+	</bean--> 
+	
+	<bean id="paginationInterceptor" class="com.deodio.components.pagination.interceptor.PaginationInterceptor">
+		<property name="properties">
+			<props>
+				<prop key="dialectClass">com.deodio.components.pagination.dialect.db.PostgreSQLDialect</prop>
+				<prop key="sqlPattern">.*find.*</prop>
+			</props>
+		</property>
+	</bean>
+
+</beans>

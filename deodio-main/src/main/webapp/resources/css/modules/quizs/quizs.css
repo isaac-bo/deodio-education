@@ -1,0 +1,206 @@
+/*-----------------------------------
+Description:    quizs椤甸潰CSS
+Author:         liujian
+Date:           2016-04-20
+------------------------------------*/
+/*reset*/
+.hdn{overflow: hidden;}
+.clb{clear: both;}
+.pt7{padding-top: 7px;}
+.w240{width: 240px;display: inline-block;vertical-align: middle;}
+
+.w240 .form-control{border:1px solid #d4d4d4 !important;}
+.w180{width: 180px;}
+
+.ti_icon1,.ti_icon2,.ti_icon3,.ti_icon4,.ti_icon5,.ti_icon6,.ti_icon7{width:36px;height: 36px;background:url('../../../img/quizs/btn_icon.png') no-repeat;}
+.ti_icon2{background-position: 0 -36px;}
+.ti_icon3{background-position: 0 -72px;}
+.ti_icon4{background-position: 0 -108px;}
+.ti_icon5{background-position: 0 -144px;}
+.ti_icon6{background-position: 0 -180px;}
+.ti_icon7{background-position: 0 -216px;}
+.b_top{border-top: 1px solid #e3e3e3;}
+
+.ti{padding:10px 0 10px 30px;overflow: hidden;}
+.ti .checkbox-group, .ti .radio-group{margin-top: 8px;}
+.ti_input_w{width:558px;}
+.btn_del_18,.btn_add_18,.btn_up_18,.btn_down_18{width:18px;height:18px;background:url('../../../img/quizs/icon_btn_18.png') no-repeat;}
+.btn_add_18{background-position: 0 -18px;}
+.btn_up_18{background-position: 0 -36px;}
+.btn_down_18{background-position: 0 -54px;}
+input.h36{height: 36px;line-height: 36px;}
+.radio-group{margin-top:8px;}
+.pt8{padding-top: 8px;}
+
+/*鏂板缓棰樺簱寮瑰嚭鏍峰紡*/
+.form-inline{overflow: hidden;}
+.form-group{margin-top:10px; position: relative; width: 100%; }
+.form-group .input-title{width: 160px; height:36px; display: inline-block; line-height:36px; border-right: 2px solid #949faa; padding-right:1em;text-align: right; position: relative; vertical-align: middle; float: left;}
+.form-group .input-title .input-title-span{position: absolute; left: 25px; color: #ff0000; } 
+.l_chickbox{width:162px;display: inline-block;position: relative;float: left;}
+.c929292{color: #929292;}
+.ti_form{position: relative;padding-right:40px;}
+.ti_form .biaoqian{width:30px;height:130px;background: #f06159;color:#fff;position: absolute;right: 0;top: 0;text-align: center;padding:10px 0;cursor:pointer;}
+.ti_form .l_pic{width:200px;height:200px;border:1px dashed #cdd5d9;position: relative;float: left;background: #f3f3f3;}
+.ti_form .pic_textarea{width: 860px;display: block;border: 1px solid #cdd5d9;height: 200px;border-radius: 2px;}
+.ti_form .textarea2{width: 100%;display: block;border-color: #ccc;height:200px;}
+.hdp{width:100%;padding-top:100px;background:url('../../../img/quizs/hdp_icon.png') center top no-repeat;margin-top:40px;}
+
+.icon_1,.icon_2,.icon_3{width:26px;height: 26px;background:url('../../../img/quizs/edit_btn.png') no-repeat;vertical-align: middle;}
+.icon_1{background-position:3px 3px}/*缂栬緫*/
+.icon_2{background-position:3px -27px}/*鍒犻櫎*/
+.icon_3{background-position:3px -57px}/*棰勮*/
+.w240 .btn36{width: 36px;height: 36px;background:url('../../../img/quizs/search_36.png') no-repeat;position: relative;float: right;}
+.w240 .search_input{padding-right:38px;width:100%;}
+.w240 .search_input input{height: 36px;border-radius:2px !important;}
+
+/*缁煎悎璇曞嵎绠＄悊*/
+ul.course-list{padding-right:260px;}
+ul.course-list li{width: 100%;  padding: 20px; background: #f9f9f9; border-radius: 3px; margin-top: 20px; overflow: hidden;}
+ul.course-list li .course-title-img{width: 278px; height: 158px; border: 1px solid #d4d4d4; overflow: hidden; display: inline-block; float: left; }
+ul.course-list li .course-text{float: left; width:500px; padding: 0 20px;position: relative; }
+
+ul.course-list li .course-text title{display: block; font-size: 20px; }
+ul.course-list li .course-text p{line-height: 24px; color: #999; margin: 5px 0; font-size: 14px;}
+ul.course-list li .course-text>div {margin-top: 10px; }
+.teacher-name-color{color: #2f71b6; }
+ul.course-list li .pull-right{width: 163px; padding: 20px 0; }
+ul.course-list li .pull-right>div {margin-top: 10px; }
+ul.course-list li .pull-right h6{vertical-align: middle; line-height: 16px; margin-left: 6px; }
+ul.course-list li .pull-right button{background-color: rgba(0, 0, 0, 0); }
+
+.h3_title{border-bottom: 2px solid #e0e0e0;padding:10px 0;display: block;}
+.btn_box{text-align:center;padding:20px 0 40px 0;}
+.cancel{background-color: #a6c3cd; }
+.preview{background-color: #b1cd5c; }
+.con800{width: 900px;margin:0 auto;}
+
+
+.top_nav{margin:20px auto 0;width:100%;font-size: 0;background: #89ca38;;border-radius:2px;}
+.top_nav li{width:25%;padding-left: 50px;text-align: center;font-size: 16px;display: inline-block;height: 42px;line-height: 42px;border-right:1px solid #fff;color: #89ca38;}
+.top_nav li:last-child{border-right: 0;}
+.top_nav li.no1,.top_nav li.no2,.top_nav li.no3,.top_nav li.no4{background: url('../../../img/quizs/nav_bg.png') no-repeat;}
+.top_nav li.no1{background-position:6px -168px;}
+.top_nav li.no2{background-position:6px -210px;}
+.top_nav li.no3{background-position:6px -252px;}
+.top_nav li.no4{background-position:6px -294px;}
+.top_nav li.no1_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px 0 no-repeat;color:#fff;border-radius:2px 0 0 2px;}
+.top_nav li.no2_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -42px no-repeat;color:#fff;}
+.top_nav li.no3_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -84px no-repeat;color:#fff;}
+.top_nav li.no4_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -126px no-repeat;color:#fff;border-radius:0 2px 2px 0;}
+
+
+.top_nav6{margin:20px auto 0;width:100%;font-size: 0;background: #89ca38;border-radius:2px;}
+.top_nav6 li{width:16%;padding-left: 50px;text-align: center;font-size: 16px;display: inline-block;height: 42px;line-height: 42px;border-right:1px solid #fff;color: #89ca38;}
+.top_nav6 li:last-child{border-right: 0;}
+.top_nav6 li.no1,.top_nav6 li.no2,.top_nav6 li.no3,.top_nav6 li.no4,.top_nav6 li.no5,.top_nav6 li.no6{background: url('../../../img/quizs/nav_bg.png') no-repeat;}
+.top_nav6 li.no1{background-position:6px -168px;}
+.top_nav6 li.no2{background-position:6px -210px;}
+.top_nav6 li.no3{background-position:6px -252px;}
+.top_nav6 li.no4{background-position:6px -294px;}
+.top_nav6 li.no5{background-position:6px -336px;}
+.top_nav6 li.no6{background-position:6px -378px;}
+.top_nav6 li.no1_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px 0 no-repeat;color:#fff;border-radius:2px 0 0 2px;}
+.top_nav6 li.no2_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -42px no-repeat;color:#fff;}
+.top_nav6 li.no3_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -84px no-repeat;color:#fff;}
+.top_nav6 li.no4_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -126px no-repeat;color:#fff;}
+.top_nav6 li.no5_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -420px no-repeat;color:#fff;}
+.top_nav6 li.no6_on{background:#89ca38 url('../../../img/quizs/nav_bg.png') 6px -462px no-repeat;color:#fff;border-radius:0 2px 2px 0;}
+
+
+
+
+/*鎵嬪姩鍒涘缓璇曞嵎*/
+.ti_right{width:190px;float: right;position: relative;background: #f9fbfb;border:1px solid #e6ebf1;border-radius:3px;padding:20px 10px;}
+.ti_right .chouqu{width:168px;height:120px;position: relative;margin-bottom:20px;}
+.ti_right .chouqu span{width:28px;height: 38px;position: absolute;top: 0;right: 0;color: #fff;display: inline-block;text-align: center;}
+.ti_left{margin-right:210px;background: #f9fbfb;border:1px solid #e6ebf1;border-radius:3px;padding:20px 30px 20px 40px;}
+.ti_left .chouti{border:1px solid #cdd5d9;border-radius:0 4px 4px 4px;position: relative;}
+.ti_left .chouti .edit_title{line-height: 40px;font-size: 14px;background:#fff;display: block;border-radius:4px 4px 0 0;border-bottom: 1px solid #ccc;}
+.ti_left .chouti .edit_title span{background: #69c9ec;width: 39px;height:42px;font-size: 24px;color:#fff;text-align: center;position: absolute;left:-45px;top:-1px;border-radius:2px 0 0 2px;}
+.ti_left .chouti .edit_title .del26{width:26px;height:26px;background:url('../../../img/quizs/del26.png') no-repeat;position: absolute;right:10px;top:7px;}
+.ti_left .chouti .edit_title .form-control{border:0;padding-right:60px;}
+.ti_left .chouti .checkbox-group,.ti_left .chouti .radio-group{margin-top: 10px;}
+.ti_left .chouti .jianda{padding:0 20px 20px;}
+.ti_left .chouti .jianda textarea{width:100%;height:200px;border:1px solid #cdd5d9;border-radius:2px;}
+.ti_left .chouti .tiankong{padding:0 20px 20px;}
+.ti_left .chouti .tiankong textarea{width:100%;height:200px;border:1px solid #cdd5d9;border-radius:2px;}
+
+.ti_left .chouti .tuxing{overflow:hidden;}
+.ti_left .chouti .tuxing .l_pic{width:200px;height:200px;border:1px dashed #cdd5d9;position: relative;float: left;padding:146px 54px 20px 54px;background:#f3f3f3 url('../../../img/quizs/hdp_icon.png') center center no-repeat;}
+.ti_left .chouti .tuxing .pic_textarea{width: 860px;display: block;border: 1px solid #cdd5d9;height: 200px;border-radius: 2px;}
+.shezhi{padding:0 0 20px 150px;border-bottom: 1px solid #e3e3e3;overflow: hidden;}
+.b_none{border-bottom: 0;}
+.shezhi li{margin:15px 0 0 0;overflow: hidden;}
+.shezhi li .r_con{width:800px;float:left;}
+.shezhi li .r_con2{padding-left: 150px;font-size: 14px;line-height: 22px;}
+.shezhi li .text{background: #f6f6f6;padding:0 15px;border:1px solid #b5b5b5;border-radius: 2px !important;height:22px;width:50px;display: inline-block;margin:0 3px;}
+.shezhi li .w200{width:200px;}
+.shezhi li .w400{width:400px;}
+
+/*鑷姩鍒涘缓璇曞嵎*/
+.ti_set{overflow: hidden;}
+.ti_set .left_title{width:120px;position: relative;padding-right: 20px;}
+.ti_set .right_con{padding-left: 120px;}
+.ti_set .right_con .text{width: 100%;height: 120px;border-color:#ccc;border-radius: 2px;}
+.more{width: 34px;height: 34px;background:url('../../../img/quizs/btn_more.png') no-repeat;vertical-align: middle;}
+.show_more{background: rgba(255,255,255,0.8);}
+.w170{width: 170px;display: inline-block;}
+.fenlei_input{height: 36px;display:inline-block;}
+.fenlei_input .form-control{height: 36px;}
+
+
+/*tab*/
+.pre1_tab li{line-height: 38px;display: inline-block;font-size: 14px;background: #64bfe0;border-radius:2px 2px 0 0;}
+.pre1_tab li a{display:block;padding:0 20px;color:#fff;}
+.pre1_tab li.active{background: #f97e37;}
+.pre1_con{border:1px solid #e4e4e4;padding:40px;font-size: 14px;border-radius:2px;}
+.pre1_con .active{display: block;}
+
+
+/*寮瑰嚭灞傚強閲岄潰琛ㄦ牸*/
+.pop_up1{width: 100%;height: 100%;position: absolute;left:0;top:0;background:rgba(0, 0, 0, 0.7);}
+.pop_up1 .box1{width: 700px;height: 450px;border:1px solid #2d3234;border-radius: 4px;background: #fff;margin:200px auto 0;box-shadow:0 0 20px #27373f;}
+.pop_up1 .box1 h2{height: 50px;background: #41829a;color: #fff;font-size: 16px;line-height: 50px;text-indent:1em;display: block;border-radius: 4px 4px 0 0;}
+.pop_up1 .box1 .table_box{padding:0 30px;}
+.pop_up1 .box1 .table_box table tr td,.pop_up1 .box1 .table_box table tr th{font-size: 14px;vertical-align: middle;}
+.l_36{height: 36px;line-height: 36px;}
+
+.date_btn{width:100%;height:28px;float:right;background:url('../../../img/group/date_icon_28.png') 146px 3px no-repeat;margin:3px 3px 0 0;}
+.date_line{width:44px;height: 36px;background:url('../../../img/group/date_line.png') center center no-repeat;display: inline-block;}
+.input-title{width: 160px; height:36px; display: inline-block; line-height:36px; border-right: 2px solid #949faa; padding-left: 30px; padding-right:3em;text-align: center; position: relative; vertical-align: middle; float: left;}
+
+
+.shezhi_normal li{margin:15px 0 0 0;overflow: hidden;}
+.shezhi_normal li .r_con{width:800px;float:left;}
+.shezhi_normal li .r_con2{padding-left: 150px;font-size: 14px;line-height: 22px;}
+.shezhi_normal li .text{background: #f6f6f6;padding:0 15px;border:1px solid #b5b5b5;border-radius: 2px !important;height:22px;width:50px;display: inline-block;margin:0 3px;}
+
+.geshi1{background:#fff;border-bottom:1px solid #e5e5e5;margin:0 auto;height:185px;}
+.geshi1 .items{width: 120px;height: 120px;float: left;margin-left: 5px;margin-right: 5px;text-align:center;border: 1px solid #3faad0;padding: 10px;border-radius: 5px;cursor:pointer;}
+.geshi1 .items img{width:100px;height:100px;}
+.geshi1 .items span{margin-top:20px;}
+.geshi1 .items:hover{box-shadow: 4px 4px #eaeaea; overflow:hidden;}
+.geshi1 .items:hover span{color:#3faad0;}
+
+.geshi1 .items-span{width:120px;text-align:center;margin-left:5px;margin-right:5px;float:left;margin-top:10px;cursor:pointer;}
+
+.jj_bjq{height:38px;}
+
+.quiz_contents{overflow: hidden;padding: 20px;padding-left: 0;margin-top: 48px;}
+
+.update-bar{width:293px; height: 6px; bottom: 0; position: absolute; background-color: #dadada; overflow: hidden; }
+.update-bar .bar{width: 60%; height: 6px; background: #12aece; }
+.user-card,.certify,.up_del{height: 34px; padding: 0 15px; color: #fff; }
+.user-card{background-color: #69c9ec; }
+.user-buttons{float: left; margin-left: 5px; }
+.user-buttons span{margin-bottom: 35px; }
+.certify{background-color: #b1cd5c; }
+.icon_cancel_publish{
+	width: 64px;
+	height:64px;
+	margin:16px;
+	background-color:rgb(101,170,221);	
+	background:url('../../../img/quizs/cancel_publish_white_ffffff_32.png') no-repeat ;
+
+}

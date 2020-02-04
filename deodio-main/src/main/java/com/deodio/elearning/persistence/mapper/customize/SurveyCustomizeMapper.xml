@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.deodio.elearning.persistence.mapper.customize.SurveyCustomizeMapper">
+
+	<insert id="insertsurveySubject" parameterType="java.util.List">
+		INSERT INTO t_survey_subject
+		(id,survey_subject,create_time,create_id,survey_id,survey_subject_type,survey_subject_order)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.surveySubject},#{item.createTime},#{item.createId},
+			#{item.surveyId},
+			#{item.surveySubjectType},#{item.surveySubjectOrder})
+		</foreach>
+	</insert>
+
+
+	<insert id="insertSurveyItems" parameterType="java.util.List">
+		INSERT INTO t_survey_items
+		(id,survey_items_name,survey_items_order,create_id,create_time,survey_subject_id)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.surveyItemsName},#{item.surveyItemsOrder},#{item.createId},#{item.createTime},
+			#{item.surveySubjectId})
+		</foreach>
+	</insert>
+
+	<select id="getGroupSurvey" resultType="java.lang.String"
+		parameterType="java.lang.String">
+		SELECT t1.id from t_survey t1,t_group_survey t2 where
+		t1.id = t2.survey_id
+		and t2.group_id=#{groupid} and t2.type=1
+	</select>
+
+
+	<delete id="deleteSurveyItems" parameterType="java.lang.String">
+		DELETE FROM
+		t_survey_items WHERE survey_subject_id in (SELECT id from
+		t_survey_subject where survey_id=#{surveyId})
+
+	</delete>
+
+
+	<select id="getSurveyList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT
+		t1.survey_id,
+		t3.id as survey_subject_id,
+		t3.survey_subject,
+		t3.survey_subject_type,
+		t3.survey_subject_order,
+		string_agg(t2.survey_items_name,'#' order by t2.survey_items_order
+		ASC) as item_options
+		FROM
+		t_group_survey t1,
+		t_survey_items t2,
+		t_survey_subject t3
+		WHERE
+		t1.survey_id = t3.survey_id and t3.id =
+		t2.survey_subject_id and
+		t1.group_id=#{groupId} and t1.type=#{type}
+		GROUP BY
+		t1.survey_id,t3.id,t3.survey_subject,t3.survey_subject_type,t3.survey_subject_order
+		ORDER BY t3.survey_subject_order ASC
+
+
+	</select>
+
+
+
+	<!-- 修改之前的findSurveyList -->
+	<!-- <select id="findSurveyList" parameterType="java.util.Map" resultType="java.util.Map"> 
+		select t_survey.*, case when t_user.nick_name is null then concat(t_user.first_name,'.',t_user.last_name) 
+		else t_user.nick_name end as username, count(t_survey_subject.survey_id) 
+		as surveynum from t_survey inner join t_user on t_user.id = t_survey.create_id 
+		and t_survey.account_id = #{accountId} <if test="keywords!=null"> and t_survey.survey_name 
+		like CONCAT('%','${keywords}','%') </if> left join t_survey_subject on t_survey.id 
+		= t_survey_subject.survey_id group by t_survey.id,username ORDER BY t_survey.survey_name, 
+		t_survey.create_time DESC </select> -->
+	<!-- 加载课程管理问卷调查列表 -->
+	<select id="findCourseManagerSurveyList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT DISTINCT 
+		(SELECT tu1.nick_name as user_name
+			FROM t_user tu1 WHERE tu1.id=ts.create_id) ,
+		(SELECT COUNT(id) FROM t_survey_subject tss 
+			WHERE tss.survey_id=ts.id) as count_issue,
+		(SELECT COUNT(*) FROM t_trainee_exam_record 
+			WHERE exam_id=ts.id and exam_type=2 ) as count_person, 
+		(SELECT COUNT(id) FROM t_course_survey
+			WHERE survey_id = ts.id) as count_quote, 
+		( SELECT count(trur.id) FROM t_group_role_user_rel trur 
+			JOIN t_group tg1 on tg1.id=trur.group_id
+			WHERE tg1.account_id=#{accountId} ) as count_all_user,
+			 ts.*,
+		(SELECT 
+			case when 
+				attach_url is null then ''
+			else 
+				attach_url 
+			end 
+		FROM t_attachment WHERE rel_id=ts.id) as attach_url,
+		(SELECT 
+			case when 
+				generate_name is null then ''
+			else 
+				generate_name 
+			end 
+		FROM t_attachment WHERE rel_id=ts.id) as generate_name
+			FROM t_survey ts JOIN t_user tu ON tu.id=ts.create_id 
+			WHERE ts.account_id=#{accountId} 
+			
+			<if test="isPublish != null">
+				and  ts.is_publish=#{isPublish}
+			</if>
+			<if test="startDate != null">
+				<![CDATA[and ts.end_time>=#{startDate}]]>
+			</if>									
+		<if test="keywords!=null">
+			and ts.survey_name like
+			CONCAT('%','${keywords}','%')
+		</if>
+		order by ts.create_time DESC
+	</select>
+	<!-- 加载课程内容问卷调查列表 -->
+	<select id="findCourseSurveyList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT DISTINCT 
+		(SELECT tu1.nick_name as user_name
+			FROM t_user tu1 WHERE tu1.id=ts.create_id) ,
+		(SELECT COUNT(id) FROM t_survey_subject tss 
+			WHERE tss.survey_id=ts.id) as count_issue,
+		(SELECT COUNT(*) FROM t_trainee_exam_record 
+			WHERE exam_id=ts.id and exam_type=2 ) as count_person, 
+		(SELECT COUNT(id) FROM t_course_survey
+			WHERE survey_id = ts.id) as count_quote, 
+		( SELECT count(trur.id) FROM t_group_role_user_rel trur 
+			JOIN t_group tg1 on tg1.id=trur.group_id
+			WHERE tg1.account_id=#{accountId} ) as count_all_user,
+			 ts.*,
+		(SELECT 
+			case when 
+				attach_url is null then ''
+			else 
+				attach_url 
+			end 
+		FROM t_attachment WHERE rel_id=ts.id) as attach_url,
+		(SELECT 
+			case when 
+				generate_name is null then ''
+			else 
+				generate_name 
+			end 
+		FROM t_attachment WHERE rel_id=ts.id) as generate_name
+			FROM t_survey ts JOIN t_user tu ON tu.id=ts.create_id 
+			WHERE ts.account_id=#{accountId} 
+			
+			<if test="isPublish != null">
+				and  ts.is_publish=#{isPublish}
+			</if>
+			<if test="startDate != null">
+				<![CDATA[and ts.start_time<=#{startDate}]]>
+			</if>
+			<if test="endDate != null">
+				<![CDATA[and ts.end_time>=#{endDate}]]>
+			</if>
+			
+			<if test="list != null">
+				AND ts.id not IN 
+			 	 <foreach collection="list" index="index" item="item" open="(" separator="," close=")">
+          	 		 #{item}       
+       			 </foreach>
+			</if>
+		<if test="keywords!=null">
+			and ts.survey_name like
+			CONCAT('%','${keywords}','%')
+		</if>
+		order by ts.create_time DESC
+	</select>
+	<select id="findSurveyList" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT DISTINCT 
+			(SELECT tu1.nick_name  FROM t_user tu1
+			 	WHERE tu1.id=ts.create_id) as user_name,
+			(SELECT COUNT(id) FROM t_survey_subject tss 
+				WHERE tss.survey_id=ts.id) as count_issue,
+			(SELECT COUNT(*) FROM t_trainee_exam_record 
+				WHERE exam_id=ts.id and exam_type=2 ) as count_person, 
+			((SELECT COUNT ( ID ) FROM t_course_survey 
+				WHERE survey_id = ts.ID)
+			+
+			(SELECT COUNT ( ID ) FROM t_course_online_item 
+				WHERE item_id = ts.ID)) AS count_quote ,
+			(SELECT count(trur.id) FROM t_group_role_user_rel trur 
+				JOIN t_group tg1 on tg1.id=trur.group_id
+				WHERE tg1.account_id=#{accountId}) as count_all_user,
+			 ts.*,
+			(SELECT 
+				case when 
+					attach_url is null then ''
+				else 
+					attach_url 
+				end 
+			FROM t_attachment WHERE rel_id=ts.id) as attach_url,
+			(SELECT 
+				case when 
+					generate_name is null then ''
+				else 
+					generate_name 
+				end 
+			FROM t_attachment 
+			WHERE rel_id=ts.id) as generate_name
+		FROM t_survey ts 
+		JOIN t_user tu ON tu.id=ts.create_id 
+			WHERE ts.account_id=#{accountId} and (ts.is_publish=1 or
+			ts.create_id= #{userId} or ts.authority_user_id=#{userId})
+		<if test="keywords!=null">
+			and ts.survey_name like
+			CONCAT('%','${keywords}','%')
+		</if>
+		order by ts.create_time DESC
+	</select>
+
+	<select id="getSurveyListByAccountId" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select t_survey.*,
+		case when t_user.nick_name is null then
+		concat(t_user.first_name,'.',t_user.last_name)
+		else t_user.nick_name
+		end as username,
+		count(t_survey_subject.survey_id) as surveynum
+		from
+		t_survey
+		inner join t_user
+		on t_user.id = t_survey.create_id
+		and
+		t_survey.account_id = #{accountId}
+		and t_survey.is_publish = 1
+		left join
+		t_survey_subject
+		on t_survey.id = t_survey_subject.survey_id
+		group by
+		t_survey.id,username
+		ORDER BY t_survey.survey_name,
+		t_survey.create_time DESC
+	</select>
+
+	<select id="getSubjectAndItems" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		SELECT
+		t_survey.*, t_survey_subject. ID AS subject_id,
+		t_survey_subject.survey_subject,
+		t_survey_subject.survey_subject_order,
+		t_survey_subject.survey_subject_type,
+		t_survey_subject.survey_id,
+		string_agg (
+		t_survey_items.survey_items_name,
+		'#'
+		ORDER BY
+		t_survey_items.survey_items_order ASC
+		) AS item_options
+		FROM
+		t_survey
+		LEFT JOIN t_survey_subject ON t_survey. ID =
+		t_survey_subject.survey_id
+		LEFT JOIN t_survey_items ON
+		t_survey_subject. ID = t_survey_items.survey_subject_id
+		WHERE
+		t_survey.
+		ID = #{surveyId}
+		AND t_survey. account_id = #{accountId}
+		GROUP BY
+		t_survey. ID,
+		t_survey_subject. ID
+		ORDER BY
+		t_survey_subject.survey_subject_order
+	</select>
+	<select id="deleteItemsBySurveyId" parameterType="java.lang.String"
+		resultType="java.util.Map">
+		DELETE
+		FROM
+		t_survey_items
+		WHERE
+		t_survey_items.survey_subject_id IN (
+		SELECT
+		t_survey_subject. ID
+		FROM
+		t_survey_subject
+		WHERE
+		t_survey_subject.survey_id = #{surveyId}
+		)
+	</select>
+
+	<select id="querySubjectList" resultType="java.util.Map">
+		SELECT
+		ss.id AS id,
+		ss.survey_id,
+		ss.survey_subject_type,
+		ss.survey_subject,
+		ss.survey_subject_order,
+		string_agg (si.survey_items_name,'#' ORDER BY
+		si.survey_items_order ASC) AS
+		item_options
+		FROM t_survey_subject ss
+		LEFT
+		JOIN t_survey_items si ON
+		si.survey_subject_id = ss.id
+		LEFT JOIN
+		t_survey s ON s.id =
+		ss.survey_id
+		WHERE ss.survey_id = #{surveyId,
+		jdbcType=VARCHAR}
+		GROUP BY
+		ss.id
+		ORDER BY ss.survey_subject_order
+	</select>
+	<insert id="insertUserSurveyforGroup" parameterType="java.util.List">
+		INSERT INTO t_survey_user_items
+		(id,group_id,user_id,survey_subject_name,survey_item_name,check_flag,type,survey_item_order)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.groupId},#{item.userId},
+			#{item.surveySubjectName},
+			#{item.surveyItemName},#{item.checkFlag},#{item.type},#{item.surveyItemOrder})
+		</foreach>
+	</insert>
+	<select id="findSurveyResultListByGroupId" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT A.survey_subject_name,
+		string_agg((case when A.survey_item_name !='' then survey_item_name else 'Yes' END)
+		,'#') as survey_item_name
+		FROM
+		t_survey_user_items A
+		WHERE
+		A.group_id=#{groupId}
+		and A.user_id=#{userId}
+		and A.check_flag='1'
+		group by A.survey_subject_name
+	</select>
+	<select id="getSurveyResultCountByGroupId" parameterType="java.util.Map"
+		resultType="java.lang.Integer">
+		select count(*) from(
+		SELECT A.survey_subject_name,
+		string_agg(A.survey_item_name,'#') as survey_item_name
+		FROM
+		t_survey_user_items A
+		WHERE A.group_id=#{groupId}
+		and A.user_id=#{userId}
+		and A.check_flag=1
+		group by A.survey_subject_name)
+	</select>
+	<select id="getSurveyResultByUserId" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select
+		t.survey_subject_name survey_subject,
+		string_agg(t.survey_item_name,'#') as item_options,
+		string_agg(t.check_flag,'#') as check_flag,
+		t."type"  survey_subject_type
+		from
+		t_survey_user_items t
+		where t.user_id=#{userId}
+		and
+		t.group_id=#{groupId}
+		group by t.survey_subject_name,t."type",t.survey_item_order
+        order by t.survey_item_order asc;
+	</select>
+	 <!-- 获取问卷调查的基本信息 -->
+  <select id="getSurveyBaseInfo" parameterType="java.util.Map" resultType="java.util.Map">  
+	SELECT * FROM t_survey  WHERE id =#{surveyId,jdbcType=VARCHAR}
+  </select>
+  <!-- 获取问卷调查的引用 -->
+    <select id="findQuoteSurveyList" parameterType="java.util.Map" resultType="java.util.Map">  
+   	     SELECT
+	tcs.course_id,
+	tcs.survey_id,
+	tcs.survey_name,
+	tcs.survey_desc,
+	tcs.survey_start_time,
+	tcs.survey_end_time,
+	tcs.survey_model,
+	tc.course_name,
+	tu.nick_name,
+	tu.user_mail,
+	tc.is_public,
+	tc.course_type,
+	tc.is_publish,
+	'course_manager' AS quoted_type 
+FROM
+	t_course_survey tcs
+	JOIN t_course tc ON tcs.course_id = tc.ID
+	JOIN t_survey ts on tcs.survey_id=ts.id
+	JOIN t_user tu ON ts.create_id = tu.ID 
+WHERE
+	tcs.survey_id = #{surveyId,jdbcType=VARCHAR}
+
+UNION
+
+SELECT tcoi.course_id,
+	tcoi.item_id,
+	ts.survey_name,
+	ts.survey_desc,
+	ts.start_time,
+	ts.end_time,
+	ts.survey_model,
+	tc.course_name,
+	tu.nick_name,
+	tu.user_mail,
+	tc.is_public,
+	tc.course_type,
+	tc.is_publish,
+	'course' AS quoted_type 
+	FROM
+	t_course_online_item tcoi
+	JOIN t_course tc ON tcoi.course_id = tc.ID 
+	JOIN t_survey ts on tcoi.item_id=ts.id
+	JOIN t_user tu ON ts.create_id = tu.ID
+	WHERE
+	ts.id = #{surveyId,jdbcType=VARCHAR}
+  </select>
+  <!-- 获取相同小组的讲师 -->
+    <select id="findShareSurveyTrainee" parameterType="java.util.Map" resultType="java.util.Map">  
+<!--      		SELECT DISTINCT tuar.account_id,tu.nick_name as user_name,tu.user_mail,tu.id as user_id
+		FROM t_user tu LEFT JOIN t_user_account_rel tuar ON tuar.user_id = tu.id
+		LEFT JOIN t_group_role_user_rel tgrur ON tgrur.user_id = tu.id
+		LEFT JOIN t_group_role tgr ON tgr.id = tgrur.group_role_id
+		WHERE tgr.name = 'Content Creator' 
+		AND tuar.account_id = #{accountId, jdbcType=VARCHAR}
+		AND tu.id != #{createId, jdbcType=VARCHAR}
+		 <if test="userName != null">
+     and tu.nick_name like CONCAT('%',#{userName},'%' )    
+     </if> -->
+     	SELECT
+			tu.nick_name as user_name,
+			tu.user_mail,
+			tu.ID AS user_id 
+		FROM t_user tu
+			JOIN t_group_role_user_rel tgrur ON tgrur.user_id = tu.ID 
+		WHERE
+			tu.ID != #{userId} 
+			AND tgrur.group_id =#{groupId} 
+			AND tgrur.group_role_id = '10001' 
+			AND tgrur.active_status=1
+		<if test="userName != null">
+    		and tu.nick_name like CONCAT('%',#{userName},'%' )    
+     	</if>
+  </select>
+  <!-- 设置问卷调查的编辑权限 -->
+    <update id="setShareSurveyTrainee" parameterType="java.util.Map">  
+    UPDATE t_survey SET authority_user_id=#{userId,jdbcType=VARCHAR}
+     WHERE id =#{surveyId,jdbcType=VARCHAR}
+  </update>
+  <!-- 设置问卷调查是否正在被编辑 -->
+    <update id="setShareSurveyIsEditNow" parameterType="java.util.Map">  
+    UPDATE t_survey SET
+    authority_user_id=#{authorityUserId,jdbcType=VARCHAR},
+    authority_user_is_edit=#{authorityUserIsEdit,jdbcType=INTEGER}
+    WHERE id =#{surveyId,jdbcType=VARCHAR}
+  </update>
+  <!-- 根据问卷调查名称模糊查询 -->
+  	<select id="getAllSurveyBySurveyName"  parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select * from t_survey t
+		where survey_name like CONCAT('%',#{surveyName,jdbcType=VARCHAR},'%' )
+	</select>
+</mapper>

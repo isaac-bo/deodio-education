@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- * * Copyright 2013 deodio Licensed under the Apache License, Version 
+	2.0 (the "License"); * you may not use this file except in compliance with 
+	the License. You may obtain a copy * of the License at * * * http://www.apache.org/licenses/LICENSE-2.0 
+	* * Unless required by applicable law or agreed to in writing, software distributed 
+	under * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, * either express or implied. See the License for 
+	the specific language governing permissions * and limitations under the License. -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<groupId>com.deodio</groupId>
+		<artifactId>deodio</artifactId>
+		<relativePath>../deodio</relativePath>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>deodio-main</artifactId>
+	<packaging>war</packaging>
+	<name>deodio-main</name>
+	<url>http://maven.apache.org</url>
+
+	<!--- Environment 
+	<properties>
+		<env>dev</env>
+		<project_name>${project.artifactId}</project_name>
+		<remote_deploy_dir>/app/upload</remote_deploy_dir>
+		<log_location>${remote_deploy_dir}/${project_name}-log</log_location>
+	</properties>
+-->
+	<dependencies>
+		<!-- deodio modules begin -->
+		<dependency>
+			<groupId>com.deodio</groupId>
+			<artifactId>deodio-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.deodio</groupId>
+			<artifactId>deodio-components</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.deodio</groupId>
+			<artifactId>deodio-convert</artifactId>
+		</dependency>
+		<!-- Spring Base -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-dbcp</groupId>
+			<artifactId>commons-dbcp</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.jolbox</groupId>
+			<artifactId>bonecp</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.jolbox</groupId>
+			<artifactId>bonecp-spring</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.jolbox</groupId>
+			<artifactId>bonecp-provider</artifactId>
+		</dependency>
+
+		<!-- Web Module -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+		</dependency>
+		<!-- Servlet Module -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+		</dependency>
+		<!-- JSON begin -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-asl</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.module</groupId>
+			<artifactId>jackson-module-jaxb-annotations</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-joda</artifactId>
+		</dependency>
+		<!-- Log module -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>log4j-over-slf4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jcl-over-slf4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>jul-to-slf4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.lazyluke</groupId>
+			<artifactId>log4jdbc-remix</artifactId>
+		</dependency>
+		<!-- mybatis -->
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+		</dependency>
+		<!-- shiro -->
+		<dependency>
+			<groupId>net.sf.ehcache</groupId>
+			<artifactId>ehcache-core</artifactId>
+		</dependency>
+
+		<!-- blaze DS -->
+		<dependency>
+			<groupId>com.adobe.blazeds</groupId>
+			<artifactId>blazeds-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.adobe.blazeds</groupId>
+			<artifactId>blazeds-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.adobe.blazeds</groupId>
+			<artifactId>blazeds-remoting</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.adobe.blazeds</groupId>
+			<artifactId>blazeds-opt</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.adobe.blazeds</groupId>
+			<artifactId>blazeds-proxy</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.flex</groupId>
+			<artifactId>spring-flex-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+
+		<!-- WebService -->
+		<dependency>
+			<groupId>com.github.axet</groupId>
+			<artifactId>kaptcha</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>net.coobird</groupId>
+			<artifactId>thumbnailator</artifactId>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.github.junrar</groupId>
+		    <artifactId>junrar</artifactId>
+		</dependency>
+		
+		<!-- 阿里云 -->	
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-mts</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun.mns</groupId>
+            <artifactId>aliyun-sdk-mns</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-cdn</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>aliyun-java-sdk-sts</artifactId>
+        </dependency>
+        
+        	<dependency> 
+			    <groupId>com.aliyun</groupId> 
+			    <artifactId>aliyun-java-sdk-vod</artifactId> 
+			</dependency>
+        
+        
+	</dependencies>
+	
+<!-- <profiles>
+		<profile>
+			<id>dev</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<env>dev</env>
+			</properties>
+		</profile>
+	<profile>
+			<id>plt</id>
+			<properties>
+				<env>plt</env>
+			</properties>
+		</profile>
+		<profile>
+			<id>test</id>
+			<properties>
+				<env>test</env>
+			</properties>
+			<dependencies>
+				<dependency>
+					<groupId>xml-apis</groupId>
+					<artifactId>xml-apis</artifactId>
+					<version>1.0.b2</version>
+					<scope>provided</scope>
+				</dependency>
+			</dependencies>
+		</profile> 
+	</profiles>-->
+	<build>
+		<plugins>
+			<plugin>
+			    <groupId>org.apache.maven.plugins</groupId>
+			    <artifactId>maven-compiler-plugin</artifactId>
+			    <configuration>
+			        <source>1.8</source>
+			        <target>1.8</target>
+			        <encoding>UTF-8</encoding>
+			        <compilerArguments>
+			            <verbose />
+			            <extdirs>${project.basedir}/src/main/webapp/WEB-INF/lib</extdirs>
+			        </compilerArguments>
+			    </configuration>
+			</plugin>
+		</plugins>
+		<resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>com/deodio/elearning/persistence/mapper/*.xml</include>
+                    <include>com/deodio/elearning/persistence/mapper/customize/*.xml</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<excludes>
+					<exclude>deploy/*.properties</exclude>
+				</excludes>
+			</resource>
+		</resources>
+		<!-- <finalName>${project_name}</finalName>
+		<outputDirectory>target/classes</outputDirectory>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<configuration>
+						<excludeClassifiers>sources</excludeClassifiers>
+						<includeScope>compile</includeScope>
+						<includeScope>runtime</includeScope>
+						<excludeScope>system</excludeScope>
+						<excludeScope>provided</excludeScope>
+						<excludeScope>test</excludeScope>
+						<outputDirectory>src/main/webapp/WEB-INF/lib</outputDirectory>
+						<overWriteIfNewer>true</overWriteIfNewer>
+					</configuration>
+					<executions>
+						<execution>
+							<phase>complie</phase>
+							<goals>
+								<goal>copy-dependencies</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<executions>
+						<execution>
+							<id>copy</id>
+							<phase>process-resources</phase>
+							<goals>
+								<goal>copy</goal>
+							</goals>
+							<configuration>
+								<artifactItems>
+									<artifactItem>
+										<groupId>com.deodio</groupId>
+										<artifactId>deodio-media</artifactId>
+										<version>${deodio.version}</version>
+										<type>swf</type>
+										<overWrite>true</overWrite>
+										<outputDirectory>${project.build.directory}/${project.artifactId}-${project.version}</outputDirectory>
+										<destFileName>DeodioMedia.swf</destFileName>
+									</artifactItem>
+								</artifactItems>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement> -->
+	</build>
+</project>

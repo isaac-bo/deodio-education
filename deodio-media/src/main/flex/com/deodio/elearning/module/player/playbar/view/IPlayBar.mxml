@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="400" height="300">
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.containers.slider.DHSlider;
+			import com.deodio.elearning.libs.containers.slider.DVSlider;
+			import com.deodio.elearning.libs.event.CommonEvent;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.skins.DHSoundSliderSkin;
+			import com.deodio.elearning.libs.skins.DProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DProgressTrackSkin;
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			
+			import mx.containers.Canvas;
+			import mx.controls.Alert;
+			import mx.controls.ProgressBar;
+			import mx.controls.Text;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			public var slider:DHSlider;
+			[Bindable]
+			public var progress:ProgressBar;
+			[Bindable]
+			public var maxDuration:Text;
+			[Bindable]
+			public var currentDuration:Text;
+			
+			public function init():void{
+				this.addEventListener(CommonEvent.SYNC_PROGRESSBAR_MAXIMUM,function(event:CommonEvent):void{
+					
+					var max:Number = event.data as Number;
+					slider.maximum = max;
+					maxDuration.text = CommonUtils.formatTimes(slider.maximum)
+				});
+				
+				this.addEventListener(CommonEvent.SYNC_PROGRESSBAR_VALUE,function(event:CommonEvent):void{
+					var duration:Number = event.data as Number;
+					slider.value = duration;
+					progress.setProgress(slider.value, slider.maximum);
+					currentDuration.text = CommonUtils.formatTimes(slider.value);
+					dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PROGRESS_CHANGE, slider.value));
+				});
+			}
+			
+			public function onSetSounding(soundCanvas:Canvas):void{
+//				component.visible = !component.visible;
+				this._model.isSettingSound = soundCanvas.visible = soundCanvas.includeInLayout = !soundCanvas.visible;
+			}
+			
+			public function onSoundProgressChange(soundSlider:DHSlider,soundProgress:ProgressBar):void{
+				_model.sound = soundSlider.value;
+				soundProgress.setProgress(soundSlider.value,soundSlider.maximum);
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_VOLUMN));
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_VOLUMN_CHANGE));
+			}
+			
+			public function onProgressChange(slider:DHSlider,progress:ProgressBar):void{
+				progress.setProgress(slider.value, slider.maximum);
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PROGRESS_CHANGE, slider.value));
+			}
+			
+			public function onProgressClick(slider:DHSlider,progress:ProgressBar):void{
+				trace("-------onProgressClick----------");
+				progress.setProgress(slider.value, slider.maximum);
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PROGRESS_CLICK, slider.value));
+			}
+			
+			public function onProgressThumbPress(slider:DHSlider):void{
+				trace("------onProgressThumbPress-----------");
+				var param:Object = new Object();
+				param.isPlayBar = true;
+				param.value = slider.value;
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PROGRESS_PRESS, param));
+			}
+
+			public function onProgressThumbRelease(slider:DHSlider):void{
+				trace("--------onProgressThumbRelease---------");
+				var param:Object = new Object();
+				param.isPlayBar = true;
+				param.value = slider.value;
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PROGRESS_RELEASE, param));
+			}
+			
+		]]>
+	</fx:Script>
+	
+</s:Group>

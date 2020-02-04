@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view:Points xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			 xmlns:s="library://ns.adobe.com/flex/spark" 
+			 xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:view="com.deodio.elearning.module.player.sync.view.*" width="400" height="300" creationComplete="init()">
+	<fx:Script>
+		<![CDATA[
+			
+			private function init():void{
+				this.toolbar.visible = this.toolbar.includeInLayout = false;
+			}
+		]]>
+	</fx:Script>
+</view:Points>

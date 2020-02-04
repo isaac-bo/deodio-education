@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			 xmlns:s="library://ns.adobe.com/flex/spark" 
+			 minHeight="6" >
+		<fx:Script>
+		
+		override protected function initializationComplete():void{
+			useChromeColor = true;
+			super.initializationComplete();
+		}
+	</fx:Script>
+	
+	<!-- layer 3: fill -->
+	<s:Rect left="0" right="0" top="0" bottom="0" 
+			topLeftRadiusX="0" topLeftRadiusY="0" topRightRadiusX="0" topRightRadiusY="0"
+			bottomLeftRadiusX="0" bottomLeftRadiusY="0" bottomRightRadiusX="0" bottomRightRadiusY="0">
+		<s:fill>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="0xa3a3a3" 
+								 alpha="1" />
+				<s:GradientEntry color="0xa3a3a3" 
+								 alpha="1" />
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	
+	<!-- layer 4: inner shadow -->
+	<s:Rect left="0" top="0" bottom="0" width="0" >
+		<s:fill>
+			<s:SolidColor color="0xa3a3a3" alpha="0.12" />
+		</s:fill>
+	</s:Rect>
+	<s:Rect right="0" top="0" bottom="0" width="0" >
+		<s:fill>
+			<s:SolidColor color="0xa3a3a3" alpha="0.12" />
+		</s:fill>
+	</s:Rect>
+	<s:Rect left="0" top="0" right="0" height="0" >
+		<s:fill>
+			<s:SolidColor color="0xa3a3a3" alpha="0.12" />
+		</s:fill>
+	</s:Rect>
+</s:SparkSkin>

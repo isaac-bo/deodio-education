@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.CourseModelOfflineCustomizeMapper">
+
+  <!-- 插入线下课程内容 -->
+  <insert id="insertCourseOfflineItemBatch" parameterType="java.util.List">
+     insert into t_course_offline_item (id, course_id, item_step_no, 
+      start_time, expire_time, item_train_location, 
+      item_train_name, item_trainers, account_id, 
+      create_id, create_time, update_id, 
+      update_time,item_type,trainee_join_num)
+    values 
+    <foreach collection="list" item="item"  separator="," >
+      (#{item.id,jdbcType=VARCHAR}, #{item.courseId,jdbcType=VARCHAR}, #{item.itemStepNo,jdbcType=INTEGER}, 
+      #{item.startTime,jdbcType=TIMESTAMP}, #{item.expireTime,jdbcType=TIMESTAMP}, #{item.itemTrainLocation,jdbcType=VARCHAR}, 
+      #{item.itemTrainName,jdbcType=VARCHAR}, #{item.itemTrainers,jdbcType=VARCHAR}, #{item.accountId,jdbcType=VARCHAR}, 
+      #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateId,jdbcType=VARCHAR}, 
+      #{item.updateTime,jdbcType=TIMESTAMP}, #{item.itemType,jdbcType=SMALLINT},#{item.traineeJoinNum,jdbcType=SMALLINT})
+    </foreach> 
+  </insert>
+  
+  <delete id="delCourseOfflineItemBatch" parameterType="java.util.List">  
+    DELETE FROM t_course_offline_item WHERE id IN  
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">   
+        #{item.id}   
+    </foreach>  
+  </delete>  
+  
+  <update id="updateCourseOfflineItemBatch"  parameterType="java.util.List">
+	   <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+		  update t_course_offline_item
+		    <set >
+		      <if test="item.courseId != null" >
+		        course_id = #{item.courseId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.itemStepNo != null" >
+		        item_step_no = #{item.itemStepNo,jdbcType=INTEGER},
+		      </if>
+		      <if test="item.startTime != null" >
+		        start_time = #{item.startTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.expireTime != null" >
+		        expire_time = #{item.expireTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.itemTrainLocation != null" >
+		        item_train_location = #{item.itemTrainLocation,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.itemTrainName != null" >
+		        item_train_name = #{item.itemTrainName,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.itemTrainers != null" >
+		        item_trainers = #{item.itemTrainers,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.accountId != null" >
+		        account_id = #{item.accountId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createId != null" >
+		        create_id = #{item.createId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createTime != null" >
+		        create_time = #{item.createTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.updateId != null" >
+		        update_id = #{item.updateId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.updateTime != null" >
+		        update_time = #{item.updateTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.itemType != null" >
+		        item_type = #{item.itemType,jdbcType=SMALLINT},
+		      </if>
+		      <if test="item.traineeJoinNum != null" >
+		        trainee_join_num = #{item.traineeJoinNum,jdbcType=SMALLINT},
+		      </if>
+		    </set>
+		    where id = #{item.id,jdbcType=VARCHAR}
+  		</foreach>
+  </update>
+  
+  
+  <!-- 通过课程编号获取线下课程信息 -->
+  <select id="queryCourseOfflineInfo" parameterType="java.util.Map" resultType="java.util.Map" >
+  	SELECT
+		course.*,	
+		offline.*,
+		att.ID attachment_id,
+		att.attach_dir,
+		att.attach_url,
+		att.rel_id,
+		att.attach_name,
+		att.attach_ext,
+		att.attach_type,
+		att.generate_name,
+		userInfo.nick_name
+		FROM t_course course
+		INNER JOIN t_course_model_offline offline on offline.course_id=#{courseId}
+		LEFT JOIN t_user userInfo ON course.create_id = userInfo.id
+		LEFT JOIN t_attachment att ON course.id = att.rel_id
+		WHERE course.course_type =2
+        and course.id = #{courseId}
+  </select>
+  
+  <!-- 通过课程编号获取线下课程信息 -->
+  <select id="queryCourseOfflineProfile" parameterType="java.util.Map" resultType="java.util.Map" >
+  	SELECT
+		course. ID AS ID,
+		course.*, offline. ID AS course_offline_id,
+		offline.*, 
+        att. ID attachment_id,
+		att.attach_dir,
+		att.attach_url,
+		att.rel_id,
+		att.attach_name,
+		att.attach_ext,
+		att.attach_type,
+		att.generate_name
+		FROM t_course course
+		LEFT JOIN t_course_model_offline offline ON course."id" = offline.course_id
+		LEFT JOIN t_attachment att ON course.id = att.rel_id  and att.attach_type='5'
+		WHERE course.course_type =2
+			and course.id = #{courseId}
+  </select>
+  
+  <!-- 通过课程编号获取线下课程内容信息 -->
+  <select id="queryCourseOfflineItem" parameterType="java.util.Map" resultType="java.util.Map" >
+  		
+  		select t.*,t_locations.location_name from (
+  		
+  		SELECT
+			offline_item.*
+			
+		<if test="itemType == 1 or itemType == 2">
+			,COUNT(user_rel.user_mail) trainee_num
+		</if>
+		
+		FROM
+			t_course_offline_item  offline_item
+		<if test="itemType == 1 or itemType == 2">
+		LEFT JOIN
+			t_course_user_rel user_rel on offline_item."id" = user_rel.item_id AND offline_item.course_id = user_rel.course_id
+		</if>
+		WHERE
+			1 = 1
+  		<if test="courseId != null">
+  		and	offline_item.course_id = #{courseId}
+  		</if>
+  		<if test="accountId != null">
+  		 and offline_item.account_id = #{accountId}
+  		 </if> 
+  		 <if test="stepNo != null">
+  		 and offline_item.item_step_no = #{stepNo}
+  		 </if>
+  		 <if test="itemType != null and itemType != 2">
+  		 and offline_item.item_type = #{itemType}
+  		 </if>
+  		 <if test="itemType == 1 or itemType == 2">
+  		 GROUP BY 
+  		 	offline_item."id"
+  		 </if>
+  		 ORDER BY 
+  		 	offline_item.start_time,offline_item.expire_time
+  		 	
+  		 ) t left join t_locations on t_locations.id = t.item_train_location
+  </select> 
+  
+  <!-- 查询课程培训人员 -->
+	 <select id="findCourseOfflineTrainees" parameterType="java.util.Map"  resultType="java.util.Map">
+	 	SELECT  
+			user_rel."id" as rel_id,
+			userInfo.id as user_id ,
+			userInfo.user_name,
+			userInfo.first_name,
+			userInfo.last_name,
+			userInfo.nick_name,
+			userInfo.user_mail,
+			user_rel.user_status,
+			user_rel.join_time,
+			user_rel.class_status,
+			offline_item.course_id,
+			offline_item.id as item_id,
+			user_rel.registe_type
+		FROM
+			t_course_offline_item offline_item
+		INNER JOIN
+			t_course_user_rel  user_rel  ON offline_item."id" = user_rel.item_id and offline_item.course_id = user_rel.course_id
+		INNER JOIN
+			t_user  userInfo on user_rel.user_mail = userInfo.user_mail 
+		WHERE 
+			<!-- offline_item.course_item_type = '0' and --> 
+			offline_item.course_id = #{courseId}
+		<if test="keywords!=null">
+			and (userInfo.first_name like CONCAT('%',#{keywords},'%' ) or userInfo.last_name like CONCAT('%',#{keywords},'%' ))
+		</if>
+		<if test="traineeStatus!=null">
+			and user_rel.user_status = #{traineeStatus,jdbcType=SMALLINT} 
+		</if>
+		<if test="registeType!=null">
+			and user_rel.registe_type = #{registeType,jdbcType=SMALLINT} 
+		</if>
+		<if test="joinTime!=null">
+		<if test="joinTime==0">
+		    and (user_rel.user_status!=0 or
+			<![CDATA[   
+		   user_rel.user_status=0 
+		   and offline_item.start_time::timestamp  > now()
+		    ]]>)
+		</if>
+		<if test="joinTime==1">
+			<![CDATA[   
+		   and user_rel.user_status=0 
+		   and offline_item.start_time::timestamp  < now()
+		    ]]>
+		</if>
+		<if test="joinTime==2">  
+		    and user_rel.class_status=2
+		</if>
+		</if>
+			and offline_item.item_step_no = #{stepNo}
+		ORDER BY 
+			userInfo.id,user_rel.join_time DESC
+	 </select>
+      <select id="getCourseTrainLocation" parameterType="java.util.Map"
+		resultType="String">
+        SELECT
+		string_agg (DISTINCT(c."name"), '、') AS locationName
+		FROM
+		t_course_offline_item A,
+		t_locations b,
+        t_dic_city c
+		WHERE
+		A .item_train_location =
+		b."id"
+		AND b.city_id=c.city_id
+		AND A.course_id = #{courseId}
+		GROUP BY
+		A .course_id
+	</select>
+	<select id="getCourseTrainTime" parameterType="java.util.Map" resultType="java.util.Map" >
+		SELECT
+		A.start_time,A.expire_time
+		FROM
+		t_course_offline_item A
+		where A.course_id = #{courseId}
+		order by A.id desc
+		limit 1
+	</select>
+	<select id="getCourseOfflineItemCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+	   select count(*) 
+	   from  t_course_offline_item  t 
+	   where t.course_id=#{courseId}
+	   and t.item_type=0
+	</select>
+	<select id="queryCourseOfflineContentTraineeSum" parameterType="java.util.Map" resultType="java.lang.Integer">
+	   select COALESCE(sum(t.trainee_join_num),0) as sumTrainee from t_course_offline_item t 
+	   where  t.item_type=0
+	   and t.item_step_no !=#{stepNo}
+	   and t.course_id=#{courseId}
+	</select>
+</mapper>

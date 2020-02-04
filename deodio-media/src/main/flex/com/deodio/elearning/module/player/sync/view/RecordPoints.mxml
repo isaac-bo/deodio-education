@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view:Points xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			 xmlns:s="library://ns.adobe.com/flex/spark" 
+			 xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:view="com.deodio.elearning.module.player.sync.view.*" width="400" height="300" creationComplete="init()">
+	<fx:Script>
+		<![CDATA[
+			
+			import com.deodio.elearning.libs.event.PointsEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			
+			import mx.controls.Alert;
+			
+			[Bindable]
+			public var duration:Number = 0;
+			
+			[Bindable]
+			[Embed(source="/assets/player/record_background.png")]
+			private var recordImage:Class;
+			
+			private function init():void{
+				this.currentState = "hideState";
+//				this.toolbar.visible = this.toolbar.includeInLayout = false;
+//				this.sync.source = recordImage;
+				this.toolbar.width=155;
+				this.toolbar.x = 0;
+				this.btnMic.visible = this.btnMic.includeInLayout = false;
+				this.btnRec.visible = this.btnRec.includeInLayout = true;
+				this.btnDur.visible = this.btnDur.includeInLayout = true;
+				this.btnGro.visible = this.btnGro.includeInLayout = true;
+				this.btnDur.text = CommonUtils.formatTimes(duration);
+				this.sync.source = recordImage;
+//				this.sync.visible = this.sync.includeInLayout = false;
+				
+				this.btnRec.addEventListener(MouseEvent.CLICK,onPlayRecordHandler);
+			}
+			
+			override public function onDeleteHandler():void{
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_REMOVE_POINT, this));
+			}
+			
+			public function onPlayRecordHandler(event:MouseEvent):void{
+				this.dispatchEvent(new RecordEvent(RecordEvent.RECORD_PLAY,this));
+			}
+		]]>
+	</fx:Script>
+	
+	
+</view:Points>

@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.deodio.elearning.persistence.mapper.customize.ClassificationCustomizeMapper">
+	<select id="getCTree" parameterType="java.util.Map" resultType="java.util.Map">
+	
+	SELECT
+			*
+		FROM
+			(
+				SELECT
+					T .classification_name AS NAME,
+					t1. COUNT,
+					T . ID AS ID,
+					'True' AS isParent
+				FROM
+					(
+						WITH RECURSIVE cte AS (
+							SELECT <!-- 用户选定系统顶级类 -->
+								t_classification. ID,
+								t_classification.classification_name,
+								t_classification.classification_parent_id
+							FROM
+								t_classification,
+								t_account_classification_rel
+							WHERE
+								t_classification. ID = t_account_classification_rel.classification_id
+							AND 
+								t_account_classification_rel.account_id = #{accountId}
+							UNION <!-- 系统默认顶级类 -->
+								SELECT
+									t_classification. ID,
+									t_classification.classification_name,
+									t_classification.classification_parent_id
+								FROM
+									t_classification
+								WHERE
+									is_default = '1'  
+							UNION 
+								SELECT  <!-- 自定义顶级类 -->
+									t_classification. ID,
+									t_classification.classification_name,
+									t_classification.classification_parent_id
+								FROM
+									t_classification
+								WHERE
+									classification_parent_id = '0' and   account_id = #{accountId}
+							UNION <!-- 顶级类子类 -->
+								SELECT
+									t_classification. ID,
+									t_classification.classification_name,
+									t_classification.classification_parent_id
+								FROM
+									t_classification
+								INNER JOIN cte C ON C . ID = t_classification.classification_parent_id  
+									and (t_classification.create_id = '1' or t_classification.account_id = #{accountId})
+						) SELECT
+							ID,
+							classification_name,
+							classification_parent_id
+						FROM
+							cte
+					) T
+				LEFT JOIN (
+					SELECT
+						tc2.classification_parent_id,
+						COUNT (1) AS COUNT
+					FROM
+						t_classification tc1
+					LEFT JOIN t_classification tc2 ON tc1. ID = tc2.classification_parent_id
+					AND tc1.account_id = #{accountId}
+					GROUP BY
+						tc2.classification_parent_id
+				) t1 ON t1.classification_parent_id = T . ID
+				WHERE
+					T .classification_parent_id = #{classificationId}
+		
+		
+				UNION
+		
+					SELECT
+						t_quiz_banks.quiz_bank_name AS NAME,
+						0 AS COUNT,
+						t_quiz_banks. ID AS ID,
+						'False' AS isParent
+					FROM
+						t_quiz_banks
+					WHERE
+					   t_quiz_banks.is_private = 1
+					   AND t_quiz_banks.create_id = #{userId}
+					<if test = "classificationId != '1000008'" >
+					AND	t_quiz_banks.classification_id = #{classificationId}
+					AND t_quiz_banks.account_id = #{accountId}
+					</if >
+					<if test = "classificationId == '1000008'" >
+					AND	t_quiz_banks.classification_id = '1000008'
+					AND t_quiz_banks.account_id = '1'
+					</if >
+					
+				UNION
+				
+				    SELECT
+                        t_quiz_banks.quiz_bank_name AS NAME,
+                        0 AS COUNT,
+                        t_quiz_banks. ID AS ID,
+                        'False' AS isParent
+                    FROM
+                        t_quiz_banks
+                    WHERE
+                        t_quiz_banks.is_private = 0
+                    <if test = "classificationId != '1000008'" >
+                     AND  t_quiz_banks.classification_id = #{classificationId}
+                    AND t_quiz_banks.account_id = #{accountId}
+                    </if >
+                    <if test = "classificationId == '1000008'" >
+                     AND  t_quiz_banks.classification_id = '1000008'
+                    AND t_quiz_banks.account_id = '1'
+                    </if >
+                    
+			) t order by id,isParent desc
+	
+	
+	</select>
+
+	<!-- 根据关键字查询所有根节点 -->
+	<select id="getLeftCtreeByLevel" parameterType="java.util.Map" resultType="java.util.Map">
+	
+			WITH RECURSIVE cte AS (
+							SELECT <!-- 查询用户定制的系统顶级类 -->
+								t_classification. ID,
+								t_classification.classification_name,
+								t_classification.classification_parent_id
+							FROM
+								t_classification,
+								t_account_classification_rel
+							WHERE
+								t_classification. ID = t_account_classification_rel.classification_id
+							AND 
+								t_account_classification_rel.account_id = #{accountId}
+							UNION 
+								SELECT  <!-- 自定义顶级类 -->
+									t_classification. ID,
+									t_classification.classification_name,
+									t_classification.classification_parent_id
+								FROM
+									t_classification
+								WHERE
+									classification_parent_id = '0' and   account_id = #{accountId}
+							UNION
+								SELECT <!-- 递归查询顶级类子类 -->
+									t_classification. ID,
+									t_classification.classification_name,
+									t_classification.classification_parent_id
+								FROM
+									t_classification
+								INNER JOIN cte C ON C . ID = t_classification.classification_parent_id 
+										and (t_classification.create_id = '1' or t_classification.account_id = #{accountId})
+						)
+	
+			SELECT 
+				cteout.classification_name AS NAME,
+				cteout.classification_parent_id AS pid,
+				t1. COUNT,
+				cteout. ID AS ID,
+				'True' AS isParent
+			FROM
+				cte cteout
+			LEFT JOIN (
+				SELECT
+					tc2.classification_parent_id,
+					COUNT (1) AS COUNT
+				FROM
+					cte tc1
+				LEFT JOIN cte tc2 ON tc1. ID = tc2.classification_parent_id 
+			<if test = "queryText!=null and queryText!='' and queryText!='undefined'" >
+				AND tc2.classification_name LIKE CONCAT ('%', '${queryText}', '%') 
+			</if >
+				GROUP BY
+					tc2.classification_parent_id
+			) t1 ON t1.classification_parent_id = cteout. ID
+			WHERE
+				1 = 1
+				<!-- t_classification.account_id = #{ accountId }  -->
+			<if test = "classificationId!=null and classificationId!='' and classificationId!='undefined'" >
+				AND cteout.classification_parent_id = #{ classificationId } 
+			</if > 
+			order by id,isParent
+	</select>
+
+	<!-- 查询所有关键字的节点和父节点 -->
+	<select id="getLeftCtreeByText" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		WITH RECURSIVE r AS (
+			SELECT	<!-- 查询用户定制的系统顶级类 -->
+				t_classification.classification_parent_id AS pid,
+				t_classification.classification_name AS NAME,
+				0 AS COUNT,
+				t_classification. ID AS ID,
+				'True' AS isParent
+			FROM
+				t_classification,
+				t_account_classification_rel
+			WHERE
+				t_classification. ID = t_account_classification_rel.classification_id
+			AND 
+				t_account_classification_rel.account_id = #{accountId}
+			<if test="queryText!=null and queryText!='' and queryText!='undefined'">
+				and t_classification.classification_name like
+				CONCAT('%','${queryText}','%' )
+			</if>
+			UNION <!-- 系统默认顶级类 -->
+			SELECT
+				t_classification.classification_parent_id AS pid,
+				t_classification.classification_name AS NAME,
+				0 AS COUNT,
+				t_classification. ID AS ID,
+				'True' AS isParent
+			FROM
+				t_classification
+			WHERE
+				is_default = '1'  
+			<if test="queryText!=null and queryText!='' and queryText!='undefined'">
+				and t_classification.classification_name like CONCAT('%','${queryText}','%' )
+			</if>
+			UNION <!-- 顶级类子类 -->
+				SELECT
+					t_classification.classification_parent_id AS pid,
+					t_classification.classification_name AS NAME,
+					0 AS COUNT,
+					t_classification. ID AS ID,
+					'True' AS isParent
+				FROM
+					t_classification
+				INNER JOIN r C ON C . ID = t_classification.classification_parent_id
+					and (t_classification.create_id = #{userId} or t_classification.account_id = #{accountId})
+			<if test="queryText!=null and queryText!='' and queryText!='undefined'">
+				and t_classification.classification_name like CONCAT('%','${queryText}','%' )
+			</if>
+		) 
+		SELECT
+			*
+		FROM
+			r
+		ORDER BY
+			ID,isParent
+	</select>
+
+	<!-- 根据关键字反向查询结果集 -->
+	<select id="queryReversionCtreeByText" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select * from (
+		
+		WITH RECURSIVE r AS (
+			SELECT	<!-- 查询用户定制的系统顶级类 -->
+				t_classification.classification_parent_id AS pid,
+				t_classification.classification_name AS NAME,
+				0 AS COUNT,
+				t_classification. ID AS ID,
+				'True' AS isParent
+			FROM
+				t_classification,
+				t_account_classification_rel
+			WHERE
+				t_classification. ID = t_account_classification_rel.classification_id
+			AND 
+				t_account_classification_rel.account_id = #{accountId}
+			
+			UNION <!-- 系统默认顶级类 -->
+			SELECT
+				t_classification.classification_parent_id AS pid,
+				t_classification.classification_name AS NAME,
+				0 AS COUNT,
+				t_classification. ID AS ID,
+				'True' AS isParent
+			FROM
+				t_classification
+			WHERE
+				is_default = '1'  
+			
+			UNION <!-- 顶级类子类 -->
+				SELECT
+					t_classification.classification_parent_id AS pid,
+					t_classification.classification_name AS NAME,
+					0 AS COUNT,
+					t_classification. ID AS ID,
+					'True' AS isParent
+				FROM
+					t_classification
+				INNER JOIN r C ON C . ID = t_classification.classification_parent_id
+					and   t_classification.account_id = #{accountId}
+			
+		) 
+		SELECT
+			*
+		FROM
+			r
+		ORDER BY
+			ID,isParent
+			
+		) t 
+		<if test="queryText!=null and queryText!='' and queryText!='undefined'">	
+		where t.name like CONCAT('%','${queryText}','%' )
+		</if>
+	</select>
+
+
+	<select id="getKnowledgeTree" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		
+		SELECT
+				t.classification_name AS NAME,
+				t1. COUNT,
+				t.ID AS ID,
+				'True' AS isParent
+			FROM
+				(
+					WITH RECURSIVE cte AS (
+							SELECT <!-- 查询用户定制的系统顶级类 -->
+								t_classification. ID,
+								t_classification.classification_name,
+								t_classification.classification_parent_id
+							FROM
+								t_classification,
+								t_account_classification_rel
+							WHERE
+								t_classification. ID = t_account_classification_rel.classification_id
+							AND 
+								t_account_classification_rel.account_id = #{accountId}
+							UNION 
+								SELECT  <!-- 自定义顶级类 -->
+									t_classification. ID,
+									t_classification.classification_name,
+									t_classification.classification_parent_id
+								FROM
+									t_classification
+								WHERE
+									classification_parent_id = '0' and   account_id = #{accountId}
+							UNION
+								SELECT <!-- 递归查询顶级类子类 -->
+									t_classification. ID,
+									t_classification.classification_name,
+									t_classification.classification_parent_id
+								FROM
+									t_classification
+								INNER JOIN cte C ON C . ID = t_classification.classification_parent_id 
+										and (t_classification.create_id = '1' or t_classification.account_id = #{accountId})
+						)
+					SELECT
+						ID,
+						classification_name,
+						classification_parent_id
+					FROM
+						cte
+				) t
+			LEFT JOIN (
+				SELECT
+					tc2.classification_parent_id,
+					COUNT (1) AS COUNT
+				FROM
+					t_classification tc1
+				LEFT JOIN t_classification tc2 ON tc1. ID = tc2.classification_parent_id
+				AND tc1.account_id = #{accountId}
+				GROUP BY
+					tc2.classification_parent_id
+			) t1 ON t1.classification_parent_id = t.ID
+			WHERE
+			t.classification_parent_id = #{classificationId}
+			ORDER BY
+				t.classification_name
+
+	</select>
+
+	<select id="findClassifications" parameterType="java.util.Map"
+		resultType="java.util.Map">
+
+		select t_classification.*,'${userId}' as current_user_id,
+		CASE WHEN
+		t_user.id is null then 'Admin'
+		ELSE
+		CASE WHEN
+		t_user.nick_name IS NULL THEN concat (t_user.first_name, '.', t_user.last_name)
+		ELSE
+		t_user.nick_name
+		END
+		END AS username
+		from t_classification
+		left join t_user
+		on t_user.id = t_classification.create_id
+		where t_classification.classification_parent_id = #{classificationId}
+		and t_classification.account_id = #{accountId}
+		<if test="keywords!=null">
+			and t_classification.classification_name like
+			CONCAT('%','${keywords}','%' )
+		</if>
+		order by 
+		t_classification.create_time desc
+	</select>
+
+	<delete id="delAllClassifications" parameterType="java.util.List">
+		DELETE FROM t_classification
+		WHERE t_classification.id in(
+		<foreach collection="list" item="item" separator=",">
+			#{item.id}
+		</foreach>
+		)
+	</delete>
+
+	<!-- 根据id查询分类描述 -->
+	<select id="queryClassificationDesc" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		select classification_desc from t_classification where id = #{id}
+	</select>
+
+
+
+	<!-- 删除分类关联关系表 -->
+	<delete id="deleteClassificationItemsRel" parameterType="String">
+		delete from t_classification_items_rel rel where
+		rel.item_id = #{itemId} and rel.item_type = #{itemType}
+	</delete>
+
+	<!-- 添加关联list(分类) -->
+	<insert id="insertClassificationItemsRel" parameterType="java.util.List">
+		INSERT INTO t_classification_items_rel
+		(id,item_id,item_type,classification_id,create_id,create_time,update_id,update_time)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.itemId},#{item.itemType},#{item.classificationId},#{item.createId},#{item.createTime},#{item.updateId},#{item.updateTime})
+		</foreach>
+	</insert>
+
+	 <!-- 根据id查询分类 -->
+	 <select id="queryClassificationById" parameterType="java.util.Map"  resultType="java.util.Map">
+	 
+	 	select distinct t1.classification_name,
+			   t1.classification_parent_id,
+			   t1.ID
+		  from (
+		
+		select t_classification.classification_name,
+			   t_classification.classification_parent_id,
+			   t_classification. ID,
+			   t_classification_items_rel.item_id
+		  from t_classification,
+		       t_classification_items_rel
+		 where t_classification.id = t_classification_items_rel.classification_id
+		   and t_classification_items_rel.item_type = #{itemType}
+		
+		   ) t1, 
+		<if test="itemType == 1">
+		  t_presentation
+		where t1.item_id = t_presentation.id
+		  and t_presentation.account_id = #{accountId}
+		</if>
+		<if test="itemType == 21 or itemType == 22 or itemType == 23">
+		  t_course
+		where t1.item_id = t_course.id
+		  and t_course.account_id = #{accountId}
+		</if>
+		<if test="itemType == 3">
+		  t_knowledge_points
+		where t1.item_id = t_knowledge_points.id
+		  and t_knowledge_points.account_id = #{accountId}
+		</if>
+		<if test="itemType == 4">
+		  t_course_package
+		where t1.item_id = t_course_package.id
+		  and t_course_package.account_id = #{accountId}
+		</if>
+		<if test="classificationId != null and classificationId!='' and classificationId!='undefined'">
+	 	  and t1.classification_parent_id = #{classificationId}
+		</if>
+	 </select>
+	 
+	 
+	 <!-- 子分类判断 -->
+	 <select id="numChildrenClassification" parameterType="java.util.Map"  resultType="java.lang.Integer">
+	 	SELECT
+			COUNT (0) AS COUNT
+		FROM
+			(
+				select distinct t1.classification_name,
+					   t1.classification_parent_id,
+					   t1.ID
+				  from (
+				
+				select t_classification.classification_name,
+					   t_classification.classification_parent_id,
+					   t_classification. ID,
+					   t_classification_items_rel.item_id
+				  from t_classification,
+				       t_classification_items_rel
+				 where t_classification.id = t_classification_items_rel.classification_id
+				   and t_classification_items_rel.item_type = #{itemType}
+				
+				   ) t1, 
+				<if test="itemType == 1">
+				  t_presentation
+				where t1.item_id = t_presentation.id
+				  and t_presentation.account_id = #{accountId}
+				</if>
+				<if test="itemType == 21 or itemType == 22 or itemType == 23">
+				  t_course
+				where t1.item_id = t_course.id
+				  and t_course.account_id = #{accountId}
+				</if>
+				<if test="itemType == 3">
+				  t_knowledge_points
+				where t1.item_id = t_knowledge_points.id
+				  and t_knowledge_points.account_id = #{accountId}
+				</if>
+				<if test="classificationId != null and classificationId!='' and classificationId!='undefined'">
+			 	  and t1.classification_parent_id = #{classificationId}
+				</if>
+			) t1
+		
+	 </select>
+	 
+	<!-- 根据itemid查询分类名称 -->
+	<select id="querySelectedClassificationNameByItemId" parameterType="java.util.Map"
+		resultType="String">
+		SELECT
+			string_agg (cl.classification_name, ',') classification_name
+		FROM
+			t_classification cl
+		INNER JOIN
+			t_classification_items_rel rel 
+		ON 
+			cl.id = rel.classification_id
+		WHERE
+			rel.item_id = #{itemId}
+		AND
+			rel.item_type = #{itemType}
+		ORDER BY cl.classification_level
+	</select>
+	
+	<!-- 查询指定课程的分类信息 -->
+	 <select id="querySelectedClassificationByItemId" parameterType="java.util.Map"  resultType="java.util.Map">
+	 	SELECT
+ 			classification.id,
+ 			classification.classification_name,
+ 			classification.classification_level
+		FROM
+			t_classification_items_rel rel 
+		INNER JOIN
+			t_classification classification on classification.id = rel.classification_id
+		WHERE 
+			rel.item_id = #{itemId}
+		AND
+			rel.item_type = #{itemType}
+		ORDER BY classification.classification_level
+	 </select>
+	 
+	 <!-- 删除指定账号下所有分类 -->
+	 <delete id="delAllClassificationsInAccount" parameterType="java.util.Map">
+		DELETE FROM 
+			t_classification
+		WHERE 
+			account_id = #{accountId} and create_id = #{userId}
+	</delete>
+	
+	<!-- 指定账号下已选中的顶级系统分类个数 -->
+	 <select id="getSelectedTopSysClassificationCount" parameterType="java.util.Map"  resultType="java.util.Map">
+	 	WITH RECURSIVE 
+			temp_data AS (  
+       			SELECT 	* FROM t_classification WHERE classification_parent_id = '0' and create_id = '1'
+			UNION   ALL  
+       			SELECT 
+       				children.* 
+       			FROM 
+       				temp_data, t_classification children 
+       			WHERE 
+       				children.classification_parent_id = temp_data.id and temp_data.visiable != '1'
+     	)  
+   		SELECT 
+   			count(1)
+   		FROM 
+   			t_account_classification_rel 
+   		WHERE 
+   			exists (
+   				SELECT 1 FROM temp_data WHERE temp_data.visiable = '1' and temp_data.id = t_account_classification_rel.classification_id
+   			)  AND account_id = #{accountId}
+   			
+	 </select>
+	 
+	 
+	 <!-- 获取注册后，分类列表(列表数据为定级分类，当顶级分类设置为不可见是，显示器下一级分类) -->
+	<select id="getRegisterClassificationList" parameterType="java.util.Map"  resultType="java.util.Map">
+		WITH RECURSIVE 
+			temp_data AS (  
+       			SELECT 	* FROM t_classification WHERE classification_parent_id = '0'  and create_id = '1' and is_default != '1'
+			UNION   ALL  
+       			SELECT 
+       				children.* 
+       			FROM 
+       				temp_data, t_classification children 
+       			WHERE 
+       				children.classification_parent_id = temp_data.id and temp_data.visiable != '1'
+     	)  
+   		SELECT 
+   			* 
+   		FROM 
+   			temp_data 
+   		WHERE 
+   			temp_data.visiable = '1' AND (temp_data.related_industry is null 
+   			<if test="relatedIndustry != null and relatedIndustry != ''">
+   				OR temp_data.related_industry = #{relatedIndustry}
+   			</if>
+   			)
+   		ORDER BY 
+   			id
+	</select>
+	
+  	<insert id="insertSysClassificationsAccountRel" parameterType="java.util.List">
+  		insert into t_account_classification_rel (id, account_id, classification_id, 
+      		create_id, create_time, update_id,update_time)
+    	values 
+    	<foreach collection="list" item="item"  separator="," >
+    		(#{item.id,jdbcType=VARCHAR}, #{item.accountId,jdbcType=VARCHAR}, #{item.classificationId,jdbcType=VARCHAR}, 
+      		#{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateId,jdbcType=VARCHAR}, 
+     	 	#{item.updateTime,jdbcType=TIMESTAMP})
+     	</foreach> 
+  	</insert>
+  	<select id="getUpdateClassificationName" parameterType="java.util.Map" resultType="java.lang.Integer">
+  	SELECT
+	COUNT (*)
+FROM
+	t_classification
+WHERE
+	classification_name in (#{newClassificationName},#{oldClassificationName})
+
+  	</select>
+</mapper>

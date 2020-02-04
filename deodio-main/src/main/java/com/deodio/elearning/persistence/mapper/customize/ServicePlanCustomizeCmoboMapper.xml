@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.ServicePlanCustomizeCmoboMapper" >
+  
+  
+  <!-- 获取注册后，分类列表(列表数据为定级分类，当顶级分类设置为不可见是，显示器下一级分类) -->
+	<select id="getServicePlanComboByIdentifier" parameterType="java.util.Map" resultType="java.lang.Integer">
+		SELECT
+			<!-- account_item_rel.account_id,
+			MAX(account_item_rel.account_type) as account_type,
+			MAX(service_plan.plan_desc) as plan_desc,
+			MAX(service_plan.plan_type) as plan_type,
+			MAX(service_plan.plan_order) as plan_order,
+		
+			MAX(service_plan_combos_rel.cmobo_standard_value) as cmobo_standard_value,
+			MAX(account_preferential.cmobo_value) as cmobo_preferential_value, -->
+			MAX(
+				COALESCE(account_preferential.cmobo_value,service_plan_combos_rel.cmobo_standard_value)
+			) as cmobo_value
+			<!-- ,
+			service_cmobo.cmobo_desc,
+		  	service_cmobo.cmobo_identifier,
+			service_cmobo.cmobo_type -->
+			
+		FROM
+			t_account_items_rel account_item_rel 
+		INNER JOIN  
+				sys_service_plan service_plan on  account_item_rel.item_id = service_plan."id" AND account_item_rel.item_type = '1'
+		INNER JOIN
+				sys_service_plan_combos_rel service_plan_combos_rel 
+					on  service_plan."id" = service_plan_combos_rel.plan_id
+		INNER JOIN
+				sys_service_plan_cmobo service_cmobo 
+					on service_plan_combos_rel.cmobo_id = service_cmobo."id" 
+		<!-- 获取优惠信息  -->
+		LEFT JOIN
+			t_account_preferential account_preferential on account_item_rel.account_id = account_preferential.account_id
+				AND account_item_rel.account_type = '2' and  account_preferential.cmobo_id = service_cmobo."id"
+		WHERE
+			account_item_rel.account_id = #{accountId}
+		<if test="cmoboIdentifier != null and cmoboIdentifier != ''">
+			AND service_cmobo.cmobo_identifier = #{cmoboIdentifier}
+		</if>
+		GROUP BY
+				account_item_rel.account_id,service_cmobo."id"
+	</select>
+	
+</mapper>

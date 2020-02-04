@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group implements="com.deodio.media.module.player.playbar.ac.IPlayBar" 
+		 xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="805" height="50" creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			[Bindable]
+			public var sliderWidth:Number = 114*20;
+			
+			private function init():void{
+			}
+			
+		]]>
+	</fx:Script>
+		
+		
+		<s:HSlider id="slider" x="5" y="20" width="2409" height="12"  minimum="0" maximum="21" snapInterval="1"
+				   skinClass="com.deodio.media.libs.skins.DHSliderSkin"/>
+</s:Group>

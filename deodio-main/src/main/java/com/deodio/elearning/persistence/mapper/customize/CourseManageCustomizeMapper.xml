@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.CourseManageCustomizeMapper" >
+
+	<select id="findCourseList" parameterType="com.deodio.elearning.persistence.model.customize.CourseDto" 
+	   resultType="com.deodio.elearning.persistence.model.customize.CourseDto">
+		SELECT
+		course.id,
+		course.course_name AS courseName,
+		course.course_description AS courseDescription,
+		course.course_cover_img AS courseCoverImg,
+		att.attach_url AS attachUrl,
+		userInfo.nick_name AS nickName
+		FROM t_course course
+		LEFT JOIN t_attachment att ON course.id = att.rel_id
+        LEFT JOIN t_user userInfo ON course.create_id = userInfo.id
+		WHERE
+		course.course_type = #{courseType}
+	    <if test="accountId != null">
+	        AND course.account_id = #{accountId}
+	    </if>
+	    <if test="classificationIdList != null">
+	        AND course.ID IN (
+	            SELECT
+	                cla.item_id
+	            FROM
+	                t_classification_items_rel cla
+	            WHERE
+	                cla.classification_id IN 
+	            <choose>
+	                <when test="classificationIdList.length == 1">
+	                    <foreach collection="classificationIdList" item="item" open="(" separator=","  close=")">
+	                        #{item}
+	                    </foreach>
+	                    and cla.item_type = #{itemType}
+	                </when>
+	                <when test="classificationIdList.length != 1">
+	                    <foreach collection="classificationIdList" item="item" open="(" separator=","  close=")" index="idx">
+	                        #{item}
+	                    </foreach>
+	                    AND cla.item_type = #{itemType}
+	                    GROUP BY cla.item_id HAVING COUNT(cla.item_id) > #{idx}
+	                </when>
+	            </choose>    
+	        )
+	    </if>
+	    <if test="tagIdList != null">
+	        AND course.ID IN (
+	            SELECT
+	                tag.item_id
+	            FROM
+	                t_tags_items_rel tag
+	            WHERE
+	                tag.tags_id IN 
+	            <choose>
+	                <when test="tagIdList.length == 1">
+	                    <foreach collection="tagIdList" item="item" open="(" separator=","  close=")">
+	                        #{item}
+	                    </foreach>
+	                    and tag.item_type = #{itemType}
+	                </when>
+	                <when test="tagIdList.length != 1">
+	                    <foreach collection="tagIdList" item="item" open="(" separator=","  close=")" index="idx">
+	                        #{item}
+	                    </foreach>
+	                    AND tag.item_type = #{itemType}
+	                    GROUP BY tag.item_id HAVING COUNT(tag.item_id) > #{idx}
+	                </when>
+	            </choose>    
+	            )
+	    </if>
+	    <where>
+	        <if test="courseName != '' and courseName != null">
+	            AND course.course_name LIKE concat(concat('%',#{courseName}),'%')
+	        </if>
+	    </where>
+		<choose>
+	    	<when test="tabType != null and tabType == 'newest'">
+	            ORDER BY course.update_time DESC
+	    	</when>
+	    	<when test="tabType != null and tabType == recommended">
+	            ORDER BY 
+	        </when>
+	        <when test="tabType != null and tabType == hot">
+	            ORDER BY 
+	        </when>
+	    	<otherwise>
+	            ORDER BY course.create_time DESC
+	    	</otherwise>
+	  	</choose>
+	</select>
+</mapper>

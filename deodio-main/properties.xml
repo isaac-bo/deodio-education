@@ -1,0 +1,35 @@
+<!-- project -->
+<project name="properties" default="" basedir=".">
+  <property environment="sys" />
+
+  <!-- 
+    build.env property
+     - This property identifies the target build environment.  I.e.: dev1|2|3, qa1|2, staging, production
+     - To set: "ant -Dbuild.env=dev1 ant {target}"
+     - currently, if this property is NOT SET there is NO CHANGE in build bahavior 
+  -->
+  <condition property="build.env" value="${build.env}">
+    <isset property="build.env" />
+  </condition>
+
+  <!-- property -->
+  <property name="src.dir" value="${basedir}/src/main" />
+  <property name="project.encoding" value="utf-8" />
+  <property name="app.name" value="deodio-main" />
+  <property name="web.dir" value="${basedir}/src/main/webapp" />
+  <property name="lib.dir" value="${web.dir}/WEB-INF/lib" />
+  <property name="bin.dir" value="${web.dir}/WEB-INF/classes" />
+  <!-- mxmlc -->
+  <property name="flex.sdk" value="${sys.FLEX_HOME}" />
+  <property name="flex.mxmlc.exe" value="${flex.sdk}/bin/mxmlc.exe" />
+  <property name="flex.mxmlc" value="${flex.sdk}/bin/mxmlc" />
+  <property name="flex.rsls" value="${flex.sdk}/frameworks/rsls" />
+  <property name="flex.src" value="${basedir}/src/main/flex" />
+  <property name="flex.bin" value="${web.dir}/resources/flex" />
+  <property name="flex.thirdparty" value="${flex.sdk}/frameworks/libs/thirdparty" />
+  <property name="flex.resources" value="${basedir}/src/main/flex-resources"/>
+  <property name="flex.libs" value="${flex.resources}/libs" />
+  
+  <taskdef resource="net/sf/antcontrib/antlib.xml"/>  
+	
+</project>

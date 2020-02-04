@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:SparkSkin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			 xmlns:s="library://ns.adobe.com/flex/spark" 
+			 xmlns:mx="library://ns.adobe.com/flex/mx"
+			 xmlns:fb="http://ns.adobe.com/flashbuilder/2009" width="400" height="300">
+	
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="disabled"/>
+	</s:states>
+	
+	<fx:Metadata>
+		[HostComponent("spark.components.List")]
+	</fx:Metadata>
+	
+	<fx:Script fb:purpose="styling">
+		<![CDATA[
+			
+			/* Define the skin elements that should not be colorized.
+			For list, the skin itself is colorized but the individual parts are not. */
+			static private const exclusions:Array = ["scroller", "background"];
+			
+			override public function get colorizeExclusions():Array {
+				return exclusions;
+			}
+			/* Define the content fill items that should be colored by the "contentBackgroundColor" style. */
+			static private const contentFill:Array = [];
+			
+			override public function get contentItems():Array {
+				return contentFill
+			}
+			
+			override protected function initializationComplete():void{
+				super.initializationComplete();
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<!-- border -->
+	<s:Rect left="0" right="0" top="0" bottom="0">
+		<s:stroke>
+			<s:SolidColorStroke color="0x535353" weight="1"/>
+		</s:stroke>
+	</s:Rect>
+	<!-- fill -->
+	<!--- Defines the background appearance of the list-based component. -->
+	<s:Rect id="background" left="1" right="1" top="1" bottom="1" >
+		<s:fill>
+			<s:LinearGradient id="bgFill" rotation="90">
+				<s:GradientEntry color="0x535353" />
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	<!--- The Scroller component to add scroll bars to the list. -->
+	<s:Scroller id="scroller"
+				left="0" top="0" right="0" bottom="0"
+				minViewportInset="1"
+				focusEnabled="false" hasFocusableChildren="false">
+		<!--- The container for the data items. -->
+		<s:DataGroup id="dataGroup" itemRenderer="com.deodio.media.module.player.renderer.SlidesPickerRenderer">
+			<s:layout>
+				<!--- The default layout is vertical and measures at least for 1 rows
+				When switching to a different layout, HorizontalLayout for example,
+				make sure to adjust the minWidth,minHeight sizes of the skin. -->
+				<s:VerticalLayout gap="0" horizontalAlign="contentJustify" requestedRowCount="1" />
+			</s:layout>
+		</s:DataGroup>
+	</s:Scroller>
+</s:SparkSkin>

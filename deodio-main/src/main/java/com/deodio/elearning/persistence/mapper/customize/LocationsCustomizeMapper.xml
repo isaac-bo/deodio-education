@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.LocationsCustomizeMapper">
+	
+	<select id="findLocationsList" parameterType="java.util.Map" resultType="java.util.Map">
+		
+		select 
+		t_locations.*,
+		#{userId} as current_user_id
+		  from t_locations
+		where t_locations.account_id = #{accountId}
+		<if test="enabled!=null">
+		    AND is_enabled=1
+		</if>
+		<if test="keywords!=null">
+			and t_locations.location_name like CONCAT('%','${keywords}','%' )
+		</if>
+		ORDER BY  convert_to(location_name, 'gbk') asc,
+		t_locations.location_name DESC
+		
+	</select>
+	
+	
+	<select id="getLocationsList" parameterType="java.util.Map" resultType="java.util.Map">
+		
+		select t_locations.*
+		  from t_locations
+		where t_locations.account_id = #{accountId}
+		<if test="keywords!=null">
+			and t_locations.location_name like CONCAT('%','${keywords}','%' )
+		</if>
+		ORDER BY t_locations.location_name, t_locations.location_name DESC
+		
+	</select>
+	
+	<delete id="delAllLocations" parameterType="java.util.List">
+		DELETE FROM t_locations
+		WHERE t_locations.id in (
+			<foreach collection="list" item="item" separator=",">
+				#{item.id}
+			</foreach>
+		)
+	</delete>
+
+	
+</mapper>

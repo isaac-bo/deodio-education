@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.QuizSubjectCustomizeMapper">
+ 
+ <select id="findSubjectList" parameterType="java.util.Map" resultType="java.util.Map">
+
+		select t_quiz_subject.* 
+		<include refid="commonQuizSubjectSql"></include>
+	</select>
+
+
+	<sql id="commonQuizSubjectSql">
+		FROM
+		t_quiz_subject
+		WHERE
+		t_quiz_subject.account_id = #{accountId}
+
+		<if test="quizBankId!=null">
+			and t_quiz_subject.quiz_bank_id=#{quizBankId}
+
+		</if>
+
+		<if test="keywords!=null">
+			and t_quiz_subject.quiz_subject_name like CONCAT('%','${keywords}','%' )
+		</if>
+		
+		<if test="type != null">
+			and t_quiz_subject.quiz_subject_type =#{type}
+		</if>
+		
+		<if test="level!=null">
+			and t_quiz_subject.quiz_subject_level =#{level}
+		</if>
+	</sql>
+ 
+</mapper>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				xmlns:s="library://ns.adobe.com/flex/spark" 
+				xmlns:mx="library://ns.adobe.com/flex/mx" focusEnabled="false">
+	<!-- states -->
+	<s:states>
+		<s:State name="normal" />
+		<s:State name="hovered" />
+		<s:State name="selected" />
+		<s:State name="normalAndShowsCaret"/>
+		<s:State name="hoveredAndShowsCaret"/>
+		<s:State name="selectedAndShowsCaret"/>
+	</s:states>
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.PresentationSyncSlides;
+			import com.deodio.elearning.libs.utils.MediaUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.service.SystemService;
+			
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindable]
+			private var _systemService:SystemService;
+			
+			override public function set data(data:Object):void {
+				if(data){
+					super.label = (data as PresentationSyncSlides).slideName
+					initData(data as PresentationSyncSlides);
+					
+				}else if(_model.selectedSyncSlide){
+					super.label = _model.selectedSyncSlide.slideName
+					initData(_model.selectedSyncSlide);
+				}
+			}
+			
+			private function initData(sync:PresentationSyncSlides):void{
+				_systemService = new SystemService();
+				_systemService.getImageServerUrl(function(event:ResultEvent):void{
+					var loader:Loader = new Loader();
+					var url:String = sync.slideUrl;
+					url = (event.result as String)+url;
+					var urlRequest:URLRequest = new URLRequest(url);
+					loader.load(urlRequest,new LoaderContext(true));
+					loader.contentLoaderInfo.addEventListener(Event.COMPLETE,function(e:Event):void{
+						var bitmap:Bitmap=Bitmap(e.target.content);
+						var object:Object=MediaUtils.middlePosition(bitmap.width,bitmap.height,
+							slideContainer.width - Number(slide.left) - Number(slide.right), 
+							slideContainer.height - Number(slide.top) - Number(slide.bottom));   
+						bitmap.x=object.x;
+						bitmap.y=object.y;
+						bitmap.width=object.width;
+						bitmap.height=object.height;
+						bitmap.smoothing = true;
+						slide.addChild(bitmap);
+					});
+				});
+			}
+		]]>
+	</fx:Script>
+	<s:Rect left="0" right="0" top="0" bottom="0" width="100%" height="98">
+		<s:stroke.normalAndShowsCaret>
+			<s:SolidColorStroke color="#3a3a3a" weight="1"/>
+		</s:stroke.normalAndShowsCaret>
+		<s:stroke.hoveredAndShowsCaret>
+			<s:SolidColorStroke color="#d0d0d0" weight="1" alpha="1"/>
+		</s:stroke.hoveredAndShowsCaret>
+		<s:stroke.selectedAndShowsCaret>
+			<s:SolidColorStroke color="#d0d0d0" weight="1"/>
+		</s:stroke.selectedAndShowsCaret>
+		<s:fill>
+			<s:SolidColor color.normal="#3a3a3a"
+						  color.normalAndShowsCaret="#3a3a3a"
+						  color.hovered="#d0d0d0"
+						  alpha.hovered="1"
+						  alpha.hoveredAndShowsCaret="1"
+						  color.hoveredAndShowsCaret="#d0d0d0"
+						  color.selected="#d0d0d0"
+						  color.selectedAndShowsCaret="#d0d0d0" />
+		</s:fill>
+	</s:Rect>
+	
+	<s:BorderContainer id="slideContainer" borderColor="#3a3a3a" borderWeight="1" borderStyle="solid" width="158" height="89" x="2.5" y="4.5">
+		<mx:Image id="slide" left="5" top="5" right="5" bottom="5"/>
+	</s:BorderContainer>
+
+</s:ItemRenderer>

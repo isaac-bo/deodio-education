@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:screen="com.deodio.elearning.module.player.screen.view.*"
+		 xmlns:toolbar="com.deodio.elearning.module.player.toolbar.view.*"
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="900" height="358" creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.PresentationSyncPoints;
+			import com.deodio.elearning.domain.customize.PresentationSyncRecordsBo;
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.RecordModelLocator;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			
+			[Bindable]
+			private var _currentIndex:Number = 0;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var _recordLocator:RecordModelLocator = RecordModelLocator.getInstance();
+			
+			[Bindable]
+			private var _presentationSyncRecords:ArrayCollection;
+			
+			private function init():void{
+				this.currentState = StateEnum.SHOW_RECORD_PICKER_STATE;
+			}
+			
+			public function initSyncPoint(presentationSyncRecords:ArrayCollection):void{
+				_presentationSyncRecords = presentationSyncRecords;
+				for each(var syncPointRecord:PresentationSyncRecordsBo in _presentationSyncRecords){
+					if(syncPointRecord.id == this._model.syncPointId){
+						_currentIndex = presentationSyncRecords.getItemIndex(syncPointRecord);
+						this.createPointImage(syncPointRecord.pointUrl);
+						this._recordLocator.dispatchEvent(new RecordEvent(RecordEvent.RECORD_PLAY_LENGTH,
+										syncPointRecord.pointEnd - syncPointRecord.pointTime));
+						break;
+					}
+				}
+			} 
+			
+			private function createPointImage(thumbnail:String):void{
+				this.slidesCanvas.createImage(thumbnail,true);
+			}
+			
+			private function onPreviousImage():void{
+				if(this._currentIndex > 0){
+					this._recordLocator.onStopDubbing();
+					this._currentIndex -= 1;
+					this.setPointImage();
+				}
+			}
+			
+			private function onNextImage():void{
+				if(this._currentIndex < this._presentationSyncRecords.length - 1){
+					this._recordLocator.onStopDubbing();
+					this._currentIndex += 1;
+					this.setPointImage();
+				}
+			}
+			
+			private function setPointImage():void{
+				var syncRecords:PresentationSyncRecordsBo = this._presentationSyncRecords.getItemAt(_currentIndex) as PresentationSyncRecordsBo;
+				this.createPointImage(syncRecords.pointUrl);
+				this._recordLocator.dispatchEvent(new RecordEvent(RecordEvent.RECORD_PLAY_LENGTH,
+										syncRecords.pointEnd - syncRecords.pointTime));
+				this._recordLocator.dispatchEvent(new RecordEvent(RecordEvent.RECORD_PLAY_INIT));
+				this._model.syncPointId = syncRecords.id;
+				this.refreshRecords();
+			}
+			
+			public function refreshRecords():void{
+				if(this._recordLocator.recordDictionary[this._model.syncPointId]){
+//					this.currentState = "showRecordPicker";
+					this.dubbingToolBar.records = this._recordLocator.recordDictionary[this._model.syncPointId] as ArrayCollection;
+				}else{
+//					this.currentState = "hideRecordPicker";
+					this.dubbingToolBar.records = null;
+				}
+				
+				this._recordLocator.setItemsDuration(_presentationSyncRecords);
+			}
+			
+			public function onShowRecordsPicker():void{
+				if(this.currentState == StateEnum.HIDE_RECORD_PICKER_STATE){
+					this.currentState = StateEnum.SHOW_RECORD_PICKER_STATE;
+				}else if(this.currentState == StateEnum.SHOW_RECORD_PICKER_STATE){
+					this.currentState = StateEnum.HIDE_RECORD_PICKER_STATE;
+				}
+			}
+			
+			public function onShowRecordSettings():void{
+				this.recordSettings.visible = this.recordSettings.includeInLayout = true;
+			}
+			
+			public function onCloseRecordSettings():void{
+				this.recordSettings.visible = this.recordSettings.includeInLayout = false;
+			}
+		]]>
+	</fx:Script>
+	
+	
+	<s:transitions>
+		<s:Transition fromState="hideRecordPicker" toState="showRecordPicker">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Move target="{dubbingToolBar}" xFrom="-200" xTo="0"/>
+					<s:Move target="{screenBar}" xFrom="128" xTo="228"/>
+					<s:Move target="{leftArrow}" xFrom="-80" xTo="20"/>
+					<s:Move target="{rightArrow}" xFrom="702" xTo="596"/>
+					<s:Move target="{recordSettings}" xFrom="{(900-270)/2}" xTo="{(900-270+200)/2}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showRecordPicker" toState="hideRecordPicker">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Move target="{screenBar}" xFrom="228" xTo="128"/>
+					<s:Move target="{leftArrow}" xFrom="20" xTo="-80"/>
+					<s:Move target="{rightArrow}" xFrom="596" xTo="702"/>
+					<s:Move target="{dubbingToolBar}" xFrom="0" xTo="-200"/>
+					<s:Move target="{recordSettings}" xFrom="{(900-270 + 200)/2}" xTo="{(900-270)/2}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions>
+	
+	<s:states>
+		<s:State name="showRecordPicker"/>
+		<s:State name="hideRecordPicker"/>
+	</s:states>
+	
+	<s:Rect width="900" height="408" x="0" y="0">
+		<s:fill>
+			<s:SolidColor color="#e5e5e5"/>
+		</s:fill>
+	</s:Rect>
+	
+	<toolbar:DubbingToolBar id="dubbingToolBar" height="406" 
+								 x.showRecordPicker="0" x.hideRecordPicker="-200"/>
+	<s:Group id="screenBar" width="644" height="100%" y="0" x.hideRecordPicker="128" x.showRecordPicker="228">
+		
+		<screen:Screen id="slidesCanvas" width="644" height="364" _borderVisible="false" _title="SLIDES SHOW" _isSlide="true" x="1" y="22"/>
+		<s:Group id="leftArrow" width="28" height="100%" x.hideRecordPicker="-80" x.showRecordPicker="20" y="-154">
+			<s:layout>
+				<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+			</s:layout>
+			<s:Group width="50" height="100" useHandCursor="true" mouseEnabled="true" buttonMode="true" click="onPreviousImage()">
+				<s:Rect width="50" height="100" x="0" y="0">
+					<s:fill>
+						<s:SolidColor color="#e5e5e5" alpha="0"/>
+					</s:fill>
+				</s:Rect>
+				<s:Path data="M15 50L35 30Z">
+					<s:stroke>
+						<s:SolidColorStroke color="#a3a3a3" weight="5"/>
+					</s:stroke>
+				</s:Path>
+				<s:Path data="M15 50L35 70Z">
+					<s:stroke>
+						<s:SolidColorStroke color="#a3a3a3" weight="5"/>
+					</s:stroke>
+				</s:Path>
+			</s:Group>
+		</s:Group>
+		<s:Group id="rightArrow" width="28" height="100%" x.showRecordPicker="596" x.hideRecordPicker="702" y="-154">
+			<s:layout>
+				<s:VerticalLayout verticalAlign="middle" horizontalAlign="center"/>
+			</s:layout>
+			<s:Group width="50" height="100" useHandCursor="true" mouseEnabled="true" buttonMode="true" click="onNextImage()">
+				<s:Rect width="50" height="100" x="0" y="0">
+					<s:fill>
+						<s:SolidColor color="#e5e5e5"  alpha="0"/>
+					</s:fill>
+				</s:Rect>
+				<s:Path data="M35 50L15 30Z">
+					<s:stroke>
+						<s:SolidColorStroke color="#a3a3a3" weight="5"/>
+					</s:stroke>
+				</s:Path>
+				<s:Path data="M35 50L15 70Z">
+					<s:stroke>
+						<s:SolidColorStroke color="#a3a3a3" weight="5"/>
+					</s:stroke>
+				</s:Path>
+			</s:Group>
+		</s:Group>
+	</s:Group>
+		
+	
+	
+	<s:BorderContainer id="recordSettings" visible="false" includeInLayout="false" x.hideRecordPicker="{(900-270)/2}" x.showRecordPicker="{(900-270 + 160)/2}" y="{(500 - 260)/2}" borderColor="#a3a3a3" borderWeight="1" backgroundColor="#000000" width="270" height="130" alpha="0.7">
+		<s:Image source="@Embed('/assets/common/close.png')"  buttonMode="true" useHandCursor="true" x="245" y="7" click="onCloseRecordSettings()"/>
+		<mx:Text text="切换录音模式" fontFamily="yahei" width="100" height="25" fontSize="12" color="#ffffff" x="10" y="10" textAlign="left" selectable="false"/>
+		<s:Line width="260" y="30" x="5">
+			<s:stroke>
+				<s:SolidColorStroke color="#a3a3a3" weight="1" caps="square"/>
+			</s:stroke>
+		</s:Line>
+		
+		<s:Image source="@Embed('/assets/player/playbar/headset_default.png')"  buttonMode="true" x="100" y="50" 
+				 click="{_model.isHeadsetMicroPhone=true;onCloseRecordSettings();}"
+				 mouseOver="{tip_system_microphone.visible = tip_system_microphone.includeInLayout = false;tip_headset_microphone.visible = tip_headset_microphone.includeInLayout = true}" />
+		<s:Image source="@Embed('/assets/player/playbar/microphone_default.png')"  buttonMode="true" x="155" y="50" 
+				 click="{_model.isHeadsetMicroPhone=false;onCloseRecordSettings();}"
+				 mouseOver="{tip_system_microphone.visible = tip_system_microphone.includeInLayout = true;tip_headset_microphone.visible = tip_headset_microphone.includeInLayout = false}" />
+		
+		<mx:Text id="tip_headset_microphone"
+				 x="20"
+				 text="耳麦模式，耳麦模式能够提升声音质量和减少噪音。" fontFamily="yahei"
+				 width="240"
+				 height="40"
+				 y="76" selectable="false"
+				 visible="{_model.isHeadsetMicroPhone}"
+				 includeInLayout="{_model.isHeadsetMicroPhone}" color="#ffffff"/>
+		<mx:Text id="tip_system_microphone"
+				 x="20"
+				 text="系统模式，为了保证录音质量和减少噪音，建议单独使用外接话筒设备。" fontFamily="yahei"
+				 width="240"
+				 height="40"
+				 y="76" selectable="false"
+				 visible="{!_model.isHeadsetMicroPhone}"
+				 includeInLayout="{!_model.isHeadsetMicroPhone}" color="#ffffff"/>
+	</s:BorderContainer>
+	
+</s:Group>

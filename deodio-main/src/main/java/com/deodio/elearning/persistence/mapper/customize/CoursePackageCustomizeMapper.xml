@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.CoursePackageCustomizeMapper">
+  <resultMap id="itemsResultMap" type="com.deodio.elearning.persistence.model.customize.CoursePackageItemsBo">
+    <result column="item_id" jdbcType="VARCHAR" property="itemId" />
+    <result column="item_name" jdbcType="VARCHAR" property="itemName" />
+    <result column="item_order" jdbcType="INTEGER" property="itemOrder" />
+    
+    <result column="package_id" jdbcType="VARCHAR" property="packageId" />
+    
+    <result column="series_id" jdbcType="VARCHAR" property="seriesId" />
+    <result column="series_name" jdbcType="VARCHAR" property="seriesName" />
+    <result column="series_order" jdbcType="SMALLINT" property="seriesOrder" />
+    <result column="elements_name" jdbcType="VARCHAR" property="elementsName" />
+  </resultMap>
+  
+  <resultMap id="elementsResultMap" type="com.deodio.elearning.persistence.model.customize.CoursePackageItemsElementsRelBo">
+    <id column="id" jdbcType="VARCHAR" property="id" />
+    <result column="item_id" jdbcType="VARCHAR" property="itemId" />
+    <result column="course_id" jdbcType="VARCHAR" property="courseId" />
+    <result column="course_name" jdbcType="VARCHAR" property="courseName" />
+    <result column="nick_name" jdbcType="VARCHAR" property="createName" />
+    <result column="create_time" jdbcType="VARCHAR" property="createTime" />
+    <result column="course_type" jdbcType="SMALLINT" property="courseType" />
+  </resultMap>
+  
+  <select id="queryCoursePackageItemsBo" parameterType="map" resultMap="itemsResultMap">		
+	SELECT
+		series.package_id,
+		items.series_id,
+		series.series_name,
+		series.series_order,
+		items.id as item_id,
+		items.item_name,
+		items.item_order,
+		string_agg(DISTINCT course.course_name,',') as elements_name
+	FROM
+		t_course_package_series  series 
+	INNER JOIN
+		t_course_package_items items ON items.series_id = series.id AND items.package_id = series.package_id
+	LEFT JOIN
+		t_course_package_items_elements_rel elements
+			on items."id" = elements.item_id 
+	LEFT JOIN t_course course on elements.course_id = course."id" 
+	WHERE
+		series.package_id = #{packageId} and series.account_id = #{accountId}
+	GROUP BY series.package_id,series.series_name,series.series_order,items.id
+	ORDER BY 
+		series.series_order,items.item_order
+
+  </select>
+  
+  <select id="queryCoursePackageItemsElementsRelBo" parameterType="java.util.Map" resultMap="elementsResultMap">
+    SELECT
+    		related.id,
+    		related.item_id,
+		  	course.id as courseId,
+		  	course.course_name,
+		  	userInfo.nick_name,
+		  	course.create_time,
+		  	course.course_description,
+		  	course.course_type
+		FROM
+			t_course_package_items_elements_rel  related
+		INNER JOIN
+			t_course  course ON course.id = related.course_id
+		LEFT JOIN 
+			t_user userInfo ON userInfo. ID = course.create_id
+		WHERE
+			related.item_id = #{itemId} and related.account_id = #{accountId}
+	ORDER BY 
+		course.create_time
+  </select>
+  
+  <insert id="insertCoursePackageSeriesBatch" parameterType="java.util.List">
+     insert into t_course_package_series (id, package_id, series_name, 
+      create_id, create_time, update_id, 
+      update_time, series_order,account_id)
+    values 
+    <foreach collection="list" item="item"  separator="," >
+      (#{item.id,jdbcType=VARCHAR}, #{item.packageId,jdbcType=VARCHAR}, #{item.seriesName,jdbcType=VARCHAR}, 
+      #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateId,jdbcType=VARCHAR}, 
+      #{item.updateTime,jdbcType=TIMESTAMP}, #{item.seriesOrder,jdbcType=SMALLINT},#{item.accountId,jdbcType=VARCHAR})
+    </foreach> 
+  </insert>
+  
+  <delete id="delCoursePackageSeriesBatch" parameterType="java.util.Map">  
+    DELETE FROM t_course_package_series WHERE id IN  
+    <foreach collection="series" index="index" item="item" open="(" separator="," close=")">   
+        #{item.id}
+    </foreach> 
+    and account_id = #{accountId} 
+  </delete> 
+   
+   <update id="publishCoursePackage" parameterType="java.util.Map" >
+  	  update  
+  	  		t_course_package
+  	  set
+  	  		is_publish = 1
+  	  where 
+  	  		id = #{packageId}
+  	</update>
+  
+  <update id="updateCoursePackageSeriesBatch"  parameterType="java.util.List">
+	   <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+		  update t_course_package_series
+		    <set>
+		      <if test="item.packageId != null">
+		        package_id = #{item.packageId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.seriesName != null">
+		        series_name = #{item.seriesName,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createId != null">
+		        create_id = #{item.createId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createTime != null">
+		        create_time = #{item.createTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.updateId != null">
+		        update_id = #{item.updateId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.updateTime != null">
+		        update_time = #{item.updateTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.seriesOrder != null">
+		        series_order = #{item.seriesOrder,jdbcType=SMALLINT},
+		      </if>
+		    </set>
+		    where id = #{item.id,jdbcType=VARCHAR}  and account_id = #{item.accountId,jdbcType=VARCHAR}
+  		</foreach>
+  </update>
+  
+  
+  <insert id="insertCoursePackageItemsBatch" parameterType="java.util.List">
+     insert into t_course_package_items (id, package_id, series_id, 
+      item_name, item_order, create_id, 
+      create_time, update_id, update_time,account_id
+      )
+    values 
+    <foreach collection="list" item="item"  separator="," >
+      (#{item.id,jdbcType=VARCHAR}, #{item.packageId,jdbcType=VARCHAR}, #{item.seriesId,jdbcType=VARCHAR}, 
+      #{item.itemName,jdbcType=VARCHAR}, #{item.itemOrder,jdbcType=INTEGER}, #{item.createId,jdbcType=VARCHAR}, 
+      #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateId,jdbcType=VARCHAR}, #{item.updateTime,jdbcType=TIMESTAMP},#{item.accountId,jdbcType=VARCHAR}
+      )
+    </foreach> 
+  </insert>
+  
+  <delete id="delCoursePackageItemsBatch" parameterType="java.util.Map">  
+    DELETE FROM t_course_package_items WHERE id IN  
+    <foreach collection="items" index="index" item="item" open="(" separator="," close=")">   
+        #{item.id}   
+    </foreach>  
+    and account_id = #{accountId}
+  </delete>  
+  
+  <update id="updateCoursePackageItemsBatch"  parameterType="java.util.List">
+	   <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+		  update t_course_package_items
+		    <set>
+		      <if test="item.packageId != null">
+		        package_id = #{item.packageId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.seriesId != null">
+		        series_id = #{item.seriesId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.itemName != null">
+		        item_name = #{item.itemName,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.itemOrder != null">
+		        item_order = #{item.itemOrder,jdbcType=INTEGER},
+		      </if>
+		      <if test="item.createId != null">
+		        create_id = #{item.createId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createTime != null">
+		        create_time = #{item.createTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.updateId != null">
+		        update_id = #{item.updateId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.updateTime != null">
+		        update_time = #{item.updateTime,jdbcType=TIMESTAMP},
+		      </if>
+		    </set>
+		    where id = #{item.id,jdbcType=VARCHAR} and account_id = #{item.accountId}
+  		</foreach>
+  </update>
+  
+  <insert id="insertCoursePackageItemsRelBatch" parameterType="java.util.List">
+     insert into t_course_package_items_rel (id, item_front_id, item_end_id, 
+      item_rel_type, create_id, create_time, 
+      update_id, update_time,package_id)
+    values 
+    <foreach collection="list" item="item"  separator="," >
+     (#{item.id,jdbcType=VARCHAR}, #{item.itemFrontId,jdbcType=VARCHAR}, #{item.itemEndId,jdbcType=VARCHAR}, 
+      #{item.itemRelType,jdbcType=SMALLINT}, #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, 
+      #{item.updateId,jdbcType=VARCHAR}, #{item.updateTime,jdbcType=TIMESTAMP},#{item.packageId,jdbcType=VARCHAR})
+    </foreach> 
+  </insert>
+  
+  <delete id="delCoursePackageItemsRelBatch" parameterType="java.util.List">  
+    DELETE FROM t_course_package_items_rel WHERE id IN  
+    <foreach collection="list" index="index" item="item" open="(" separator="," close=")">   
+        #{item.id}   
+    </foreach>  
+  </delete>  
+  
+  <update id="updateCoursePackageItemsRelBatch"  parameterType="java.util.List">
+	   <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+		  update t_course_package_items_rel
+		    <set>
+		      <if test="item.itemFrontId != null">
+		        item_front_id = #{item.itemFrontId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.itemEndId != null">
+		        item_end_id = #{item.itemEndId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.itemRelType != null">
+		        item_rel_type = #{item.itemRelType,jdbcType=SMALLINT},
+		      </if>
+		      <if test="item.createId != null">
+		        create_id = #{item.createId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createTime != null">
+		        create_time = #{item.createTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.updateId != null">
+		        update_id = #{item.updateId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.updateTime != null">
+		        update_time = #{item.updateTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.packageId != null">
+		        package_id = #{item.packageId,jdbcType=VARCHAR},
+		      </if>
+		    </set>
+		    where id = #{item.id,jdbcType=VARCHAR}
+  		</foreach>
+  </update>
+  
+  <insert id="insertCoursePackageItemsElementsRelBatch" parameterType="java.util.List">
+     insert into t_course_package_items_elements_rel (id, item_id, course_id, 
+      create_id, create_time, update_id, 
+      update_time,account_id)
+    values 
+    <foreach collection="list" item="item"  separator="," >
+     (#{item.id,jdbcType=VARCHAR}, #{item.itemId,jdbcType=VARCHAR}, #{item.courseId,jdbcType=VARCHAR}, 
+      #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateId,jdbcType=VARCHAR}, 
+      #{item.updateTime,jdbcType=TIMESTAMP},#{item.accountId,jdbcType=VARCHAR})
+    </foreach> 
+  </insert>
+  
+  <delete id="delCoursePackageItemsElementsRelBatch" parameterType="java.util.Map">  
+    DELETE FROM t_course_package_items_elements_rel WHERE id IN  
+    <foreach collection="elements" index="index" item="item" open="(" separator="," close=")">   
+        #{item.id}   
+    </foreach>  
+    AND account_id = #{accountId}
+  </delete>  
+  
+  <update id="updateCoursePackageItemsElementsRelBatch"  parameterType="java.util.List">
+	   <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+		  update t_course_package_items_elements_rel
+		    <set>
+		      <if test="item.itemId != null">
+		        item_id = #{item.itemId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.courseId != null">
+		        course_id = #{item.courseId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createId != null">
+		        create_id = #{item.createId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.createTime != null">
+		        create_time = #{item.createTime,jdbcType=TIMESTAMP},
+		      </if>
+		      <if test="item.updateId != null">
+		        update_id = #{item.updateId,jdbcType=VARCHAR},
+		      </if>
+		      <if test="item.updateTime != null">
+		        update_time = #{item.updateTime,jdbcType=TIMESTAMP},
+		      </if>
+		    </set>
+		    where id = #{item.id,jdbcType=VARCHAR} and account_id = #{item.accountId}
+  		</foreach>
+  </update>
+  
+   <!-- 设置course信息 - 获取详细信息（关联查询图片路径） -->
+	 <select id="findCoursePackageList" parameterType="java.util.Map"  resultType="java.util.Map">
+		 SELECT
+			package.*,
+			att.ID attachment_id,
+			att.attach_dir,
+			att.attach_url,
+			att.rel_id,
+			att.attach_name,
+			att.attach_ext,
+			att.attach_type,
+			att.generate_name,
+			(select count(t_course_package_items.id) from t_course_package_items where t_course_package_items.package_id = package.id group by t_course_package_items.package_id) as course_num,
+			(
+				SELECT
+					string_agg(tgs.tag_name,',')
+				FROM
+					t_tags tgs
+				WHERE
+					tgs. ID IN (
+						SELECT
+							tgsrel.tags_id
+						FROM
+							t_tags_items_rel tgsrel
+						WHERE
+							tgsrel.item_id = package.ID
+						and tgsrel.item_type = #{itemType}
+					)
+			) tag_name,
+			userInfo.nick_name
+		FROM
+			t_course_package package 
+			
+		left join t_user userInfo on package.create_id = userInfo.id
+		LEFT JOIN t_attachment att on package.id = att.rel_id
+		where 
+			1 = 1
+		<if test="accountId != null">
+			and package.account_id = #{accountId,jdbcType=VARCHAR}
+		</if>
+		<if test="classificationIdList != null">
+			and package.ID IN (
+				SELECT
+					rel.item_id
+				FROM
+					t_classification_items_rel rel
+				WHERE
+					rel.classification_id in <foreach collection="classificationIdList" item="item" open="(" separator=","  close=")">
+				        #{item}
+				    </foreach>
+				    and rel.item_type = #{itemType}
+			)
+		</if>
+		<if test="tagIdList != null">
+			and package.ID IN (
+				SELECT
+					tag.item_id
+				FROM
+					t_tags_items_rel tag
+				WHERE
+					tag.tags_id in <foreach collection="tagIdList" item="item" open="(" separator=","  close=")">
+				        #{item}
+				    </foreach>
+				     and tag.item_type = #{itemType}
+			)
+		</if>
+		order by package.create_time DESC
+	 </select>
+  
+
+</mapper>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view:Points xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			 xmlns:s="library://ns.adobe.com/flex/spark" 
+			 xmlns:mx="library://ns.adobe.com/flex/mx" xmlns:view="com.deodio.elearning.module.player.sync.view.*" creationComplete="init()" width="400" height="300">
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.customize.PresentationSyncQuizsBo;
+			import com.deodio.elearning.libs.event.PointsEvent;
+			
+			[Bindable]
+			public var point:PresentationSyncQuizsBo;
+			  
+			[Bindable]
+			[Embed(source="/assets/manage/quiz-bg.png")]
+			private var quizImage:Class;
+			
+			override public function onDeleteHandler():void{
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_REMOVE_POINT, this));
+			}
+			
+			override public function onPreview():void{
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_PRVIEW_POINT,this));
+			}
+			
+			override public function onPrevious():void{
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_PREVIOUS_POINT,this));
+			}
+			
+			override public function onNext():void{
+				this.dispatchEvent(new PointsEvent(PointsEvent.POINT_NEXT_POINT,this));
+			}
+			
+			private function init():void{
+				this.btnPre.visible = this.btnPre.includeInLayout = true;
+				this.isRecord = false;
+				this.isMicphone = false;
+				this.sync.source = quizImage;
+			}
+			
+			public function setQuizPointsTips(currentPage:Number,totalPage:Number):void{
+				this.btnPrevious.visible = this.btnPrevious.includeInLayout = totalPage > 1;
+				this.btnNext.visible = this.btnNext.includeInLayout = totalPage > 1;
+				this.btnPage.visible = this.btnPage.includeInLayout = totalPage > 1;
+				this.btnPage.text = currentPage + "/" + totalPage;
+			}
+			
+		]]>
+	</fx:Script>
+</view:Points>

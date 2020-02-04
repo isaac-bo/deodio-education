@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.AttachmentCustomizeMapper">
+
+	<resultMap id="attachmentResultMap" type="java.util.HashMap">
+		<!-- 公用部分 -->
+	    <id column="id" jdbcType="VARCHAR" property="id" />
+	    <result column="attach_dir" jdbcType="VARCHAR" property="attachDir" />
+	    <result column="attach_url" jdbcType="VARCHAR" property="attachUrl" />
+	    <result column="rel_id" jdbcType="VARCHAR" property="relId" />
+	    <result column="attach_name" jdbcType="VARCHAR" property="attachName" />
+	    <result column="attach_ext" jdbcType="VARCHAR" property="attachExt" />
+	    <result column="attach_type" jdbcType="VARCHAR" property="attachType" />
+	    <result column="create_id" jdbcType="VARCHAR" property="createId" />
+	    <result column="update_id" jdbcType="VARCHAR" property="updateId" />
+	    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+	    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+	    <result column="generate_name" jdbcType="VARCHAR" property="generateName" />
+	    <result column="attach_size" jdbcType="INTEGER" property="attachSize" />
+	    
+	    <!-- media独有部分 -->
+	    <result column="item_convert_status" jdbcType="INTEGER" property="itemConvertStatus" />
+	    <result column="item_job_id" jdbcType="VARCHAR" property="itemJobId" />
+	    <result column="media_length" jdbcType="VARCHAR" property="mediaLength" />
+  	</resultMap>
+
+	<insert id="insertSlidesBatch" parameterType="java.util.Map">
+		INSERT INTO 
+			t_attachment_slides_item (id, slide_id, slide_name, 
+	      		slide_size, slide_ext, slide_url, slide_dir, slide_order, create_id, 
+	      		create_time,slide_original_name)
+	    VALUES
+	    <foreach collection="list" index="index" item="item" separator="," >
+	    	(#{item.id,jdbcType=VARCHAR}, #{item.slideId,jdbcType=VARCHAR}, #{item.slideName,jdbcType=VARCHAR}, 
+		     #{item.slideSize,jdbcType=BIGINT}, #{item.slideExt,jdbcType=VARCHAR}, #{item.slideUrl,jdbcType=VARCHAR}, 
+		     #{item.slideDir,jdbcType=VARCHAR}, #{item.slideOrder,jdbcType=INTEGER}, #{item.createId,jdbcType=VARCHAR}, 
+		     #{item.createTime,jdbcType=TIMESTAMP},#{item.slideOriginalName,jdbcType=VARCHAR})
+	    </foreach>
+	</insert>
+	
+	<insert id="insertMediaBatch" parameterType="java.util.Map">
+		INSERT INTO t_attachment_media_item (id, media_id, item_name, 
+	      item_size, item_ext, item_url, 
+	      item_dir, item_length, item_type, 
+	      item_order, item_cover, item_start, 
+	      item_end, item_width, item_height, 
+	      create_id, create_time, update_id, 
+	      update_time, item_original_name, item_convert_status, 
+	      item_job_id)
+	    VALUES
+	    <foreach collection="list" index="index" item="item" separator="," > 
+	    (#{item.id,jdbcType=VARCHAR}, #{item.mediaId,jdbcType=VARCHAR}, #{item.itemName,jdbcType=VARCHAR}, 
+	      #{item.itemSize,jdbcType=BIGINT}, #{item.itemExt,jdbcType=VARCHAR}, #{item.itemUrl,jdbcType=VARCHAR}, 
+	      #{item.itemDir,jdbcType=VARCHAR}, #{item.itemLength,jdbcType=BIGINT}, #{item.itemType,jdbcType=INTEGER}, 
+	      #{item.itemOrder,jdbcType=INTEGER}, #{item.itemCover,jdbcType=VARCHAR}, #{item.itemStart,jdbcType=BIGINT}, 
+	      #{item.itemEnd,jdbcType=BIGINT}, #{item.itemWidth,jdbcType=INTEGER}, #{item.itemHeight,jdbcType=INTEGER}, 
+	      #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateId,jdbcType=VARCHAR}, 
+	      #{item.updateTime,jdbcType=TIMESTAMP}, #{item.itemOriginalName,jdbcType=VARCHAR}, #{item.itemConvertStatus,jdbcType=INTEGER}, 
+	      #{item.itemJobId,jdbcType=VARCHAR})
+	     </foreach>
+	</insert>
+	
+	<insert id="insertScromBatch" parameterType="java.util.Map">
+		INSERT INTO t_attachment_scrom_item (id, identifier, type, 
+	      title, launch, mastery_score,sequence, the_level, identifierref, 
+	      create_id, create_time, update_id,update_time, scrom_id)
+	    VALUES 
+	    <foreach collection="list" index="index" item="item" separator="," >
+	    (#{item.id,jdbcType=VARCHAR}, #{item.identifier,jdbcType=VARCHAR}, #{item.type,jdbcType=VARCHAR}, 
+	      #{item.title,jdbcType=VARCHAR}, #{item.launch,jdbcType=VARCHAR}, #{item.masteryScore,jdbcType=VARCHAR}, 
+	      #{item.sequence,jdbcType=BIGINT}, #{item.theLevel,jdbcType=BIGINT}, #{item.identifierref,jdbcType=VARCHAR}, 
+	      #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, #{item.updateId,jdbcType=VARCHAR}, 
+	      #{item.updateTime,jdbcType=TIMESTAMP}, #{item.scromId,jdbcType=VARCHAR})
+	     </foreach>
+	</insert>
+	
+	<insert id="insertPackageBatch" parameterType="java.util.Map">
+		INSERT INTO t_attachment_package_item (id, create_id, create_time, 
+	      update_id, update_time, package_generate_name, 
+	      package_name, package_id, package_size, 
+	      package_ext, package_url, package_dir
+	      )
+	    VALUES 
+	    <foreach collection="list" index="index" item="item" separator="," > 
+	     (#{item.id,jdbcType=VARCHAR}, #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, 
+	      #{item.updateId,jdbcType=VARCHAR}, #{item.updateTime,jdbcType=TIMESTAMP}, #{item.packageGenerateName,jdbcType=VARCHAR}, 
+	      #{item.packageName,jdbcType=VARCHAR}, #{item.packageId,jdbcType=VARCHAR}, #{item.packageSize,jdbcType=BIGINT}, 
+	      #{item.packageExt,jdbcType=VARCHAR}, #{item.packageUrl,jdbcType=VARCHAR}, #{item.packageDir,jdbcType=VARCHAR}
+	      )
+	    </foreach>
+	</insert>
+	
+	<insert id="insertAttachmentItemRel" parameterType="java.util.Map" >
+    	INSERT INTO 
+    		t_attachment_items_rel (id, attachment_id, item_id, 
+	      	item_type, create_id, create_time, account_id
+	    )
+    	VALUES (#{id,jdbcType=VARCHAR}, #{attachmentId,jdbcType=VARCHAR}, #{itemId,jdbcType=VARCHAR}, 
+      	#{itemType,jdbcType=INTEGER}, #{userId,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP},#{accountId,jdbcType=VARCHAR}
+      	)
+  	</insert>
+  	<!-- 查询上传附件与制定Item 的关联数据是否存在 -->
+  	<select id="selectAttachmentItemRelByAttachmentAndItem" parameterType="java.util.Map" resultType="java.lang.Integer">
+  		SELECT 
+  			count(id)
+  		FROM
+  			t_attachment_items_rel
+  		WHERE
+  			attachment_id = #{attachmentId}
+  		AND
+  			item_id = #{itemId}
+  	</select >
+  	
+  	<select id = "selectAttachmentByItem" parameterType="java.util.Map" resultMap="attachmentResultMap">
+  		SELECT 
+  			t_attachment.*,
+  			t_attachment_items_rel.item_id
+  		<if test="itemType == 54">
+  			,t_attachment_media_item.item_convert_status
+  			,t_attachment_media_item.item_job_id
+  		</if>	
+  			
+  		FROM
+  			t_attachment_items_rel
+  		INNER JOIN
+  			t_attachment on
+  				t_attachment_items_rel.attachment_id = t_attachment.id  and t_attachment_items_rel.item_id = #{itemId}  and t_attachment.attach_type = #{itemType}
+  		<if test="itemType == 54"> <!-- 多媒体 -->
+  		INNER JOIN
+  				t_attachment_media_item ON
+  					t_attachment.id = t_attachment_media_item.media_id
+  		</if>
+  		<if test="itemType == 53"> <!-- ppt -->
+  		WHERE EXISTS(
+  			SELECT 1 FROM t_attachment_slides_item WHERE
+  				t_attachment.id = t_attachment_slides_item.slide_id 
+  		)
+  		</if>
+  		<if test="itemType == 51"> <!-- 压缩包 -->
+  		WHERE EXISTS(
+  			SELECT 1 FROM t_attachment_package_item WHERE
+  				t_attachment.id = t_attachment_package_item.package_id
+  		)		 
+  		</if>
+  		<if test="itemType == 50">	<!-- scorm 课件 -->
+  		WHERE EXISTS(
+  			SELECT 1 FROM t_attachment_scrom_item WHERE
+  				t_attachment.id = t_attachment_scrom_item.scrom_id
+  		) 
+  		</if>
+  	</select>
+  	
+  	<!-- 删除附件关联关系 -->
+  	<delete id="deleteAttachmentItemRel" parameterType="java.util.Map">
+  		DELETE	FROM  
+  			t_attachment_items_rel 
+  		WHERE 
+  			item_id = #{itemId}  
+  		AND 
+  			create_id = #{userId}
+  		<if test="attachmentId != null and attachmentId != ''">
+  		AND 
+  			attachment_id = #{attachmentId}
+  		</if>
+  	</delete>
+  	
+  	
+  	 <select id="findAttachmentNotSelected" parameterType="java.util.Map"  resultMap="attachmentResultMap">
+	  	  SELECT 
+		  	  t_attachment.*
+		  <if test="itemType == 54">
+		  	  ,t_attachment_model_media.media_length
+		  </if>
+	      FROM 
+	      	t_attachment	
+	      <if test="itemType == 54">
+		  INNER JOIN  
+		  	t_attachment_model_media  on t_attachment.id = t_attachment_model_media.media_id  
+		  </if>	
+	      WHERE 
+	      	1=1 
+	      AND 
+	      	t_attachment.attach_type = #{itemType}
+	      AND 
+	      	t_attachment.create_id = #{userId}
+	      <if test="itemName != null and itemName != '' ">
+	      	AND t_attachment.attach_name like CONCAT('%',#{itemName},'%' ) 
+	      </if>
+	      <if test="itemId != null">
+	      	AND NOT EXISTS (
+	      			SELECT 
+	      				1 
+	      			FROM 
+	      				t_attachment_items_rel 
+	      			WHERE 
+	      				t_attachment_items_rel.attachment_id = t_attachment.id 
+	      			AND 
+	      				t_attachment_items_rel.item_id = #{itemId}  
+	      	) 
+	      </if>
+	      AND EXISTS(
+	      	   SELECT 1 FROM 
+		      <if test="itemType == 54">
+		  		<!--  t_attachment_model_media 
+		  	  INNER JOIN   -->
+		  	  <!-- 已转码完毕的媒体 -->
+		  	  		t_attachment_media_item 
+		  	  	 <!-- on t_attachment_model_media.media_id = t_attachment_media_item.media_id -->
+		  	  WHERE
+		  			t_attachment.id = t_attachment_media_item.media_id  
+		  	  </if>	
+		  	  <if test="itemType == 50">
+		  	  	 <!-- 已解压的scrom -->
+		  	  	 t_attachment_scrom_item 
+		  	  WHERE
+		  	  	 	t_attachment.id = t_attachment_scrom_item.scrom_id 
+		  	  </if>	
+		  	  <if test="itemType == 51">
+		  	  <!-- 已解压的package-->
+		  	  	 t_attachment_package_item 
+		  	  WHERE
+		  	  	 	t_attachment.id = t_attachment_package_item.package_id 
+		  	  </if>	
+		  	  <if test="itemType == 53">
+		  	  <!-- 已转化的slides-->
+		  	  	 t_attachment_slides_item 
+		  	  WHERE
+		  	  		t_attachment.id = t_attachment_slides_item.slide_id 
+		  	  </if>	
+	      )
+	      order by t_attachment.create_time desc
+  	</select>
+  	
+  	<insert id="insertAttachmentItemRelBatch" parameterType="java.util.Map" >
+    	INSERT INTO 
+    		t_attachment_items_rel (id,attachment_id,item_id,item_type,create_id,create_time,account_id
+	    )
+    	VALUES 
+    	<foreach collection="list" index="index" item="item" separator="," >
+	    	(#{item.id,jdbcType=VARCHAR}, #{item.attachmentId,jdbcType=VARCHAR}, #{item.itemId,jdbcType=VARCHAR},
+	    	#{item.itemType,jdbcType=INTEGER}, #{userId,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP},#{accountId,jdbcType=VARCHAR}
+	      	)
+      	</foreach>
+  	</insert>
+  	
+  	<!-- 查询附件处理后文件的具体设定值 -->
+  	<select id="queryAttachmentItemSetting" parameterType="java.util.Map" resultType="java.util.Map">
+  		SELECT
+  		<if test="fileItemType == 51">
+			t_attachment_package_item."id" as file_id,
+			t_attachment_package_item.package_name as file_name,
+		</if>
+		<if test="fileItemType == 50">
+			t_attachment_scrom_item."id" as file_id,
+			t_attachment_scrom_item.title as file_name,
+			t_attachment_scrom_item.identifier,
+			t_attachment_scrom_item.launch,
+			t_attachment_scrom_item.title,
+		</if>
+			t_attachment_file_item_rel.count_down
+		FROM
+			t_attachment_items_rel
+		<if test="fileItemType == 51">
+			INNER JOIN
+				t_attachment_package_item on t_attachment_items_rel.attachment_id = t_attachment_package_item.package_id
+		</if>
+		<if test="fileItemType == 50">
+			INNER JOIN
+				t_attachment_scrom_item on t_attachment_items_rel.attachment_id = t_attachment_scrom_item.scrom_id
+			AND
+				t_attachment_scrom_item.launch is not null 
+		</if>
+		
+		LEFT JOIN
+			t_attachment_file_item_rel on t_attachment_items_rel.item_id = t_attachment_file_item_rel.item_id
+		<if test="fileItemType == 51">	
+			AND	t_attachment_package_item."id" = t_attachment_file_item_rel.file_item_id
+		</if>
+		<if test="fileItemType == 50">	
+			AND	t_attachment_scrom_item."id" = t_attachment_file_item_rel.file_item_id
+		</if>
+		
+		WHERE
+			t_attachment_items_rel.item_id = #{itemId}
+  	</select>
+  	
+  	<insert id="insertAttachmentItemSettingBatch" parameterType="java.util.List">
+  		INSERT INTO t_attachment_file_item_rel (id, create_id, create_time,file_item_id, 
+	      item_id, item_type, count_down,file_item_type)
+	    VALUES 
+	    <foreach collection="list" index="index" item="item" separator="," >
+	      (#{item.id,jdbcType=VARCHAR}, #{item.createId,jdbcType=VARCHAR}, #{item.createTime,jdbcType=TIMESTAMP}, 
+	      #{item.fileItemId,jdbcType=VARCHAR},#{item.itemId,jdbcType=VARCHAR}, #{item.itemType,jdbcType=SMALLINT}, #{item.countDown,jdbcType=INTEGER}, 
+	      #{item.fileItemType,jdbcType=SMALLINT})
+  		</foreach>
+  	</insert>
+  	
+  	<delete id="deleteAttachmentItemSetting">
+  		delete from t_attachment_file_item_rel where item_id = #{itemId} and create_id = #{userId}
+  	</delete>
+  	
+  	<select id="queryAttachmentItems" parameterType="java.util.Map" resultType="java.util.Map">
+  		SELECT
+  			<!-- package 文件 -->
+  			<if test="attachType == '51'">
+  				t_attachment_package_item.*
+  			</if>
+  			<!-- scorm文件 -->
+  			<if test=" attachType == '50'">
+  				t_attachment_scrom_item.*
+  			</if>
+  			<if test="attachType == '53'">
+  				t_attachment_slides_item.*
+  			</if>
+  			<if test="attachType == '54'">
+  				t_attachment_media_item.*
+  			</if>
+		FROM	
+			t_attachment 
+		INNER JOIN 
+			t_attachment_items_rel ON t_attachment."id" = t_attachment_items_rel.attachment_id
+		INNER JOIN
+			<if test="attachType == '51'">
+				t_attachment_package_item on t_attachment_items_rel.attachment_id = t_attachment_package_item.package_id
+			</if>
+			<if test="attachType == '50'">
+				t_attachment_scrom_item on t_attachment_items_rel.attachment_id = t_attachment_scrom_item.scrom_id
+			</if>
+			<if test="attachType == '53'">
+				t_attachment_slides_item on t_attachment_items_rel.attachment_id = t_attachment_slides_item.slide_id
+			</if>
+			<if test="attachType == '54'">
+				t_attachment_media_item on t_attachment_items_rel.attachment_id = t_attachment_media_item.media_id
+			</if>
+		WHERE
+			t_attachment_items_rel.item_id = #{itemId} 
+		AND
+			t_attachment.attach_type = #{attachType}
+		ORDER BY
+			id
+  	</select>
+	
+</mapper>

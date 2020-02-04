@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.QuizCustomizeMapper">
+ 
+ <insert id="insertQuizSubject" parameterType="java.util.List">
+ 		INSERT INTO t_quiz_subject (id,quiz_subject_name,create_time,create_id,account_id,quiz_subject_type,quiz_subject_from,quiz_subject_answer)
+    VALUES 
+    <foreach collection="list" item="item"  separator="," >
+        (#{item.id},#{item.quizSubjectName},#{item.createTime},#{item.createId},#{item.accountId},
+        #{item.quizSubjectType},#{item.quizSubjectFrom},#{item.quizSubjectAnswer})
+    </foreach>
+ </insert>
+ 
+  <insert id="insertQuizItems" parameterType="java.util.List">
+ 		INSERT INTO t_quiz_items (id,quiz_item_name,quiz_item_order,create_time,
+ 		create_id,quiz_subject_id)
+    VALUES 
+    <foreach collection="list" item="item"  separator="," >
+        (#{item.id},#{item.quizItemName},#{item.quizItemOrder},#{item.createTime},#{item.createId},
+        #{item.quizSubjectId})
+    </foreach>
+ </insert>
+ 
+ 
+  <insert id="insertQuizSubjectRel" parameterType="java.util.List">
+ 		INSERT INTO t_quiz_subject_rel (id,quiz_subject_id,quiz_id,
+ 		create_id,account_id,create_time)
+    VALUES 
+    <foreach collection="list" item="item"  separator="," >
+        (#{item.id},#{item.quizSubjectId},#{item.quizId},#{item.createId},#{item.accountId},#{item.createTime})
+    </foreach>
+ </insert>
+ 
+ 
+ 
+ <select id="getPreviewQuizExamination" parameterType="java.lang.String" resultType="java.util.Map">
+ 
+ SELECT
+ 		t2.id,
+	t2.quiz_subject_type,
+	t2.quiz_subject_name,
+	t1.quiz_subject_order,
+	string_agg (
+		t3.quiz_item_name,
+		'#'
+	ORDER BY
+		t3.quiz_item_order ASC
+	) AS item_options,
+t2.quiz_subject_answer
+FROM
+	t_quiz_subject_rel t1,
+	t_quiz_subject t2
+LEFT JOIN t_quiz_items t3 ON t2.id = t3.quiz_subject_id
+WHERE
+	t1.quiz_subject_id = t2.id
+AND t1.quiz_id = #{quizId}
+GROUP BY
+		t2.id,
+	t2.quiz_subject_type,
+	t2.quiz_subject_name,
+	t1.quiz_subject_order,
+t2.quiz_subject_answer
+ORDER BY
+	t1.quiz_subject_order ASC
+ 
+ </select>
+ 
+ 
+ <select id="getClassiFication"  parameterType="java.util.Map" resultType="com.deodio.elearning.persistence.model.Tags">
+SELECT DISTINCT 
+	t2.id,
+	t2.classification_name as tagName
+FROM
+	t_quiz_banks t1,
+	t_classification t2
+WHERE
+	t1.classification_id = t2.ID and t1.account_id=#{accountId} and t1.create_id =#{userId}
+ 
+ </select>
+ 
+  <select id="getSubjctCount"  parameterType="java.util.List" resultType="java.util.Map">
+SELECT  quiz_subject_type,
+sum(typeCount) as sumnum
+from (SELECT
+	quiz_bank_id,
+	quiz_subject_type,
+	count(quiz_subject_type) typeCount
+FROM
+	t_quiz_subject
+ where quiz_bank_id in   
+ <foreach collection="list" item="item"  open="(" separator="," close=")" >
+        #{item}
+    </foreach>
+GROUP BY 
+quiz_bank_id,
+quiz_subject_type) t GROUP BY quiz_subject_type ORDER BY  quiz_subject_type ASC
+ 
+ </select>
+ 
+ 
+</mapper>

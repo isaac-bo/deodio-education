@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.SurveyCustomizeMapper">
+	
+	<insert id="insertsurveySubject" parameterType="java.util.List">
+		INSERT INTO t_survey_subject
+		(id,survey_subject,create_time,create_id,survey_id,survey_subject_type,survey_subject_order)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.surveySubject},#{item.createTime},#{item.createId},
+			#{item.surveyId},
+			#{item.surveySubjectType},#{item.surveySubjectOrder})
+		</foreach>
+	</insert>
+
+
+	<insert id="insertSurveyItems" parameterType="java.util.List">
+		INSERT INTO t_survey_items
+		(id,survey_items_name,survey_items_order,create_id,create_time,survey_subject_id)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.surveyItemsName},#{item.surveyItemsOrder},#{item.createId},#{item.createTime},
+			#{item.surveySubjectId})
+		</foreach>
+	</insert>
+
+	<select id="getGroupSurvey" resultType="java.lang.String"
+		parameterType="java.lang.String">
+		SELECT t1.id from t_survey t1,t_group_survey t2 where t1.id = t2.survey_id
+		and t2.group_id=#{groupid} and t2.type=1
+	</select>
+
+
+	<delete id="deleteSurveyItems" parameterType="java.lang.String">
+		DELETE FROM t_survey_items WHERE survey_subject_id in (SELECT id from
+		t_survey_subject where survey_id=#{surveyId})
+
+	</delete>
+
+
+	<select id="getSurveyList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		t1.survey_id,
+		t3.id as survey_subject_id,
+		t3.survey_subject,
+		t3.survey_subject_type,
+		t3.survey_subject_order,
+		string_agg(t2.survey_items_name,'#' order by t2.survey_items_order ASC) as item_options
+		FROM
+		t_group_survey t1,
+		t_survey_items t2,
+		t_survey_subject t3
+		WHERE
+		t1.survey_id = t3.survey_id and t3.id = t2.survey_subject_id and
+		t1.group_id=#{groupId} and t1.type=#{type}
+		GROUP BY
+		t1.survey_id,t3.id,t3.survey_subject,t3.survey_subject_type,t3.survey_subject_order
+		ORDER BY t3.survey_subject_order ASC
+
+
+	</select>
+
+	<select id="findSurveyList" parameterType="java.util.Map" resultType="java.util.Map">
+		select t_survey.*,
+			case when t_user.nick_name is null then
+				concat(t_user.first_name,'.',t_user.last_name)
+			else t_user.nick_name end as username,
+			count(t_survey_subject.survey_id) as surveynum
+		from t_survey
+  		inner join t_user
+			on t_user.id = t_survey.create_id
+			and t_survey.account_id = #{accountId}
+			<if test="keywords!=null">
+				and t_survey.survey_name like CONCAT('%','${keywords}','%')
+			</if>
+   		left join t_survey_subject
+		  	on t_survey.id = t_survey_subject.survey_id
+		group by t_survey.id,username
+		ORDER BY t_survey.create_time DESC
+	</select>
+
+	<select id="getSubjectAndItems" parameterType="java.util.Map" resultType="java.util.Map">
+			
+		SELECT
+			t_survey.*, t_survey_subject. ID AS subject_id,
+			t_survey_subject.survey_subject,
+			t_survey_subject.survey_subject_order,
+			t_survey_subject.survey_subject_type,
+			t_survey_subject.survey_id,
+			string_agg (
+				t_survey_items.survey_items_name,
+				'#'
+			ORDER BY
+				t_survey_items.survey_items_order ASC
+			) AS item_options
+		FROM
+			t_survey
+		LEFT JOIN t_survey_subject ON t_survey. ID = t_survey_subject.survey_id
+		LEFT JOIN t_survey_items ON t_survey_subject. ID = t_survey_items.survey_subject_id
+		WHERE
+			t_survey. ID = #{surveyId}
+					AND t_survey. account_id = #{accountId}
+		GROUP BY
+			t_survey. ID,
+			t_survey_subject. ID
+		ORDER BY
+			t_survey_subject.survey_subject_order	
+	</select>
+
+	<select id="deleteItemsBySurveyId" parameterType="java.lang.String" resultType="java.util.Map">
+		DELETE
+		FROM
+			t_survey_items
+		WHERE
+			t_survey_items.survey_subject_id IN (
+				SELECT
+					t_survey_subject. ID
+				FROM
+					t_survey_subject
+				WHERE
+					t_survey_subject.survey_id = #{surveyId}
+			)
+	</select>
+</mapper>

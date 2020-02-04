@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.DiscussionModelCustomizeMapper" >
+  <resultMap id="BaseResultMap" type="com.deodio.elearning.persistence.model.customize.DiscussionModelBo" >
+    <id column="id" property="id" jdbcType="VARCHAR" />
+    <result column="account_id" property="accountId" jdbcType="VARCHAR" />
+    <result column="discussion_text" property="discussionText" jdbcType="VARCHAR" />
+    <result column="course_id" property="courseId" jdbcType="VARCHAR" />
+    <result column="related_id" property="relatedId" jdbcType="VARCHAR" />
+    <result column="agree_num" property="agreeNum" jdbcType="INTEGER" />
+    <result column="reply_num" property="replyNum" jdbcType="INTEGER" />
+    <result column="scan_num" property="scanNum" jdbcType="INTEGER" />
+    <result column="create_id" property="createId" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_id" property="updateId" jdbcType="VARCHAR" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+	<result column="user_icon" property="userIcon" jdbcType="VARCHAR" />
+	<result column="attach_url" property="attachUrl" jdbcType="VARCHAR" />
+    
+   	<collection column="id" property="replys" ofType="com.deodio.elearning.persistence.model.customize.DiscussionModelBo" select="queryCourseDiscussionReplyTopThree" />
+  </resultMap>
+  
+  	<!-- 查询课程评论列表 -->
+  <select id="queryCourseDiscussionList" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    SELECT
+		t_discussion.id,
+		t_discussion.create_time,
+		t_discussion.discussion_text,
+		t_discussion.agree_num,
+		t_discussion.reply_num,
+		t_discussion.scan_num,
+		t_user.nick_name,
+		t_user.user_icon,
+		t_attachment.attach_url
+		
+	FROM
+		t_discussion
+	INNER JOIN 
+		t_user on  t_user.id = t_discussion.create_id and t_discussion.related_id is NULL
+	LEFT JOIN
+		t_attachment ON t_attachment.generate_name = t_user.user_icon
+	WHERE
+		t_discussion.course_id = #{courseId}
+	AND
+		t_discussion.account_id = #{accountId}
+	ORDER BY
+		t_discussion.create_time  desc
+  </select>
+  
+  <select id="queryCourseDiscussionReplyTopThree" resultMap="BaseResultMap" parameterType="java.lang.String" >
+  	SELECT
+		<!-- reply_discussion.id , -->
+		reply_discussion.create_time ,
+		reply_discussion.discussion_text ,
+		reply_user.nick_name ,
+		reply_user.user_icon ,
+		reply_attachment.attach_url 
+	FROM
+		t_discussion reply_discussion
+	LEFT JOIN 
+		t_user reply_user on  reply_user.id = reply_discussion.create_id 
+	LEFT JOIN
+		t_attachment reply_attachment ON reply_attachment.generate_name = reply_user.user_icon
+	WHERE
+		 reply_discussion.related_id = #{discussionId}
+	ORDER BY
+		reply_discussion.create_time  desc
+   	LIMIT 3
+  </select>
+  
+  <select id="queryCourseDiscussionReplys" resultMap="BaseResultMap" parameterType="java.util.Map" >
+  	SELECT
+		reply_discussion.id ,
+		reply_discussion.create_time ,
+		reply_discussion.discussion_text ,
+		reply_user.nick_name ,
+		reply_user.user_icon ,
+		reply_attachment.attach_url 
+	FROM
+		t_discussion reply_discussion
+	LEFT JOIN 
+		t_user reply_user on  reply_user.id = reply_discussion.create_id 
+	LEFT JOIN
+		t_attachment reply_attachment ON reply_attachment.generate_name = reply_user.user_icon
+	WHERE
+		 reply_discussion.related_id = #{discussionId}
+	ORDER BY
+		reply_discussion.create_time  desc
+  </select>
+  
+  
+  <!-- <select id="queryCourseDiscussionList" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    SELECT
+		t_discussion.id,
+		t_discussion.create_time,
+		t_discussion.discussion_text,
+		t_discussion.agree_num,
+		t_discussion.reply_num,
+		t_discussion.scan_num,
+		t_user.nick_name,
+		t_user.user_icon,
+		t_attachment.attach_url,
+		
+		reply_discussion.id as reply_id,
+		reply_discussion.create_time as reply_create_time,
+		reply_discussion.discussion_text as reply_discussion_text,
+		reply_user.nick_name as reply_nick_name,
+		reply_user.user_icon as reply_user_icon,
+		reply_attachment.attach_url as reply_attach_url
+	FROM
+		t_discussion
+	INNER JOIN 
+		t_user on  t_user.id = t_discussion.create_id and t_discussion.related_id is NULL
+	LEFT JOIN
+		t_attachment ON t_attachment.generate_name = t_user.user_icon
+	LEFT JOIN
+		t_discussion reply_discussion  on reply_discussion.related_id = t_discussion."id"
+	LEFT JOIN 
+		t_user reply_user on  reply_user.id = reply_discussion.create_id 
+	LEFT JOIN
+		t_attachment reply_attachment ON reply_attachment.generate_name = reply_user.user_icon
+	WHERE
+		t_discussion.course_id = #{courseId}
+	AND
+		t_discussion.account_id = #{accountId}
+	ORDER BY
+		t_discussion.create_time  desc
+  </select> -->
+  
+  <!-- 更新课程评论回复次数 -->
+  <update id="updateCourseDiscussionReplyNum" parameterType="java.util.Map">
+  	UPDATE
+  		t_discussion
+  	SET
+  		reply_num = reply_num + 1,
+  		update_id = #{userId},
+  		update_time = now()
+  	WHERE
+  		id = #{discussionId}
+  	AND
+  		account_id = #{accountId}
+  	
+  </update>
+  <!-- 更新课程评论赞同次数 -->
+  <update id="updateCourseDiscussionAgreeNum" parameterType="java.util.Map">
+  	UPDATE
+  		t_discussion
+  	SET
+  		agree_num = agree_num + 1,
+  		update_id = #{userId},
+  		update_time = now()
+  	WHERE
+  		id = #{discussionId}
+  	AND
+  		account_id = #{accountId}
+  	
+  </update>
+</mapper>

@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.AccountCustomizeMapper">
+
+<resultMap type="com.deodio.elearning.persistence.model.customize.GroupRoleRelBo" id="groupRoleRelResultMap">
+	<result column="group_role_id" jdbcType="VARCHAR" property="groupRoleId" />
+    <result column="group_role_name" jdbcType="VARCHAR" property="groupRoleName" />
+    <result column="has_leader" jdbcType="SMALLINT" property="hasLeader" />
+    <result column="group_id" jdbcType="VARCHAR" property="groupId" />
+    <result column="group_name" jdbcType="VARCHAR" property="groupName" />
+    <result column="group_description" jdbcType="VARCHAR" property="groupDescription" />
+    <result column="account_id" jdbcType="VARCHAR" property="accountId" />
+</resultMap>
+
+<select id="getLoginAccountList" parameterType="java.util.Map" resultType="java.util.Map">
+	<!-- SELECT DISTINCT
+	t.account_id,
+	t.nick_name
+	FROM
+	(
+		SELECT
+			t1.account_id,
+			t3.nick_name
+		FROM
+			t_user_account_rel t1
+		INNER JOIN t_account t2 ON t1.account_id = t2. ID
+		INNER JOIN t_user t3 ON t2.owner_id = t3. ID
+		INNER JOIN t_group t4 ON t1.account_id = t4.account_id
+		INNER JOIN t_group_role_user_rel t5 ON t4. ID = t5.group_id
+		AND t5.user_id = t1.user_id
+		INNER JOIN t_group_role t6 ON t5.group_role_id = t6. ID
+		WHERE
+			t1.user_id = #{userId} 
+			and t5.active_status=1
+		GROUP BY
+			t1.account_id,
+			t3.nick_name
+		UNION
+			SELECT
+				t_account. ID AS account_id,
+				t_user.nick_name
+			FROM
+				t_account,
+				t_user
+			WHERE
+				t_account.owner_id = t_user. ID
+			AND t_user. ID = #{userId}
+	) t -->
+	
+	SELECT DISTINCT
+	t.account_id,
+	t.nick_name
+	FROM
+	(
+		SELECT
+			t1.account_id,
+			( CASE WHEN t3.register_type = 3 THEN t3.user_name ELSE t3.nick_name END ) AS nick_name
+		FROM
+			t_user_account_rel t1
+		INNER JOIN t_account t2 ON t1.account_id = t2. ID
+		INNER JOIN t_user t3 ON t2.owner_id = t3. ID
+		INNER JOIN t_group t4 ON t1.account_id = t4.account_id
+		INNER JOIN t_group_role_user_rel t5 ON t4. ID = t5.group_id
+		AND t5.user_id = t1.user_id
+		INNER JOIN t_group_role t6 ON t5.group_role_id = t6. ID
+		WHERE
+			t1.user_id = #{userId}
+			and t5.active_status=1
+		GROUP BY
+			t1.account_id,
+			t3.nick_name,
+			t3.register_type,
+			t3.user_name
+		UNION
+			SELECT
+				t_account. ID AS account_id,
+				( CASE WHEN t3.register_type = 3 THEN t3.user_name ELSE t3.nick_name END ) AS nick_name
+			FROM
+				t_account,
+				t_user t3
+			WHERE
+				t_account.owner_id = t3. ID
+			AND t3. ID = #{userId}
+	) t
+ </select>
+ 
+ <!-- 查询指定用户加入到的account 列表 -->
+ <select id="getAccountList" parameterType="java.util.Map" resultType="java.util.Map">
+
+	<!-- SELECT
+		t1.account_id,
+		t3.nick_name,
+	 	string_agg(DISTINCT t6.name,'#') as role_name
+	FROM
+		t_user_account_rel t1,
+		t_account t2,
+		t_user t3,
+		t_group t4,
+		t_group_role_user_rel t5,
+		t_group_role t6
+	WHERE
+		t1.account_id = t2. ID
+	AND t2.create_id = t3. ID
+	AND t1.user_id = #{userId} 
+	AND t1.account_id = t4.account_id
+	AND t4.id = t5.group_id AND t5.group_role_id = t6.id  group by  t1.account_id,
+		t3.nick_name -->
+	
+		<!-- SELECT
+			t1.account_id,账户编号
+			t3.nick_name,账户所有人名称
+			string_agg (DISTINCT t6. NAME, '#') AS role_name  角色列表
+		FROM
+			t_user_account_rel t1
+		INNER JOIN 
+			t_account t2 ON t1.account_id = t2. ID
+		INNER JOIN
+			t_user t3 ON t2.owner_id = t3. ID
+		INNER JOIN
+			t_group t4 ON t1.account_id = t4.account_id
+		INNER JOIN 
+			t_group_role_user_rel t5  ON t4. ID = t5.group_id AND  t5.user_id = t1.user_id AND t5.active_status=1
+		INNER JOIN
+			t_group_role t6 ON t5.group_role_id = t6. ID
+		WHERE
+			t1.user_id = #{userId}
+		GROUP BY
+			t1.account_id,
+			t3.nick_name  -->
+			
+	SELECT
+		t1.account_id,
+		( CASE WHEN t3.register_type = 3 THEN t3.user_name ELSE t3.nick_name END ) AS nick_name,
+		string_agg ( DISTINCT t6.NAME, '#' ) AS role_name 
+	FROM
+		t_user_account_rel t1
+		INNER JOIN t_account t2 ON t1.account_id = t2.
+		ID INNER JOIN t_user t3 ON t2.owner_id = t3.
+		ID INNER JOIN t_group t4 ON t1.account_id = t4.account_id
+		INNER JOIN t_group_role_user_rel t5 ON t4.ID = t5.group_id 
+		AND t5.user_id = t1.user_id 
+		AND t5.active_status = 1
+		INNER JOIN t_group_role t6 ON t5.group_role_id = t6.ID 
+	WHERE
+		t1.user_id = #{userId} 
+	GROUP BY
+		t1.account_id,
+		t3.nick_name,
+		t3.register_type,
+		t3.user_name
+ 
+ </select>
+ 
+  <!-- 获取指定用户，账户对应的课程 -->
+  <select id="queryUserGroupRoleCourseList" parameterType="java.util.Map" resultType="java.util.Map">
+	SELECT
+		group_role_user_rel.group_role_id
+		,group_role_user_rel.group_id
+		,group_role_user_rel.user_id
+		,items.item_id as course_id
+	FROM
+		t_group_role group_role  
+	INNER JOIN
+		t_group_role_user_rel group_role_user_rel  ON group_role."id" = group_role_user_rel.group_role_id AND  group_role_user_rel.active_status = '1'
+	INNER JOIN	
+		t_group groups ON group_role_user_rel.group_id = groups."id"
+	LEFT JOIN
+		t_group_items items ON items.item_type = '4' AND groups."id" = items.group_id
+	WHERE
+		groups.account_id = #{accountId}  AND group_role_user_rel.user_id = #{userId} 
+	<if test="groupId != null and groupId != ''">
+		groups.id = #{groupId}
+	</if>
+ </select>
+ 
+ 	<!-- 查询指定account  用户角色 -->
+<!--    <select id="queryUserGroupRoleRel" parameterType="java.util.Map" resultMap="groupRoleRelResultMap">-->   
+<select id="queryUserGroupRoleRel" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			t_group_role."id" as group_role_id,
+			t_group_role."name" as group_role_name,
+			(
+			  SELECT CASE WHEN COUNT(1) > 0 THEN '1' ELSE '0' END FROM t_group_role_func_rel WHERE group_id = t_group."id" and function_id = '10012'  
+			) as has_leader,
+			t_group."id" AS group_id,
+		  	t_group.group_name,
+		  	t_group.group_description,
+		  	t_group.account_id as account_id
+			
+		FROM
+			t_group_role 
+		INNER JOIN  
+		  t_group_role_user_rel  on t_group_role."id" = t_group_role_user_rel.group_role_id
+		INNER JOIN
+			t_group on t_group_role_user_rel.group_id = t_group."id"
+		WHERE  
+			t_group.account_id = #{accountId}  AND t_group_role_user_rel.user_id = #{userId}
+			and t_group_role_user_rel.active_status='1'
+			<if test="groupId != null">
+				And t_group."id" = #{groupId}
+			</if>
+		ORDER BY
+			group_role_id,group_id
+ </select>
+ 
+ 
+ <select id="findAccountMembers" parameterType="java.util.Map" resultType="java.util.Map">
+		select distinct t_user.*, t_attachment.attach_url,t_attachment.generate_name
+  from t_account
+inner join t_group
+        on t_account.id = t_group.account_id
+inner join t_group_role_user_rel
+		on t_group.id = t_group_role_user_rel.group_id
+inner join  t_user
+	    on t_group_role_user_rel.user_id = t_user.id
+left join t_attachment
+       on t_attachment.rel_id = t_user.id
+      and t_attachment.generate_name = t_user.user_icon
+    where t_account.id = #{accountId}
+    
+    <if test="keywords != null and keywords != ''">
+		and (t_user.nick_name like CONCAT('%','${keywords}','%' )  or
+		     t_user.user_name like CONCAT('%','${keywords}','%' )  or 
+			 t_user.first_name like CONCAT('%','${keywords}','%' ) or 
+			 t_user.last_name  like CONCAT('%','${keywords}','%' )  or
+			 t_user.user_mail like CONCAT('%','${keywords}','%' )  or 
+			 t_user.mobile_phone like CONCAT('%','${keywords}','%' ) ) 
+	</if>
+	
+	<if test="registerType > 0">
+		and t_user.register_type = #{registerType}
+	</if>
+	
+	<if test="certified > 0">
+		and t_user.is_certified = #{certified}
+	</if>
+  order by t_user.user_name,t_user.user_mail
+ </select>
+ 
+
+ <select id="getAccountMemberDetail" parameterType="java.util.Map" resultType="java.util.Map">
+		select distinct t_user.*, t_attachment.attach_url,t_attachment.generate_name
+  from t_account
+inner join t_group
+        on t_account.id = t_group.account_id
+inner join t_group_role_user_rel
+		on t_group.id = t_group_role_user_rel.group_id
+inner join  t_user
+	    on t_group_role_user_rel.user_id = t_user.id
+left join t_attachment
+       on t_attachment.rel_id = t_user.id
+      and t_attachment.generate_name = t_user.user_icon
+    where t_account.id = #{accountId}
+      and t_user.id = #{userId}
+  order by t_user.user_name,t_user.user_mail
+ </select>
+ <select id="getGroupListByUserId" parameterType="java.lang.String" resultType="java.lang.Integer">
+	SELECT
+		count(1) 
+	FROM
+		t_group tg
+		JOIN t_account ta ON tg.account_id = ta.ID 
+		JOIN t_user tu ON tu.ID = ta.owner_id 
+	WHERE
+		tu.ID = #{userId}
+ </select>
+ <select id="getAccountListSize" parameterType="java.lang.String" resultType="java.lang.Integer">
+	SELECT
+		count(1) 
+	FROM
+		t_user_account_rel tuar
+		JOIN t_user tu ON tu.ID = tuar.user_id 
+	WHERE
+		tu.ID = #{userId}
+ </select>
+ <select id="getAccountRelGroupCapalityCount" parameterType="java.lang.String" resultType="java.lang.Integer">
+	select count(*) from t_group_capability c where c.group_id in(
+    select b.id from t_group b where b.account_id = #{accountId});
+ </select>
+ 
+</mapper>

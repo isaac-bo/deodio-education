@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.QuizBanksCustomizeMapper">
+
+	<select id="findQuizBankList" parameterType="java.util.Map"
+		resultType="com.deodio.elearning.persistence.model.customize.QuizBankBo">
+		SELECT 
+            qb.id,
+            qb.quiz_bank_name AS quizBankName,
+            qb.quiz_bank_desc AS quizBankDesc,
+            qb.is_private AS isPrivate,
+            qb.create_id AS createId,
+            c.id AS classificationId,
+            c.classification_name AS classificationName,
+            (   SELECT
+                    COUNT (qs.quiz_bank_id)
+                FROM t_quiz_banks banks
+                LEFT JOIN t_quiz_subject qs ON qs.quiz_bank_id = banks.id
+                WHERE banks.account_id = #{accountId, jdbcType=VARCHAR}
+                AND banks.id = qb.id
+                <if test="classificationId != null">
+                	<if test="classificationId != '1000008'">
+                	 	AND banks.classification_id = #{classificationId, jdbcType=VARCHAR}
+                	</if>
+                	<if test="classificationId == '1000008'">
+                	 	AND banks.classification_id = '1000008'
+                	</if>
+                   
+                </if>
+                <if test="quizBankName != null">
+                    AND banks.quiz_bank_name LIKE CONCAT(CONCAT('%',#{quizBankName, jdbcType=VARCHAR}),'%') 
+                </if>
+                <if test="bankIds != null">
+                    AND qb.id NOT IN 
+                    <foreach collection="bankIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}       
+                    </foreach>
+                </if>
+                GROUP BY banks.id
+            ) AS subjectCount 
+        FROM t_quiz_banks qb
+        LEFT JOIN t_classification c ON c.id = qb.classification_id
+        WHERE
+            qb.is_private = 0
+        <if test="classificationId != '1000008'">
+         	AND qb.account_id = #{accountId, jdbcType=VARCHAR}
+            AND qb.classification_id = #{classificationId, jdbcType=VARCHAR}
+        </if>
+        
+        <if test="classificationId == '1000008'">
+         	AND qb.account_id = '1'
+            AND qb.classification_id = '1000008'
+         </if>
+
+        <if test="quizBankName != null">
+            AND qb.quiz_bank_name like CONCAT(CONCAT('%',#{quizBankName, jdbcType=VARCHAR}),'%') 
+        </if>
+		
+		<if test="bankIds != null">
+		    AND qb.id NOT IN 
+            <foreach collection="bankIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}       
+            </foreach>
+		</if>
+		
+		UNION 
+		
+		SELECT 
+            qb.id,
+            qb.quiz_bank_name AS quizBankName,
+            qb.quiz_bank_desc AS quizBankDesc,
+            qb.is_private AS isPrivate,
+            qb.create_id AS createId,
+            c.id AS classificationId,
+            c.classification_name AS classificationName,
+            (   SELECT
+                    COUNT (qs.quiz_bank_id)
+                FROM t_quiz_banks banks
+                LEFT JOIN t_quiz_subject qs ON qs.quiz_bank_id = banks.id
+                WHERE banks.account_id = #{accountId, jdbcType=VARCHAR}
+                AND banks.id = qb.id
+                <if test="classificationId != null">
+                    <if test="classificationId != '1000008'">
+                        AND banks.classification_id = #{classificationId, jdbcType=VARCHAR}
+                    </if>
+                    <if test="classificationId == '1000008'">
+                        AND banks.classification_id = '1000008'
+                    </if>
+                   
+                </if>
+                <if test="quizBankName != null">
+                    AND banks.quiz_bank_name LIKE CONCAT(CONCAT('%',#{quizBankName, jdbcType=VARCHAR}),'%') 
+                </if>
+                <if test="bankIds != null">
+                    AND qb.id NOT IN 
+                    <foreach collection="bankIds" index="index" item="item" open="(" separator="," close=")">
+                        #{item}       
+                    </foreach>
+                </if>
+                GROUP BY banks.id
+            ) AS subjectCount 
+        FROM t_quiz_banks qb
+        LEFT JOIN t_classification c ON c.id = qb.classification_id
+        WHERE
+             qb.is_private = 1 
+             AND qb.create_id = #{userId, jdbcType=VARCHAR}
+        <if test="classificationId != '1000008'">
+            AND qb.account_id = #{accountId, jdbcType=VARCHAR}
+            AND qb.classification_id = #{classificationId, jdbcType=VARCHAR}
+        </if>
+        <if test="classificationId == '1000008'">
+             AND qb.account_id = '1'
+            AND qb.classification_id = '1000008'
+         </if>
+
+        <if test="quizBankName != null">
+            AND qb.quiz_bank_name like CONCAT(CONCAT('%',#{quizBankName, jdbcType=VARCHAR}),'%') 
+        </if>
+        
+        <if test="bankIds != null">
+            AND qb.id NOT IN 
+            <foreach collection="bankIds" index="index" item="item" open="(" separator="," close=")">
+                #{item}       
+            </foreach>
+        </if>
+	</select>
+
+</mapper>

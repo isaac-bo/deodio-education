@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.ClassificationCustomizeMapper">
+ 
+  <select id="getCTree" parameterType="java.util.Map"  resultType="java.util.Map">
+ 
+select * from (
+SELECT
+	t_classification.classification_name AS name,
+	t1.count,
+    t_classification.id as id,
+	'True' as isParent
+
+FROM
+	t_classification
+left join
+	(
+		SELECT
+			tc2.classification_parent_id,
+			COUNT (1) AS COUNT
+		FROM
+			t_classification tc1
+		LEFT JOIN t_classification tc2 ON tc1. ID = tc2.classification_parent_id
+		AND tc1.account_id = #{accountId}  
+		GROUP BY
+			tc2.classification_parent_id
+	) t1
+on t1.classification_parent_id = t_classification.id
+WHERE
+	t_classification.account_id =  #{accountId}  
+and t_classification.classification_parent_id =  #{classificationId}  
+
+UNION
+	SELECT
+		t_quiz_banks.quiz_bank_name AS name,
+		0 AS count,
+		t_quiz_banks.ID AS id,
+		'False' AS isParent
+	FROM
+		t_quiz_banks
+	WHERE
+		t_quiz_banks.classification_id = #{classificationId}  
+	AND t_quiz_banks.account_id = #{accountId}  
+
+) t order by t.isParent desc
+ 
+ </select>
+
+</mapper>

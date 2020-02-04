@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.TraineeExamCustomizeMapper">
+
+<insert id="insertItemByBatch" parameterType="com.deodio.elearning.persistence.model.TraineeExamRecordItem">
+    INSERT INTO t_trainee_exam_record_items 
+    (id,item_id,exam_record_subject_id,item_order,item_name,is_correct,attach_url,create_id,update_id,create_time,updte_time)
+    VALUES
+    <foreach collection="list" item="item" index="index" separator=",">
+        (#{item.id},
+        #{item.itemId},
+        #{item.examRecordSubjectId},
+        #{item.itemOrder},
+        #{item.itemName},
+        #{item.isCorrect},
+        #{item.attachUrl},
+        #{item.createId},
+        #{item.updateId},
+        #{item.createTime},
+        #{item.updteTime})
+    </foreach>
+</insert>
+<insert id="insertSubjectByBatch" parameterType="com.deodio.elearning.persistence.model.customize.TraineeExamRecordSubjectBo">
+    INSERT INTO t_trainee_exam_record_subject 
+    (id,subject_id,exam_record_id,score,subject_name,subject_type,subject_order,exam_answer,self_answer,remark,
+    create_id,update_id,create_time,updte_time)
+    VALUES
+    <foreach collection="list" item="item" index="index" separator=",">
+        (#{item.id},
+        #{item.subjectId},
+        #{item.examRecordId},
+        #{item.score},
+        #{item.subjectName},
+        #{item.subjectType},
+        #{item.subjectOrder},
+        #{item.examAnswer},
+        #{item.selfAnswer},
+        #{item.remark},
+        #{item.createId},
+        #{item.updateId},
+        #{item.createTime},
+        #{item.updteTime})
+    </foreach>
+</insert>
+ <select id="getTraineeQuizCountScore" parameterType="java.lang.String" resultType="java.lang.Integer">
+ 	SELECT SUM
+				( score ) 
+	FROM
+				t_trainee_exam_record_subject t,
+				t_trainee_course_record t1,
+ 	WHERE       t.id=t1.exam_record_id and 
+				t1.exam_id = #{quizId} 
+ </select>
+ <select id="getTraineePreviewExamination" parameterType="java.util.Map" resultType="java.util.Map">
+ SELECT
+	t2. ID,
+	t2.subject_type,
+	t2.subject_name,
+	ars.subject_score,
+	(
+		CASE
+		WHEN t_quiz.create_type = '1' THEN
+			COALESCE (t2.score, 0)
+		WHEN t_quiz.create_type = '2'
+		AND t_quiz.score_set = '0' THEN
+			COALESCE (ars.subject_score, 0)
+		WHEN t_quiz.create_type = '2'
+		AND t_quiz.score_set = '1' THEN
+			COALESCE (t2.score, 0)
+		END
+	) AS quiz_subject_score,
+	t2.subject_order,
+	t1. ID AS quiz_subject_rel_id,
+	string_agg (
+		t3.attach_url,
+		'#'
+	ORDER BY
+		t3.item_order ASC
+	) AS attach_url,
+	string_agg (
+		to_char(t3.is_correct, 'FM999MI'),
+		'#'
+	ORDER BY
+		t3.item_order ASC
+	) AS option_answer,
+	string_agg (
+		t3. ID,
+		'#'
+	ORDER BY
+		t3.item_order ASC
+	) AS option_answer_id,
+	string_agg (
+		t3.item_name,
+		'#'
+	ORDER BY
+		t3.item_order ASC
+	) AS item_options
+FROM
+	t_quiz
+JOIN t_trainee_exam_record t1 ON t_quiz. ID = t1.exam_id
+LEFT JOIN t_trainee_exam_record_subject t2 ON t2. exam_record_id = t1.id
+LEFT JOIN t_trainee_exam_record_items t3 ON t2.id = t3.exam_record_subject_id
+LEFT JOIN t_quiz_auto_rule_subject ars ON ars.quiz_id = t1.exam_id
+AND ars.subject_type = t2.subject_type
+WHERE
+	t1.id = t2. exam_record_id
+AND t1.exam_id = #{quizId}
+GROUP BY
+	t_quiz. ID,
+	t2. ID,
+	ars. ID,
+	t2.subject_type,
+	t2.subject_name,
+	t2.subject_order,
+	t1. ID,
+	ars.subject_type,
+	ars.subject_order,
+	ars.subject_score
+ORDER BY
+	ars.subject_order ASC,
+	t2.subject_order ASC
+ 
+
+ </select>
+</mapper>

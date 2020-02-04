@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group implements="com.deodio.elearning.module.player.screen.ac.IScreen" 
+		  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx" creationComplete="init()" mouseMove="onMouseMove()" rollOut="onRollOut()">
+	
+	<fx:Script>
+		<![CDATA[ 
+			import com.deodio.elearning.libs.containers.tools.DResizeMoveTool;
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.enum.TypeEnum;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.stream.VideoStreamController;
+			import com.deodio.elearning.libs.utils.MediaUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.service.SystemService;
+			
+			import mx.controls.Alert;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindlable]
+			public var _title:String = "";	
+			
+			[Bindable]
+			public var _borderColor:uint = 0xd0d0d0;
+			
+			[Bindable]
+			public var _borderStyle:String = "inset";
+			
+			[Bindable]
+			public var _borderWeight:Number = 1;  
+			
+			[Bindable]
+			public var _borderVisible:Boolean = true;
+			
+			[Bindable]
+			public var _isSlide:Boolean = true;
+			
+			[Bindable]
+			public var _isTitle:Boolean = false;
+			
+			[Bindable]
+			private var _timer:Timer;
+			
+			[Bindable]
+			private var _isDrag:Boolean = false;
+			
+			[Bindable]
+			public var handler:DResizeMoveTool = null;
+			
+			[Bindable]
+			private var _systemService:SystemService;
+			
+			public function init():void{
+				_systemService = new SystemService();
+			}
+			
+			public function swapMedia():void{
+				
+				if(_model.isSwap == true){
+					this.swapCanvas.visible = this.swapCanvas.includeInLayout = _model.isSwap;
+					if(this.clipsImage != null && this.clipsImage.numChildren > 0){
+						handler = new DResizeMoveTool(this.screenComponent, this.clipsImage.getChildAt(0) as Bitmap);
+					}else{
+						handler = new DResizeMoveTool(this.screenComponent,this.screenComponent);
+					}
+					handler.addHandler(swapCanvas);
+				}else{
+					this.swapCanvas.visible = this.swapCanvas.includeInLayout = _model.isSwap;
+					handler.removeHandler();
+					handler = null;
+				}	
+				
+			}
+			
+			public function onRollOver():void{
+//				if(_model.isFullScreen && width != flash.system.Capabilities.screenResolutionX){
+//					this.currentState = StateEnum.SHOW_STATE;
+//				}
+			}
+			
+			public function onMouseMove():void{
+				
+//				if(_model.isFullScreen && width != flash.system.Capabilities.screenResolutionX){
+//					currentState = StateEnum.SHOW_STATE;
+//					if(currentState == StateEnum.SHOW_STATE && this._isDrag == false){
+//						if(_timer){
+//							_timer.stop();
+//						}
+//						_timer = new Timer(3000);
+//						_timer.start();
+//						_timer.addEventListener(TimerEvent.TIMER,function(event:TimerEvent):void{
+//							currentState = StateEnum.HIDE_STATE;
+//						});
+//						
+//					}else if(currentState == StateEnum.SHOW_STATE && this._isDrag == true){
+//						if(_timer){
+//							_timer.stop();
+//						}
+//					}
+//				}
+			}
+			
+			public function onRollOut():void{
+//				if(this._isDrag != true){
+//					this.currentState = StateEnum.HIDE_STATE;
+//					if(_timer){
+//						_timer.stop();
+//					}
+//				}
+			}
+			
+			public function onSwitchScreen():void{
+				this.currentState = StateEnum.INIT_STATE;
+				if(_model.isFullScreen && _model.screenType == TypeEnum.TYPE_CLIPS){
+					this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SCREEN_SWITCH_SCREEN,false));
+				}else if(_model.isFullScreen && _model.screenType == TypeEnum.TYPE_SLIDES){
+					this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SCREEN_SWITCH_SCREEN,true));
+				}
+			}
+			
+			public function onDragScreen():void {
+					var shadowWidth:Number=flash.system.Capabilities.screenResolutionX - width;
+					var shadowHeight:Number=flash.system.Capabilities.screenResolutionY - height;
+					this.startDrag(false, new Rectangle(0, 0, shadowWidth, shadowHeight));
+					this._isDrag=true;
+			}
+			
+			public function onHoldScreen():void{
+				this.stopDrag();
+				this._isDrag=false;
+			}
+			
+			public function createImage(url:String,isSlide:Boolean):void{
+				_systemService.getImageServerUrl(function(event:ResultEvent):void{
+					var loader:Loader=new Loader();
+					var urlRequest:URLRequest=new URLRequest((event.result as String)+url);
+					loader.load(urlRequest,new LoaderContext(true));
+					loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(e:Event):void {
+						var bitmap:Bitmap=Bitmap(e.target.content);
+						var object:Object=MediaUtils.middlePosition(bitmap.width, bitmap.height, screenComponent.width - 4, screenComponent.height - 4);
+						bitmap.x=object.x;
+						bitmap.y=object.y;
+						bitmap.width=object.width;
+						bitmap.height=object.height;
+						bitmap.smoothing=true;
+						if(isSlide){
+							slideImage.addChild(bitmap);
+							_isSlide=isSlide;
+						}else{
+							clipsImage.addChild(bitmap);
+							clipsImage.visible=true;
+							clipsImage.includeInLayout=true;
+							_isSlide=isSlide;
+							videoDisplay.visible=false;
+							videoDisplay.includeInLayout=false;
+						}
+						
+					});
+				});
+				
+			}
+			
+			public function destoryImage(isSlide:Boolean):void{
+				this.clipsImage.visible=false;
+				this.clipsImage.includeInLayout=false;
+				this._isSlide=isSlide;
+				this.videoDisplay.visible=true;
+				this.videoDisplay.includeInLayout=true;
+			}
+			
+			public function createMedia(videoStream:VideoStreamController,isSlide:Boolean):void{
+				
+				if (_model.media != null) {
+					_model.media.clear();
+					this.videoDisplay.removeChild(_model.media);
+				}
+				this._model.media=new Video();
+				this._model.media.attachNetStream(videoStream.stream);
+				this._model.media.name="video";
+				var object:Object=MediaUtils.middlePosition(_model.mediaWidth, _model.mediaHeight, screenComponent.width - 4, screenComponent.height - 4);
+				this._model.media.x=object.x;
+				this._model.media.y=object.y;
+				this._model.media.width=object.width;
+				this._model.media.height=object.height;
+				this.videoDisplay.addChild(_model.media);
+				this._isSlide=isSlide;
+			}
+			
+			//source="rtmp://192.168.122.97:1935/m/mp4:sample2_1000kbps.f4v"
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="hideState"/>
+		<s:State name="showState"/>
+		<s:State name="initState"/>
+	</s:states>
+	<s:transitions>
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0.7"/>
+				</s:Parallel>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" heightFrom="0" heightTo="25"/>
+					<s:Move target="{toolbar}" yFrom="{height - 2}" yTo="{height - 27}"/>
+				</s:Parallel>
+				
+				<!--s:Move target="{toolbar}" xFrom="996" xTo="910"/-->
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" heightFrom="25" heightTo="0" />
+					<s:Move target="{toolbar}" yFrom="{height - 27}" yTo="{height - 2}"/>
+				</s:Parallel>
+				
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0"/>
+				</s:Parallel>
+				<!--s:Move target="{toolbar}" xFrom="996" xTo="910"/-->
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="initState">
+			<s:Sequence duration="0.1">
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" heightFrom="25" heightTo="0" />
+					<s:Move target="{toolbar}" yFrom="{height - 27}" yTo="{height - 2}"/>
+				</s:Parallel>
+				
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0"/>
+				</s:Parallel>
+				<!--s:Move target="{toolbar}" xFrom="996" xTo="910"/-->
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions>
+	
+	<s:BorderContainer x="0" y="0" height="30" width="100%" visible="{_isTitle}" includeInLayout="{_isTitle}">
+		<s:backgroundFill>
+			<s:SolidColor color="0x292929"/>
+		</s:backgroundFill>
+	</s:BorderContainer>
+	
+	<s:BorderContainer id="screenComponent" x="0" y="{_isTitle?30:0}" width="100%" height="100%" borderColor="{_borderColor}" borderStyle="{_borderStyle}" borderWeight="{_borderWeight}" borderVisible="{_borderVisible}">
+		<s:backgroundFill>
+			<s:SolidColor color="0x000011"/>
+		</s:backgroundFill>
+		<s:VideoDisplay id="videoDisplay" width="100%" height="100%" visible="{!_isSlide}" includeInLayout="{!_isSlide}"/>
+		<mx:Image id="clipsImage" width="100%" height="100%" visible="false" includeInLayout="false"/>
+		<mx:Image id="slideImage" width="100%" height="100%" visible="{_isSlide}" includeInLayout="{_isSlide}"/>
+		
+		<mx:Canvas id="swapCanvas" visible="false" includeInLayout="false" x="0" y="0" alpha="0.5" backgroundAlpha="0.7" backgroundColor="#000000" borderStyle="solid" borderColor="#d0d0d0" width="100%" height="100%"/>
+		
+	</s:BorderContainer>
+	
+	
+	
+	<mx:HBox id="toolbar" y.showState="{height - 27}" y.hideState="{height - 2}" y.initState="{height - 2}" height.showState="25" height.hideState="0" height.initState="0" width="{width - 4}" x="2" backgroundAlpha="0.7" 
+			 backgroundColor="#526c8d" verticalAlign="middle" horizontalAlign="right">
+		<s:Image source="@Embed('/assets/common/microphone.png')" buttonMode="true" mouseDown="onDragScreen()" mouseUp="onHoldScreen()"/>
+		<s:Image source="@Embed('/assets/common/close.png')" buttonMode="true" click="onSwitchScreen()"/>
+		<mx:Canvas width="3" height="25"/>
+	</mx:HBox>
+	
+	<!--y.showState="144" y.hideState="169" height.showState="25" height.hideState="0"  rollOver="this.currentState = 'showState'" rollOut="this.currentState = 'hideState'"-->
+</s:Group>

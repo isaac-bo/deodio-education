@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<p:IPlayBar implements="com.deodio.elearning.module.player.playbar.ac.IPlayBar" 
+		 xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:p="com.deodio.elearning.module.player.playbar.view.*"
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 width="805" height="50" creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.event.CommonEvent;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.skins.DHSoundSliderSkin;
+			import com.deodio.elearning.libs.skins.DProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DProgressTrackSkin;
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			
+			import mx.controls.Alert;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+
+			override public function init():void{
+//				this.addChildAt(this.setSounding,this.numElements + 1);
+				this.soundSlider.value = this._model.sound;
+				this.soundProgress.setProgress(soundSlider.value,soundSlider.maximum);
+				
+				super.slider = this.slider;
+				super.progress = this.progress;
+				super.maxDuration = this.maxDuration;
+				super.currentDuration = this.currentDuration;
+				super.init();
+				
+				this.addEventListener(MockEvent.MOCK_RESIZE_SCREEN,function(event:MockEvent):void{
+					
+					var parentState:String = event.data as String;
+					if(parentState == StateEnum.HIDE_STATE){
+						visible = false;
+					}else{
+						visible = true;
+					}
+				});
+				
+			}
+			
+			private function setProgressValue(event:CommonEvent):void{
+				
+			}
+			
+			public function onPlay():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PLAY));
+			}
+			
+			public function onPause():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PAUSE));
+			}
+			
+			public function onStop():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_STOP));
+			}
+			
+			public function onForward():void{
+				
+			}
+			
+			public function onBackward():void{
+				
+			}
+			
+//			public function onSetSounding():void{
+//				this.fullScreen.visible = !this.fullScreen.visible;
+//				this._model.isSettingSound = this.setSounding.visible = this.setSounding.includeInLayout = !this.fullScreen.visible;
+//			}
+//			
+			public function onSwitchScreen():void{
+				this.setSounding.visible = this.setSounding.includeInLayout = false;
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SCREEN_FULL_SCREEN));
+			}
+			
+			public function onChooseLayout():void{
+				this.setSounding.visible = this.setSounding.includeInLayout = false;
+				this.dispatchEvent(new MockEvent(MockEvent.MOCK_CHANGE_LAYOUT));
+			}
+			
+			override public function onSoundProgressChange(soundSlider:DHSlider,soundProgress:ProgressBar):void{
+				super.onSoundProgressChange(soundSlider,soundProgress);
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_VOLUMN_CHANGE));
+			}
+		]]>	
+	</fx:Script>
+	
+	<!--s:Rect x="0" y="0" height="100%" width="100%">
+		<s:fill>
+			<s:BitmapFill source="@Embed('/assets/player/playbar_full_screen.png')"/>
+		</s:fill>
+	</s:Rect-->
+	
+	<mx:HBox id="playBar" width="100%" height="100%" backgroundColor="#292929" backgroundAlpha="1">
+		
+		<mx:HBox id="leftToolBar" width="114" height="100%" backgroundColor="#292929" backgroundAlpha="{_model.isFullScreen?0:1}" verticalAlign="middle" horizontalAlign="center" horizontalGap="15">
+			<s:Image id="btnBackward" source="@Embed('/assets/player/playbar/backward_default.png')"  buttonMode="true" click="onBackward()"/>
+			<s:Image id="btnPlay" source="@Embed('/assets/player/playbar/play_active.png')"  buttonMode="true" click="onPlay()"/>
+			<s:Image id="btnPause" source="@Embed('/assets/player/playbar/pause_default.png')"  buttonMode="true" click="onPause()" visible="false" includeInLayout="false"/>
+			<s:Image id="btnForward"  source="@Embed('/assets/player/playbar/forward_default.png')"  buttonMode="true" click="onForward()"/>
+		</mx:HBox>
+
+		<mx:Canvas width="100%" height="100%" verticalScrollPolicy="off" horizontalScrollPolicy="off">
+			<mx:ProgressBar id="progress" x="10" y="21" width="430" height="6" label="" labelPlacement="center"
+							barSkin="com.deodio.elearning.libs.skins.DProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DProgressTrackSkin"
+							mode="manual"/>
+			<c:DHSlider id="slider" x="10" y="23" width="430" height="12"  minimum="0" maximum="20" snapInterval="0.001" showDataTip="true" allowTrackClick="false" 
+					   skinClass="com.deodio.elearning.libs.skins.DSliderSkin" change="onProgressChange(this.slider,this.progress)" click="onProgressClick(this.slider,this.progress)" thumbPress="onProgressThumbPress(this.slider)" thumbRelease="onProgressThumbRelease(this.slider);"/>
+			<mx:Text id="currentDuration" text="{CommonUtils.formatTimes(slider.value)}" color="#d0d0d0" width="60" x="450" y="15"/>
+			<mx:Text id="delimiter" text="/" color="#d0d0d0" width="10" x="500" y="15"/>
+			<mx:Text id="maxDuration" text="{CommonUtils.formatTimes(this.slider.maximum)}" color="#d0d0d0"  width="60" x="508" y="15"/>
+			
+		</mx:Canvas>
+		
+		<mx:HBox id="rightToolBar" width="114" height="100%" backgroundColor="#292929" backgroundAlpha="{_model.isFullScreen?0:1}" verticalAlign="middle" horizontalAlign="center" horizontalGap="15">
+			<s:Image source="@Embed('/assets/player/playbar/sound_default.png')"  buttonMode="true" click="onSetSounding(this.setSounding)"/>
+			<s:Image id="fullScreen" source="@Embed('/assets/player/playbar/zoomout_default.png')"  buttonMode="true" click="onSwitchScreen()"/>
+			<s:Image id="twoLayout" source="@Embed('/assets/player/playbar/2layout_ud_default.png')"  buttonMode="true" click="onChooseLayout()" visible="{!this._model.isFullScreen}" includeInLayout="{!this._model.isFullScreen}"/>
+		</mx:HBox>
+		
+	</mx:HBox>
+	
+	<mx:Canvas id="setSounding" visible="false" includeInLayout="false" x="{_model.isFullScreen?this.width - 90:695}" y="-55" backgroundColor="#292929" backgroundAlpha="1" width="30" height="65" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<mx:ProgressBar id="soundProgress" x="12" y="58" width="50" height="{_model.isFullScreen?6:6}" label="" labelPlacement="center" rotation="-90"
+						barSkin="com.deodio.elearning.libs.skins.DSFProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DVProgressTrackSkin"
+						mode="manual"/>
+		<c:DHSlider id="soundSlider" x="22" y="58" width="50" height="{_model.isFullScreen?6:6}"  minimum="0" maximum="1" snapInterval="0.1" showDataTip="false" allowTrackClick="false"
+					skinClass="com.deodio.elearning.libs.skins.DHSoundSliderSkin" change="onSoundProgressChange(this.soundSlider,this.soundProgress)" rotation="-90"/>
+	</mx:Canvas>
+	
+</p:IPlayBar>

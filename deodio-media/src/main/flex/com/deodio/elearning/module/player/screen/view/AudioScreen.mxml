@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="400" height="300" creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.player.playbar.view.SyncMediaPlayBar;
+			import com.deodio.elearning.module.player.screen.view.libs.SLine;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			
+			[Bindlable]
+			public var _title:String = "";	
+			
+			[Bindable]
+			public var _borderColor:uint = 0xd0d0d0;
+			
+			[Bindable]
+			public var _borderStyle:String = "inset";
+			
+			[Bindable]
+			public var _borderWeight:Number = 2;  
+			
+			[Bindable]
+			public var _uX:Number = -176;
+			[Bindable]
+			public var _dX:Number = 176;
+			
+			[Bindable]
+			public var _borderVisible:Boolean = true;
+			
+			[Bindable]
+			public var _timer:Timer;
+			
+			public function init():void{
+				initFreFunc();
+			}
+			
+			private function calSquarFunc(index:Number,length:Number):Number{
+				
+				if(index%2==0){
+					length -= 50;
+				}else{
+					length += 25;
+				}
+				
+				if(length < 15)
+					length = 75;
+				
+				
+				return length;
+			}
+			
+			private function initFreFunc():void{
+				
+				var start:Number = 75;
+				
+				for(var index:int=0; index<60;index++){
+					start = calSquarFunc(index,start);
+					var suL:SLine = new SLine();
+					suL.id = "upperLine"+index
+					suL.width=start;
+					suL.y = 27 + index*10;
+					suL.x = _uX;
+					this.upperLine.addElement(suL);
+					
+					var sdL:SLine = new SLine();
+					sdL.id = "downLine"+index
+					sdL.color=0xa3a3a3;
+					sdL.width=start;
+					sdL.y = -27-(index*10);
+					sdL.x = _dX;
+					this.downLine.addElement(sdL);
+				}
+			}
+			
+			public function onPlayFrequencyTimer():void{
+				
+				if(_timer != null){
+					_timer.stop();
+					_timer = null;
+				}
+				
+				_timer = new Timer(500);
+				_timer.addEventListener(TimerEvent.TIMER,onCalcFrequency);
+				_timer.start();
+			}
+			
+			public function onStopFrequencyTimer():void{
+				if(_timer != null){
+					_timer.stop();
+					_timer = null;
+				}
+			}
+			
+			public function onCalcFrequency(event:TimerEvent):void{
+				
+				for (var index:Number=0; index < upperLine.numElements; index++) { // 
+					if (upperLine.getElementAt(index) is SLine) {
+						upperLine.getElementAt(index).width = Math.round(Math.random()*(75-15))+14;
+					}
+				}
+				
+				for (var index:Number=0; index < downLine.numElements; index++) { // 
+					if (downLine.getElementAt(index) is SLine) {
+						downLine.getElementAt(index).width = Math.round(Math.random()*(75-15))+14;
+					}
+				}
+
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:BorderContainer x="0" y="0" width="100%" height="100%" borderColor="{_borderColor}" borderStyle="{_borderStyle}" borderWeight="{_borderWeight}" borderVisible="{_borderVisible}">
+		<s:backgroundFill>
+			<s:SolidColor color="#000011"/>
+		</s:backgroundFill>
+	</s:BorderContainer>
+	
+	
+	<s:Group id="upperLine" width="100%" height="48" buttonMode="true" rotation="-90"/>
+	<s:Group id="downLine" width="100%" height="48" buttonMode="true" rotation="90"/>
+	
+</s:Group>

@@ -1,0 +1,59 @@
+/*-------------------------public----------------------*/
+.btn-default{
+	background: #3faad0;
+}
+.footer-color-gray{
+	background: #eff2f5;
+}
+.footer-color-blue{
+	background: #3073ad;
+	color: #fff;
+
+}
+.font-color-white{
+	color: white;
+}
+
+/*--------------------------login---------------------*/
+.login-body-bg-color{
+	background: rgba(4,67,115,0.8);
+}
+
+.content>.login-item-color{
+	background: rgba(255,255,255,0.2);
+}
+
+.content .box-size>.register-color{
+	color: #a40000;
+}
+/*---------------------------register------------------*/
+
+.register-body-bg-color{
+	background: rgba(8,53,111,0.8);
+}
+
+.content .tab-item ul li a.a-color{
+	background: #e5e5e5;
+	color: #4b5f74;
+}
+.content .tab-item ul li a.on{
+	background: rgba(255,255,255,1);
+	color: #4b5f74;
+}
+
+
+.base-info-bg{
+	background: #dde2ea;
+}
+.base-info-bg:nth-child(odd){
+	background: #eaedf2;
+}
+.nav-bg{
+	background: rgba(0, 0, 0, 0) url("../../img/login_bg.jpg") repeat-y scroll center top;
+	height: 80px !important;
+
+}
+.input-title-color{
+	background: #f5f7fa;
+	color: #44555f;
+}

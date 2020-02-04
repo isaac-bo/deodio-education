@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.UserCustomizeMapper">
+
+	<!-- getAccoutInfo��ȡaccount�˺���Ϣ -->
+	<select id="getAccoutInfo" parameterType="java.lang.String"
+		resultType="java.util.Map">
+		SELECT ta.*,tu.* FROM t_user tu JOIN t_account ta
+		on ta.owner_id=tu.id WHERE
+		tu.user_name=#{user_name,jdbcType=VARCHAR}
+		or tu.user_mail=#{user_name,jdbcType=VARCHAR}
+		or tu.mobile_phone=#{user_name,jdbcType=VARCHAR}
+	</select>
+	<!-- getAccoutInfoByOwnerId����ownerId��ȡaccount��Ϣ -->
+	<select id="getAccoutInfoByOwnerId" parameterType="java.lang.String"
+		resultType="java.util.Map">
+		SELECT * FROM t_account WHERE owner_id=#{owner_id,jdbcType=VARCHAR}
+	</select>
+	<!-- getUserInfoById�����û�id��ȡ�û���Ϣ -->
+	<select id="getUserInfoById" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT *
+		FROM t_user tu WHERE
+		tu.id=#{id,jdbcType=VARCHAR}
+	</select>
+	<!-- getUserInfo��ȡ�û���Ϣ -->
+	<select id="getUserInfo" parameterType="java.util.Map"
+		resultType="java.util.Map">
+		SELECT * FROM t_user tu   where
+  tu.user_name=#{user_name,jdbcType=VARCHAR}
+	or tu.user_mail=#{user_name,jdbcType=VARCHAR}
+	or tu.mobile_phone=#{user_name,jdbcType=VARCHAR} 
+
+	</select>
+	<!-- getclassficationNum获取account账号选择的课程类别数目 -->
+	<select id="getclassficationNum" parameterType="java.lang.String"
+		resultType="java.lang.Integer">
+		SELECT count(id) as classficationNum FROM t_account_classification_rel
+		WHERE account_id=#{accountId,jdbcType=VARCHAR}
+	</select>
+	<!-- updateUserEmailVerified更改用户邮箱状态 -->
+	<update id="updateUserEmailVerified" parameterType="java.util.Map">
+		update t_user set is_check_mail=#{is_check_mail,jdbcType=VARCHAR}
+		where user_mail=#{user_mail,jdbcType=VARCHAR}
+	</update>
+    <select id="userLogin" parameterType="java.util.Map" resultType="java.util.Map">
+	  SELECT * FROM t_user tu   where
+	  tu.user_name=#{userName,jdbcType=VARCHAR}
+		or tu.user_mail=#{userName,jdbcType=VARCHAR}
+		or tu.mobile_phone=#{userName,jdbcType=VARCHAR} 
+  </select>
+    <select id="getAccountNum" parameterType="java.lang.String" resultType="java.lang.Integer">
+		SELECT count(id) FROM t_user_account_rel WHERE user_id =#{id,jdbcType=VARCHAR}
+  </select>
+    <select id="getJoinGroupNum" parameterType="java.lang.String" resultType="java.lang.Integer">
+		SELECT count(id) FROM t_group_role_user_rel WHERE user_id =#{userId,jdbcType=VARCHAR}
+  </select>
+    <select id="getCreateGroupNum" parameterType="java.lang.String" resultType="java.lang.Integer">
+		SELECT count(id) FROM t_group  WHERE create_id =#{userId,jdbcType=VARCHAR}
+  </select>
+
+</mapper>

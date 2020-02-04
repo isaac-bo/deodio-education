@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:p="com.deodio.elearning.module.player.playbar.view.*" width="400" height="300" creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.event.CommonEvent;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.skins.DHSliderSkin;
+			import com.deodio.elearning.libs.skins.DHSoundSliderSkin;
+			import com.deodio.elearning.libs.skins.DSFProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DVProgressBarSkin;
+			import com.deodio.elearning.libs.skins.DVProgressTrackSkin;
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			import com.deodio.elearning.model.ModelLocator;
+			
+			import mx.controls.Alert;
+			
+			[Bindable]
+			public var progressWidth:Number = 114*21 + 15;
+			[Bindable]
+			public var is2Layout:Boolean = false;
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			
+			public function init():void{
+//				this.currentState="showState";
+				
+				this.soundSlider.value = this._model.sound;
+				this.soundProgress.setProgress(soundSlider.value,soundSlider.maximum);
+				
+				this.addEventListener(CommonEvent.SYNC_PROGRESSBAR_MAXIMUM,function(event:CommonEvent):void{
+					var max:Number = event.data as Number;
+					slider.slider.maximum = max + 1;
+					progressWidth = 114 * (max + 1) + 15;
+					if(progressWidth > 10000){
+						
+						var integeral:Number  =  Math.floor((progressWidth - 10000)/10000) ;
+						var remainder:Number = (progressWidth - 10000)%10000 > 0? 1:0;
+						
+						var extNum:Number = integeral + remainder;
+						if(extNum > 0){
+							for (var index:Number = 0; index< extNum ;index++){
+								var richPlayBarContainerExt:RichPlayBarContainerExt = new RichPlayBarContainerExt();
+								richPlayBarContainerExt.progressWidth = 10000;
+								if(index == extNum - 1){
+									richPlayBarContainerExt.progressWidth = (progressWidth - 10000)%10000 > 0? (progressWidth - 10000)%10000:10000;
+								}
+								richPlayBarContainerExt.x = (index+1)*10000;
+								scrollGroup.addElement(richPlayBarContainerExt);
+							}
+						}
+						
+						var container:VGroup = scrollGroup.getElementAt(0) as VGroup;
+						scrollGroup.removeElement(container);
+						scrollGroup.addElement(container);
+					}
+					
+					drawSmallerTicks(max);
+					drawBiggerTicks(max);
+					drawTicks(max);
+					
+				});
+				
+				this.addEventListener(CommonEvent.SYNC_PROGRESSBAR_VALUE,function(event:CommonEvent):void{
+					var value:Number = event.data as Number;
+					slider.slider.value = value;
+				});
+				
+				this.addEventListener(MockEvent.MOCK_RESIZE_SCREEN,function(event:MockEvent):void{
+					var parentState:String = event.data as String;
+					parentState == StateEnum.HIDE_STATE?is2Layout=true:is2Layout=false;
+				});
+			}
+			
+			public function onChooseLayout():void{
+				this.is2Layout = false;
+				this.setSounding.visible = this.setSounding.includeInLayout = false;
+				this.dispatchEvent(new MockEvent(MockEvent.MOCK_CHANGE_LAYOUT));
+			}
+			
+			public function onForward():void{
+				
+			}
+			
+			public function onBackward():void{
+				
+			}
+			
+			public function onPause():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PAUSE));
+			}
+			
+			public function onStop():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_STOP));
+			}
+			
+			public function onPlay():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PLAY));
+			}
+			
+			public function onSwitchScreen():void{
+				this.setSounding.visible = this.setSounding.includeInLayout = false;
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SCREEN_FULL_SCREEN));
+			}
+			
+			public function onSoundProgressChange(soundSlider:DHSlider,soundProgress:ProgressBar):void{
+				_model.sound = soundSlider.value;
+				soundProgress.setProgress(soundSlider.value,soundSlider.maximum);
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_VOLUMN));
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_VOLUMN_CHANGE));
+			}
+			
+			public function onSetSounding(soundCanvas:Canvas):void{
+				//				component.visible = !component.visible;
+				this._model.isSettingSound = soundCanvas.visible = soundCanvas.includeInLayout = !soundCanvas.visible;
+			}
+			
+			
+			public function drawSmallerTicks(max:Number):void{
+				
+				// dig up to the custom Slider's skin to find information on the thumbGroup size
+				// and the stepSize, minimum, maximum values of the custom slider
+				var numberOfTicks:Number = max;
+				this.timeline.left = 0 ;
+				this.timeline.right = 0;
+				for (var i:int = 0; i <= numberOfTicks * 10; i++){
+					var tick:SmallTick = new SmallTick();
+					tick.y = 30;
+					tick.x = 8 + i * 11.4;//tickSpacing;
+					this.timeline.addElement(tick);
+				}
+			}
+			
+			
+			public function drawBiggerTicks(max:Number):void{
+				// dig up to the custom Slider's skin to find information on the thumbGroup size
+				// and the stepSize, minimum, maximum values of the custom slider
+				var numberOfTicks:Number = max;
+				
+				this.timeline.left = 0 ;
+				this.timeline.right = 0;
+				for (var i:int = 0; i <= numberOfTicks; i++){
+					var tick:BiggerTick = new BiggerTick();
+					tick.y = 25;
+					tick.x = 8 + 57 + i * 114;
+					this.timeline.addElement(tick);
+				}
+			}
+			
+			/**
+			 * This is very naive, and it could be made more efficient
+			 */
+			public function drawTicks(max:Number):void {
+				
+				// dig up to the custom Slider's skin to find information on the thumbGroup size
+				// and the stepSize, minimum, maximum values of the custom slider
+				var numberOfTicks:Number = max;
+				for (var i:int = 0; i <= numberOfTicks; i++){
+					var tick:Tick = new Tick();
+					var tickLabel:TickLabel = new TickLabel();
+					tick.y = 25;
+					tick.x = 8 + i * 114;
+					this.timeline.addElement(tick);
+					
+					tickLabel.y = 5;
+					tickLabel.x = 8 + i * 114;
+					tickLabel.labelDisplay.text = CommonUtils.formatTimes(i);
+					this.timeline.addElement(tickLabel);
+				}
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	<fx:Declarations>
+		<fx:Component className="Tick">
+			<s:Group width="1" height="10">
+				<s:Rect left="0" right="0" top="0" bottom="0">
+					<s:fill>
+						<s:SolidColor color="0xd0d0d0" />
+					</s:fill>
+				</s:Rect>
+			</s:Group>
+		</fx:Component>
+		
+		<fx:Component className="TickLabel">
+			<s:DataRenderer minHeight="24" minWidth="40">
+				<s:Label id="labelDisplay" text="00:00:00"
+						 horizontalCenter="0" verticalCenter="1" textAlign="left" verticalAlign="middle"
+						 fontWeight="normal" color="0xd0d0d0" fontSize="11">
+				</s:Label>
+			</s:DataRenderer>
+		</fx:Component>
+		
+		<fx:Component className="BiggerTick">
+			<s:Group width="1" height="10">
+				<s:Rect left="0" right="0" top="0" bottom="0">
+					<s:fill>
+						<s:SolidColor color="0xd0d0d0" />
+					</s:fill>
+				</s:Rect>
+			</s:Group>
+		</fx:Component>
+		
+		<fx:Component className="SmallTick">
+			<s:Group width="1" height="5">
+				<s:Rect left="0" right="0" top="0" bottom="0">
+					<s:fill>
+						<s:SolidColor color="0xd0d0d0" />
+					</s:fill>
+				</s:Rect>
+			</s:Group>
+		</fx:Component>
+	</fx:Declarations>
+	
+	
+	<s:Line height="273" x="0" y="0" >
+		<s:stroke> 
+			<s:SolidColorStroke color="0xd0d0d0" weight="1"/> 
+		</s:stroke> 
+	</s:Line>
+	
+	<s:Line height="273" x="114" y="0" >
+		<s:stroke> 
+			<s:SolidColorStroke color="0xd0d0d0" weight="1"/> 
+		</s:stroke> 
+	</s:Line>
+	
+	<s:HGroup id="componentId" width="100%" height="100%" gap="0">		
+		<s:VGroup width="114" height="100%" gap="0">
+			<mx:HBox width="114" height="45" backgroundColor="#292929" horizontalGap="15" verticalAlign="middle" horizontalAlign="center" visible="{is2Layout}" includeInLayout="{is2Layout}">
+				<s:Image id="btnBackward" source="@Embed('/assets/player/playbar/backward_default.png')"  buttonMode="true" click="onBackward()"/>
+				<s:Image id="btnPlay" source="@Embed('/assets/player/playbar/play_active.png')"  buttonMode="true" click="onPlay()"/>
+				<s:Image id="btnPause" source="@Embed('/assets/player/playbar/pause_default.png')"  buttonMode="true" click="onPause()" visible="false" includeInLayout="false"/>
+				<s:Image id="btnForward"  source="@Embed('/assets/player/playbar/forward_default.png')"  buttonMode="true" click="onForward()"/>
+			</mx:HBox>
+			<mx:HBox width="114" height="45" backgroundColor="#292929" horizontalGap="0" visible="{!is2Layout}" includeInLayout="{!is2Layout}"/>
+			<mx:HBox width="114" height="70" verticalAlign="middle" horizontalAlign="center"  backgroundColor="#a3a3a3">
+				<s:Image source="@Embed('/assets/manage/Film01.png')"/>
+			</mx:HBox>
+			<s:Line width="114" x="0" y="71" >
+				<s:stroke> 
+					<s:SolidColorStroke color="0xffffff" weight="1"/> 
+				</s:stroke> 
+			</s:Line>
+			<mx:HBox width="114" height="70" verticalAlign="middle" horizontalAlign="center"  backgroundColor="#a3a3a3">
+				<s:Image source="@Embed('/assets/manage/Film02.png')"/>
+			</mx:HBox>
+			<s:Line width="114" x="0" y="141" >
+				<s:stroke> 
+					<s:SolidColorStroke color="0xffffff" weight="1"/> 
+				</s:stroke> 
+			</s:Line>
+			<mx:HBox width="114" height="71" verticalAlign="middle" horizontalAlign="center"  backgroundColor="#a3a3a3">
+				<s:Image source="@Embed('/assets/manage/Film03.png')"/>
+			</mx:HBox>
+			<mx:Canvas width="114" height="15" backgroundColor="#292929">
+				
+			</mx:Canvas>
+		</s:VGroup>
+		<s:Group width="100%" height="100%">
+			<s:Scroller id="scroller" width="100%" height="273" horizontalScrollPolicy="on" verticalScrollPolicy="off">
+				<s:Group id="scrollGroup"  width="100%" height="100%" maxWidth="{progressWidth}">
+					<s:VGroup id="aaa" width="{progressWidth}" height="100%" gap="0" maxWidth="{progressWidth}">
+						<mx:Canvas id="timeline" width="{progressWidth}" height="45" backgroundColor="#292929" maxWidth="{progressWidth}" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+							<mx:HRule width="{progressWidth - 8}" height="1" strokeColor="0xffffff" strokeWidth="1" y="35" x="8"/> 
+						</mx:Canvas>
+						<mx:Canvas width="{progressWidth}" height="70" id="mediaPoint" backgroundColor="#e5e5e5"  maxWidth="{progressWidth}">
+						</mx:Canvas>
+						<s:Line width="{progressWidth}" x="0" y="71"   maxWidth="{progressWidth}">
+							<s:stroke> 
+								<s:SolidColorStroke color="0xffffff" weight="1"/> 
+							</s:stroke> 
+						</s:Line>
+						<mx:Canvas width="{progressWidth}" height="70" id="syncPoint" backgroundColor="#e5e5e5"  maxWidth="{progressWidth}">
+						</mx:Canvas>
+						<s:Line width="{progressWidth}" x="0" y="141"  maxWidth="{progressWidth}">
+							<s:stroke> 
+								<s:SolidColorStroke color="0xffffff" weight="1"/> 
+							</s:stroke> 
+						</s:Line>
+						<mx:Canvas width="{progressWidth}" height="71" id="syncQuiz" backgroundColor="#e5e5e5"  maxWidth="{progressWidth}">
+						</mx:Canvas>				
+						<mx:Canvas width="{progressWidth}" height="15" backgroundColor="#292929"  maxWidth="{progressWidth}">
+						</mx:Canvas>
+					</s:VGroup> 
+				</s:Group>
+			</s:Scroller>
+			<p:RichPlayBar id="slider" width="100%" height="1" sliderWidth="{this.width - 121 - 75}" left="2" buttonMode="true"/>
+		</s:Group>
+		<s:Group width="75" height="273" visible="{is2Layout}" includeInLayout="{is2Layout}">
+			<s:Rect width="100%" height="100%">
+				<s:fill>
+					<s:SolidColor color="#e5e5e5"/>
+				</s:fill>
+			</s:Rect>
+			<s:Line width="75" x="0" y="115" >
+				<s:stroke> 
+					<s:SolidColorStroke color="0xffffff" weight="1"/> 
+				</s:stroke> 
+			</s:Line>
+			<s:Line width="75" x="0" y="186" >
+				<s:stroke> 
+					<s:SolidColorStroke color="0xffffff" weight="1"/> 
+				</s:stroke> 
+			</s:Line>
+			<mx:Canvas width="75" height="15" backgroundColor="#292929" y="258" />
+		</s:Group>
+		
+		<mx:Canvas backgroundColor="#292929" width="2" height="273"/>
+		
+	</s:HGroup>
+	
+	<mx:HBox width="78" height="45" backgroundColor="#292929" verticalAlign="middle" horizontalAlign="center" horizontalGap="15" right="0" visible="{is2Layout}" includeInLayout="{is2Layout}">
+		<s:Image source="@Embed('/assets/player/playbar/sound_default.png')"  buttonMode="true" click="onSetSounding(this.setSounding)"/>
+		<s:Image id="fullScreen" source="@Embed('/assets/player/playbar/zoomout_default.png')"  buttonMode="true" click="onSwitchScreen()" visible="false" includeInLayout="false"/>
+		<s:Image id="threeLayout" source="@Embed('/assets/player/playbar/3layout_default.png')"  buttonMode="true" click="onChooseLayout()"/>
+	</mx:HBox>
+	
+	<mx:Canvas id="setSounding" visible="false" includeInLayout="false" x="{this.componentId.width-75}" y="-55" backgroundColor="#292929" backgroundAlpha="1" width="30" height="65" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<mx:ProgressBar id="soundProgress" x="12" y="58" width="50" height="6" label="" labelPlacement="center" rotation="-90"
+						barSkin="com.deodio.elearning.libs.skins.DSFProgressBarSkin" trackSkin="com.deodio.elearning.libs.skins.DVProgressTrackSkin"
+						mode="manual"/>
+		<c:DHSlider id="soundSlider" x="22" y="58" width="50" height="6"  minimum="0" maximum="1" snapInterval="0.1" showDataTip="false" allowTrackClick="false"
+					skinClass="com.deodio.elearning.libs.skins.DHSoundSliderSkin" change="onSoundProgressChange(this.soundSlider,this.soundProgress)" rotation="-90"/>
+	</mx:Canvas>
+	
+</s:Group>

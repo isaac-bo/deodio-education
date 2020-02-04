@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark" 
+		  xmlns:mx="library://ns.adobe.com/flex/mx" width="400" height="300" gap="0">
+	<fx:Script>
+		<![CDATA[
+			
+			[Bindable]
+			public var progressWidth:Number = 0;
+		]]>
+	</fx:Script>
+	<mx:Canvas width="{progressWidth}" height="45" backgroundColor="#292929" maxWidth="{progressWidth}">
+	</mx:Canvas>
+	<mx:Canvas width="{progressWidth}" height="70" backgroundColor="#e5e5e5"  maxWidth="{progressWidth}">
+	</mx:Canvas>
+	<s:Line width="{progressWidth}" x="0" y="71"   maxWidth="{progressWidth}">
+		<s:stroke> 
+			<s:SolidColorStroke color="0xffffff" weight="1"/> 
+		</s:stroke> 
+	</s:Line>
+	<mx:Canvas width="{progressWidth}" height="70" backgroundColor="#e5e5e5"  maxWidth="{progressWidth}">
+	</mx:Canvas>
+	<s:Line width="{progressWidth}" x="0" y="141"  maxWidth="{progressWidth}">
+		<s:stroke> 
+			<s:SolidColorStroke color="0xffffff" weight="1"/> 
+		</s:stroke> 
+	</s:Line>
+	<mx:Canvas width="{progressWidth}" height="71" backgroundColor="#e5e5e5"  maxWidth="{progressWidth}">
+	</mx:Canvas>				
+	<mx:Canvas width="{progressWidth}" height="15" backgroundColor="#292929"  maxWidth="{progressWidth}">
+	</mx:Canvas>
+</s:VGroup>

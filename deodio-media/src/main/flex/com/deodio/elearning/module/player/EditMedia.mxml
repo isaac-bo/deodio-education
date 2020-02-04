@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:media="com.deodio.elearning.module.player.screen.view.*" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:playbar="com.deodio.elearning.module.player.playbar.view.*"
+		 width="900" height="500" creationComplete="init()">
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.Media;
+			import com.deodio.elearning.libs.constants.Constants;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.libs.stream.VideoStreamController;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.ActionModelLocator;
+			import com.deodio.elearning.module.plugin.AudioModelLocator;
+			import com.deodio.elearning.module.plugin.EditorModelLocator;
+			import com.deodio.elearning.module.plugin.RecordModelLocator;
+			import com.deodio.elearning.service.MediaService;
+			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.CloseEvent;
+			import mx.rpc.events.ResultEvent;
+			import mx.utils.StringUtil;
+			
+			[Bindable]
+			public var mediaId:String = "2";
+			
+			[Bindable]
+			private var _recordDictionary:Dictionary=new Dictionary();
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var _recordLocator:RecordModelLocator = RecordModelLocator.getInstance();
+			[Bindable]
+			private var _editorLocator:EditorModelLocator = EditorModelLocator.getInstance();
+			[Bindable]
+			private var _audioLocator:AudioModelLocator = AudioModelLocator.getInstance();
+			[Bindable]
+			private var _actionLocator:ActionModelLocator = ActionModelLocator.getInstance();
+			
+			[Bindable]
+			private var _mediaService:MediaService = new MediaService();
+		
+			private function init():void{
+				_model.userId = Application.application.parameters.userId;
+				_model.presentationId=Application.application.parameters.presentationId;
+// ---------------  TODO -------------------------------------
+//				_mediaService.getMedia(mediaId,getMediaFunc);
+// -----------------------------------------------------------
+				this.initModelLocators();
+			}
+			
+			
+			private function getMediaFunc(event:ResultEvent):void{
+				var media:Media = event.result as Media;
+				if(media != null){
+					this._model.isEditMedia = true;
+					this._model.editorMedia = media;
+					this._editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_IS_EDIT_PLAYBAR,media));
+					this._editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_IS_EDIT_SCREEN,media));
+				}
+				this.initModelLocators();
+			}
+			
+			private function initModelLocators():void{
+				this.initRecordLocator().initEditorLocator();
+			}
+			
+			private function initToolsLocator():EditMedia{
+//				_actionLocator.addEventListener(PointsEvent.POINT_SAVE_POINT,function(event:PointsEvent):void{
+//					saveSyncPoints();
+//				});
+				return this;
+			}
+			
+			private function initRecordLocator():EditMedia{
+				this._recordLocator.recordDictionary = this._recordDictionary;
+				this._recordLocator.setIsRecording(true);
+				this._recordLocator.init(playBar);
+				
+				this.mediaScreen.addEventListener(MockEvent.MOCK_CHNAGE_MODEL,function(event:MockEvent):void{
+					
+					if(event.data as Boolean == true){
+						_recordLocator.setIsRecording(true);
+						_recordLocator.init(playBar);
+						
+					}else{
+						_recordLocator.setIsRecording(false);
+						_recordLocator.init(playBar);
+					}
+				});
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_START_MEDIA,function(event:RecordEvent):void{
+					if(event.data is Video){
+						var media:Video = event.data as Video;
+						media.name = "media-name";
+						mediaScreen.mediaScreen.videoDisplay.addChild(event.data as Video);
+					}else{
+						mediaScreen.audioScreen.onPlayFrequencyTimer();
+					}
+				});
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_STOP_MEDIA,function(event:RecordEvent):void{
+					if(event.data as Boolean){
+						var media:Video = mediaScreen.mediaScreen.videoDisplay.getChildByName("media-name")  as Video;
+						media.attachCamera(null);
+						mediaScreen.mediaScreen.videoDisplay.removeChild(media);
+					}else{
+						mediaScreen.audioScreen.onStopFrequencyTimer();
+					}
+					
+				});
+//				this._recordLocator.setIsRecording(true);
+//				this._recordLocator.init(playBar);
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_CREATE_COMPLETED,function(event:RecordEvent):void{
+					var media:Media = event.data as Media;
+					_model.editorMedia = media;
+				});
+				
+				this._editorLocator.addEventListener(MediaEvent.MEDIA_CREATE_MEDIA_ITEM,function(event:MediaEvent):void{
+					var stream:VideoStreamController = event.data as VideoStreamController;
+					mediaScreen.mediaScreen.createMedia(stream,false);
+				});
+				
+				this._editorLocator.addEventListener(RecordEvent.RECORD_PLAY_MEDIA,function(event:RecordEvent):void{
+					if(_recordLocator.recordStream.getIsRecordVideo() == false){
+						mediaScreen.audioScreen.onPlayFrequencyTimer();
+					}
+				});
+				
+				this._editorLocator.addEventListener(RecordEvent.RECORD_PAUSE_MEDIA,function(event:RecordEvent):void{
+					if(_recordLocator.recordStream.getIsRecordVideo() == false){
+						mediaScreen.audioScreen.onStopFrequencyTimer();
+					}
+				});
+				
+				this._editorLocator.addEventListener(RecordEvent.REORD_CLICK_RECORD_MEDIA,function(event:RecordEvent):void{
+					if(StringUtil.trim(_model.recordMediaName).length >0 && _model.recordMediaName != null){
+						playBar.recordMedia();
+					}else{
+						Alert.show("Please input media name");
+					}
+				});
+				
+				this._editorLocator.addEventListener(RecordEvent.RECORD_SAVE_MEDIA,function(event:RecordEvent):void{
+					if(StringUtil.trim(_model.recordMediaName).length >0 && _model.recordMediaName != null){
+						//playBar.recordMedia();
+						_mediaService.saveMedia(_model.editorMedia,_model.presentationId,saveMediaSuccess);
+					}else{
+						Alert.show("Please input media name");
+					}
+				});
+				
+				
+				this._editorLocator.addEventListener(MediaEvent.MEDIA_TRIM_MEDIA,function(event:MediaEvent):void{
+					_model.isTrim = !_model.isTrim;
+					if(_model.isTrim == true)
+						playBar.onTrimMedia();
+					else
+						playBar.stopTrimMedia();
+				});
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_SET_MODEL,function(event:RecordEvent):void{
+					mediaScreen.onShowRecordSettings();
+				});
+				
+				this._editorLocator.addEventListener(MediaEvent.MEDIA_TRIM_RESULT,function(event:MediaEvent):void{
+					_model.slidesValues = event.data as Array;
+					Alert.show("Do you want to save this change?",'Message',Alert.OK|Alert.CANCEL,null,closeTrimMediaFunc);
+				});
+				
+				this._editorLocator.addEventListener(MediaEvent.MEDIA_SWAP_RESULT,function(event:MediaEvent):void{
+					_model.slidesValues = event.data as Array;
+					Alert.show("Do you want to save this change?",'Message',Alert.OK|Alert.CANCEL,null,closeSwapMediaFunc);
+				});
+//				
+//				this._recordLocator.addEventListener(RecordEvent.RECORD_PLAY_LENGTH,function(event:RecordEvent):void{
+//					var recordLength:Number = event.data as Number;
+//					playBar.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_MAXIMUM,recordLength));
+//				});
+//				
+//				this._recordLocator.addEventListener(RecordEvent.RECORD_PLAY_INIT,function(event:RecordEvent):void{
+//					playBar.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_VALUE,0));
+//				});
+//				
+//				this._recordLocator.addEventListener(RecordEvent.RECORD_REMOVE_ALL,function(event:RecordEvent):void{
+//					mediaScreen.refreshRecords();
+//				});
+//				
+//				this._recordLocator.addEventListener(RecordEvent.RECORD_REMOVE_ITEM,function(event:RecordEvent):void{
+//					mediaScreen.refreshRecords();
+//				});
+//				this._recordLocator.addEventListener(MockEvent.MOCK_CHANGE_RECORD_LAYOUT,function(event:MockEvent):void{
+//					mediaScreen.onShowRecordsPicker();
+//					//					mediaScreen.currentState == "hideRecordPicker"?
+//					//						playBar.leftToolBar.setStyle("backgroundColor","0x526c8d"):
+//					//							playBar.leftToolBar.setStyle("backgroundColor","0x000000");
+//				});
+//				
+//				this._recordLocator.addEventListener(RecordEvent.RECORD_SET_MODEL,function(event:RecordEvent):void{
+//					mediaScreen.onShowRecordSettings();
+//				});
+//				
+				return this;
+			}
+			
+			
+			public function saveMediaSuccess(evet:ResultEvent):void{
+				var param:Object = new Object();
+				param.id=_model.editorMedia.id;
+				param.mediaName = _model.editorMedia.mediaName;
+				param.mediaType = _model.editorMedia.mediaExt ;
+				param.mediaSize = _model.editorMedia.mediaSize;
+				this._actionLocator.command(Constants.COMMAND_LIST_MEDIA,"",param);
+			}
+			
+			public function closeTrimMediaFunc(event:CloseEvent):void{
+				if(event.detail == Alert.OK){
+					this._model.editorMedia.mediaStart = this._model.slidesValues[0];
+					this._model.editorMedia.mediaEnd = this._model.slidesValues[1];
+				}
+				_editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_TRIM_MEDIA));
+			}
+			
+			public function closeSwapMediaFunc(event:CloseEvent):void{
+				
+				if(event.detail == Alert.OK){
+					Alert.show(mediaScreen.mediaScreen.swapCanvas.x + "--------" + mediaScreen.mediaScreen.swapCanvas.y + "-------------" + mediaScreen.mediaScreen.swapCanvas.width + "--------" + mediaScreen.mediaScreen.swapCanvas.height);	
+				}
+				_editorLocator.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_SWAP_MEDIA));
+			}
+			
+			
+			private function initEditorLocator():EditMedia{
+				this._editorLocator.init(playBar);
+				return this;
+			}
+		]]>
+	</fx:Script>
+	
+	<media:EditMediaScreen id="mediaScreen" width="100%" height="100%"/>
+	<playbar:EditMediaPlayBar id="playBar" y="408" width="900" height="48"/>
+	
+</s:Group>

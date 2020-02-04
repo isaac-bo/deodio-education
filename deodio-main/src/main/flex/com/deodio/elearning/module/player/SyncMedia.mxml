@@ -1,0 +1,642 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" width="1000" height="300"
+		 xmlns:media="com.deodio.elearning.module.player.screen.view.*" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:playbar="com.deodio.elearning.module.player.playbar.view.*"
+		 xmlns:container="com.deodio.elearning.libs.containers.*" creationComplete="init()" initialize="initApplication()">	
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.Presentation;
+			import com.deodio.elearning.domain.PresentationSyncMedia;
+			import com.deodio.elearning.domain.PresentationSyncPoints;
+			import com.deodio.elearning.domain.PresentationSyncQuizs;
+			import com.deodio.elearning.domain.PresentationSyncSlides;
+			import com.deodio.elearning.domain.customize.PresentationBo;
+			import com.deodio.elearning.domain.customize.PresentationSyncMediaBo;
+			import com.deodio.elearning.domain.customize.PresentationSyncQuizsBo;
+			import com.deodio.elearning.domain.customize.QuizExaminationBo;
+			import com.deodio.elearning.libs.constants.Constants;
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.PointsEvent;
+			import com.deodio.elearning.libs.stream.VideoStreamController;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.player.screen.view.SyncMediaScreen;
+			import com.deodio.elearning.module.plugin.ActionModelLocator;
+			import com.deodio.elearning.module.plugin.CommandModelLocator;
+			import com.deodio.elearning.module.plugin.ProgressBarModelLocator;
+			import com.deodio.elearning.module.plugin.ScreenModelLocator;
+			import com.deodio.elearning.module.plugin.SyncPointsModelLocator;
+			import com.deodio.elearning.module.plugin.SyncQuizsModelLocator;
+			import com.deodio.elearning.module.plugin.SyncSlidesModelLocator;
+			import com.deodio.elearning.service.PresentationService;
+			import com.deodio.elearning.service.QuizExaminationService;
+			import com.deodio.elearning.service.SystemService;
+			
+			import mx.collections.ArrayCollection;
+			import mx.core.Application;
+			import mx.events.DragEvent;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.components.Alert;
+			
+			[Bindable]
+			public var presentationId:String = "1";
+			[Bindable]
+			public var accountId:String = "1";
+			[Bindable]
+			public var systemUrl:String = "";;
+			[Bindable]
+			public var _timer:Timer;
+			[Bindable]
+			public var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			public var _parameterMap:Dictionary = new Dictionary();
+			[Bindable]
+			public var _screenLocator:ScreenModelLocator = ScreenModelLocator.getInstance();
+			[Bindable]
+			public var _commandLocator:CommandModelLocator = CommandModelLocator.getInstance();
+			[Bindable]
+			public var _actionLocator:ActionModelLocator = ActionModelLocator.getInstance();
+			[Bindable]
+			public var _slidesLocator:SyncSlidesModelLocator = SyncSlidesModelLocator.getInstance();
+			[Bindable]
+			public var _syncPointsLocator:SyncPointsModelLocator = SyncPointsModelLocator.getInstance();
+			[Bindable]
+			public var _syncQuizsLocator:SyncQuizsModelLocator = SyncQuizsModelLocator.getInstance();
+			[Bindable]
+			public var _progressBarLocator:ProgressBarModelLocator = ProgressBarModelLocator.getInstance();
+			
+			[Bindable]
+			private var _presentation:PresentationBo = new PresentationBo();
+			[Bindable]
+			private var _presentationService:PresentationService = new PresentationService();
+			[Bindable]
+			private var _systemService:SystemService = new SystemService();
+			[Bindable]
+			private var _quizExaminationService:QuizExaminationService = new QuizExaminationService();
+			
+			private function init():void{
+				presentationId=Application.application.parameters.presentationId;
+				accountId=Application.application.parameters.accountId;
+				_presentationService.getPresentation(presentationId,getPresentationFunc);
+				_quizExaminationService.getQuizExaminationList(accountId,getQuizExaminationFunc);
+				this.currentState = StateEnum.SHOW_STATE;
+//				this.initEvents();
+				
+			}
+			
+			private function initApplication():void{
+//				initEvents();
+			}
+			
+
+			private function initModelLocators():void{
+				this.initProgressBarLocator().initSlidesLocator()
+						.initToolsLocator().initSyncPointLocator()
+							.initSyncQuizsLocator().initCommandLocator().initScreenLocator();
+		
+			}
+			
+			private function initSlidesLocator():SyncMedia{
+				if(_presentation.slides != null){
+					_slidesLocator.slides = _presentation.slides;
+					this.slideList.selectedIndex = 0;
+				}
+				return this;
+			}
+			
+			private function initSyncPointLocator():SyncMedia{
+				_syncPointsLocator.syncPoints = _presentation.points;
+				_syncPointsLocator.isSlides = _slidesLocator.slides != null && _slidesLocator.slides.length > 0 ? true : false;
+				_syncPointsLocator.initPointDictionary(_parameterMap,_slidesLocator.slides);
+				_syncPointsLocator.initDrawSyncPoints(_parameterMap,this.syncEditor.syncPoint);
+				return this;
+			}
+			
+			private function initSyncQuizsLocator():SyncMedia{
+				if(_presentation.quizs != null){
+					this.quizList.selectedIndex = 0;
+					
+					for each(var quiz:PresentationSyncQuizs in _presentation.quizs){
+						_syncQuizsLocator.syncQuizs.addItem(new PresentationSyncQuizsBo(quiz));
+					}
+				
+					_syncQuizsLocator.initPointDictionary(_parameterMap);
+					_syncQuizsLocator.initDrawSyncPoints(_parameterMap,this.syncEditor.syncQuiz);
+				}
+				return this;
+			}
+			
+			private function initProgressBarLocator():SyncMedia{
+					
+				//INFO: Init the events for _progressBarLocator.
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_DESTORY_MEDIA_COVER,function(event:MediaEvent):void{
+					mediaScreen.clipsCanvas.destoryImage(false);
+				});
+			
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_CREATE_MEDIA_ITEM,function(event:MediaEvent):void{
+					var stream:VideoStreamController = event.data as VideoStreamController;
+					mediaScreen.clipsCanvas.createMedia(stream,false);
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_CREATE_MEDIA_COVER,function(event:MediaEvent):void{
+					if (mediaScreen.clipsCanvas.clipsImage.data == null) {
+						var coverUrl:String = event.data as String;
+						mediaScreen.clipsCanvas.createImage(coverUrl,false);
+					}
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_EXEC_COMMAND,function(event:MediaEvent):void{
+					_commandLocator.executeCommand(_parameterMap,event.data as Number);
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_SCREEN_FULL_SCREEN,onMouseSwitchFullScreen);
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_VOLUMN,function(event:MediaEvent):void{
+//					_progressBarLocator.videoStream.setSound(_model.sound);
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_PLAY, function(event:MediaEvent):void{
+					onPlay();
+				});
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_PAUSE, function(event:MediaEvent):void{
+					onPause();
+				});
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_STOP, function(event:MediaEvent):void{
+					onStop();
+				});
+				
+				_progressBarLocator.addEventListener(MockEvent.MOCK_CHANGE_LAYOUT,function(event:MockEvent):void{
+					onChangeLayout();
+				});
+				
+				syncEditor.addEventListener(MediaEvent.MEDIA_VOLUMN_CHANGE,function(event:MediaEvent):void{
+					playBar.soundProgress.setProgress(syncEditor.soundSlider.value,syncEditor.soundSlider.maximum);
+					playBar.soundSlider.value = syncEditor.soundSlider.value;
+				});
+				
+				playBar.addEventListener(MediaEvent.MEDIA_VOLUMN_CHANGE,function(event:MediaEvent):void{
+					syncEditor.soundProgress.setProgress(playBar.soundSlider.value,playBar.soundSlider.maximum);
+					syncEditor.soundSlider.value = playBar.soundSlider.value;
+				});
+				
+				for each(var media:PresentationSyncMedia in _presentation.medias){
+					_progressBarLocator.mediaPoints.addItem(new PresentationSyncMediaBo(media));
+				}
+				
+//				_progressBarLocator.mediaPoints = _presentation.medias;
+				_progressBarLocator.initMedia(this.playBar,this.syncEditor);
+				_progressBarLocator.initDrawMediaPoints(this.syncEditor.mediaPoint);
+				return this;
+			}
+			
+			private function initCommandLocator():SyncMedia{
+				_commandLocator.container = this;
+				_commandLocator.systemUrl = systemUrl;
+				_commandLocator.executeCommand(_parameterMap,0);
+				return this;
+			}
+			
+			private function initScreenLocator():SyncMedia{
+				
+				_screenLocator.addEventListener(MediaEvent.MEDIA_PLAY, function(event:MediaEvent):void{
+					onPlay();
+				});
+				_screenLocator.mediaScreen = this.mediaScreen;
+				_screenLocator.initScreen();
+				return this;
+			}
+			
+			private function initToolsLocator():SyncMedia{
+				_actionLocator.addEventListener(PointsEvent.POINT_SAVE_POINT,function(event:PointsEvent):void{
+					saveSyncPoints();
+				});
+				return this;
+			}
+			
+			private function getPresentationFunc(event:ResultEvent):void{
+				_presentation = event.result as PresentationBo;
+				_systemService.getImageServerUrl(function(event:ResultEvent):void{
+					systemUrl = event.result as String;
+					initModelLocators();
+				});
+			}
+			
+			private function getQuizExaminationFunc(event:ResultEvent):void{
+				this.quizList.dataProvider = event.result as ArrayCollection;
+				this._syncQuizsLocator.quizs = event.result as ArrayCollection;
+			}
+			
+			private function onPreviousHandler():void{
+				if(this.slideList.selectedIndex > 0)
+					this.slideList.selectedIndex -= 1;
+				else
+					this.slideList.selectedIndex = 0;
+				this.slideList.ensureIndexIsVisible(this.slideList.selectedIndex);
+			}
+			
+			private function onNextHandler():void{
+				if(this.slideList.selectedIndex < this._slidesLocator.slides.length - 1)
+					this.slideList.selectedIndex += 1;
+				else
+					this.slideList.selectedIndex = this._slidesLocator.slides.length - 1;
+				this.slideList.ensureIndexIsVisible(this.slideList.selectedIndex);
+			}
+			
+			public function getSlidesContainer():Group {
+				return this.mediaScreen.slidesCanvas;
+			}
+			
+			public function onMouseSwitchFullScreen(event:MediaEvent):void{
+				if(this._model.isFullScreen){
+					this.closeFullScreen();
+					if(_timer){
+						_timer.stop();
+					}
+				}else{
+					this.showFullScreen(this._progressBarLocator.isMedia());
+					this.monitorMouseMove();
+				}
+			}
+			
+			public function showFullScreen(isMedia:Boolean):void {
+				
+				_model.isFullScreen=true;
+//				this._screenLocator.switchScreen(isMedia);
+				mediaScreen.clipsCanvas.width=mediaScreen.slidesCanvas.width=(this.screen.width - this.slidePicker.width)/2;
+				mediaScreen.clipsCanvas.height=mediaScreen.slidesCanvas.height=(this.screen.width - this.slidePicker.width) / 2 * 9 /16 ;
+				
+				mediaScreen.slidesCanvas.y = mediaScreen.clipsCanvas.y = (this.screen.height - mediaScreen.clipsCanvas.height - this.playBar.height - this.syncEditor.height)/2;
+				mediaScreen.clipsCanvas.x = mediaScreen.slidesCanvas.x + mediaScreen.slidesCanvas.width + 0.5;
+				
+				this.playBar.y=mediaScreen.clipsCanvas.y + mediaScreen.clipsCanvas.height + 1;
+				this.playBar.width = this.screen.width - this.slidePicker.width;
+				this.playBar.progress.width = this.playBar.width - this.playBar.leftToolBar.width - this.playBar.rightToolBar.width 
+												- this.playBar.currentDuration.width - this.playBar.delimiter.width - this.playBar.maxDuration.width - 20;
+				this.playBar.slider.width = this.playBar.progress.width;
+				
+				this.playBar.currentDuration.x =  this.playBar.progress.width + 20;
+				this.playBar.delimiter.x = this.playBar.currentDuration.x + this.playBar.currentDuration.width - 10;
+				this.playBar.maxDuration.x = this.playBar.delimiter.x + this.playBar.delimiter.width - 5;
+				
+				this.syncEditor.y=this.playBar.y+this.playBar.height + 1;
+				this.syncEditor.width = this.screen.width - this.sliderPickerContainer.width;
+				this.sliderPickerContainer.height = mediaScreen.clipsCanvas.height + this.playBar.height + this.syncEditor.height - this.slidePickerTabBar.height + 5;
+				this.sliderPickerContainer.y = mediaScreen.slidesCanvas.y;
+				this.quizList.height = this.slideList.height = this.sliderPickerContainer.height - 70;
+				
+				this.mediaScreen.playIcon.x = mediaScreen.clipsCanvas.width - this.mediaScreen.playIcon.width/2;
+				this.mediaScreen.playIcon.y = mediaScreen.clipsCanvas.y + (mediaScreen.clipsCanvas.height - this.mediaScreen.playIcon.height)/2;
+				(this.parentApplication as DeodioSyncMedia).topImage.width = (this.parentApplication as DeodioSyncMedia).bottomImage.width = this.screen.width;	
+				(this.parentApplication as DeodioSyncMedia).topImage.visible = (this.parentApplication as DeodioSyncMedia).topImage.includeInLayout = true;
+				(this.parentApplication as DeodioSyncMedia).bottomImage.visible = (this.parentApplication as DeodioSyncMedia).bottomImage.includeInLayout = true;
+				(this.parentApplication as DeodioSyncMedia).topImage.y = 0;
+				(this.parentApplication as DeodioSyncMedia).bottomImage.y = this.screen.height - (this.parentApplication as DeodioSyncMedia).bottomImage.height;
+				
+				this._screenLocator.resizeScreen((this.screen.width - this.slidePicker.width)/2,(this.screen.width - this.slidePicker.width) / 2 * 9 /16,(this.screen.width - this.slidePicker.width)/2,(this.screen.width - this.slidePicker.width) / 2 * 9 /16);
+				
+				this.stage.addEventListener(FullScreenEvent.FULL_SCREEN, onKeyBoardSwitchFullScreen);
+				this.stage.displayState=StageDisplayState.FULL_SCREEN;
+			}
+			
+			public function closeFullScreen():void {
+				_model.isFullScreen=false;
+				
+				mediaScreen.clipsCanvas.width=mediaScreen.slidesCanvas.width=400;
+				mediaScreen.clipsCanvas.height=mediaScreen.slidesCanvas.height=255 ;
+				
+				mediaScreen.slidesCanvas.y = mediaScreen.clipsCanvas.y = 0;
+				mediaScreen.clipsCanvas.x = mediaScreen.slidesCanvas.x + mediaScreen.slidesCanvas.width + 0.5;
+				
+				this.playBar.y=mediaScreen.clipsCanvas.y + mediaScreen.clipsCanvas.height + 1;
+				this.playBar.width = 802;
+				this.playBar.progress.width = 430;
+				this.playBar.slider.width = this.playBar.progress.width;
+				
+				this.playBar.currentDuration.x =  this.playBar.progress.width + 20;
+				this.playBar.delimiter.x = 500;
+				this.playBar.maxDuration.x = 508;
+				this.syncEditor.y=this.playBar.y+this.playBar.height + 1;
+				this.syncEditor.width = 802;
+				
+				this.sliderPickerContainer.height = mediaScreen.clipsCanvas.height + this.playBar.height + this.syncEditor.height - this.slidePickerTabBar.height + 5;
+				this.sliderPickerContainer.y = 0;
+				this.quizList.height = this.slideList.height = this.sliderPickerContainer.height - 70;
+				
+				this.mediaScreen.playIcon.x = mediaScreen.clipsCanvas.width - this.mediaScreen.playIcon.width/2;
+				this.mediaScreen.playIcon.y = mediaScreen.clipsCanvas.y + (mediaScreen.clipsCanvas.height - this.mediaScreen.playIcon.height)/2;
+				
+				this.currentState = StateEnum.SHOW_STATE;
+				this.stage.removeEventListener(FullScreenEvent.FULL_SCREEN, onKeyBoardSwitchFullScreen);
+				this.stage.displayState=StageDisplayState.NORMAL;
+				(this.parentApplication as DeodioSyncMedia).topImage.visible = (this.parentApplication as DeodioSyncMedia).topImage.includeInLayout = false;
+				(this.parentApplication as DeodioSyncMedia).bottomImage.visible = (this.parentApplication as DeodioSyncMedia).bottomImage.includeInLayout = false;
+				
+				(this.parentApplication as DeodioSyncMedia).topImage.width = (this.parentApplication as DeodioSyncMedia).bottomImage.width = 0;	
+				(this.parentApplication as DeodioSyncMedia).topImage.y = 0;
+				(this.parentApplication as DeodioSyncMedia).bottomImage.y = 0;
+				this._screenLocator.resizeScreen(400,225,400,225);
+			}
+
+			public function onKeyBoardSwitchFullScreen(event:FullScreenEvent):void{
+				//IINFO: 0 point can't be do any thing.
+				if (event.fullScreen) {
+					/* Do something specific here if we switched to full screen mode. */
+					this.showFullScreen(this._progressBarLocator.isMedia());
+				} else {
+					/* Do something specific here if we switched to normal mode. */
+					this.closeFullScreen();
+//					if(_timer){
+//						_timer.stop();
+//					}
+//					this.currentState = "showState";
+				}
+			}
+			
+			public function onPlay():void{
+				this.playBar.btnPause.visible=this.playBar.btnPause.includeInLayout=true;
+				this.playBar.btnPlay.visible=this.playBar.btnPlay.includeInLayout=false;
+				this.syncEditor.btnPause.visible=this.syncEditor.btnPause.includeInLayout=true;
+				this.syncEditor.btnPlay.visible=this.syncEditor.btnPlay.includeInLayout=false;
+				this.mediaScreen.playIcon.visible = this.mediaScreen.playIcon.includeInLayout = false;
+				this._progressBarLocator.play();
+			}
+			
+			public function onPause():void{
+				this.playBar.btnPause.visible=this.playBar.btnPause.includeInLayout=false;
+				this.playBar.btnPlay.visible=this.playBar.btnPlay.includeInLayout=true;
+				this.syncEditor.btnPause.visible=this.syncEditor.btnPause.includeInLayout=false;
+				this.syncEditor.btnPlay.visible=this.syncEditor.btnPlay.includeInLayout=true;
+				this.mediaScreen.playIcon.visible=this.mediaScreen.playIcon.includeInLayout=true;
+				this._screenLocator.resizePlayIcon();
+				this._progressBarLocator.pause();
+			}
+			
+			
+			public function onStop():void{
+				this.playBar.btnPause.visible=this.playBar.btnPause.includeInLayout=false;
+				this.playBar.btnPlay.visible=this.playBar.btnPlay.includeInLayout=true;
+				this.syncEditor.btnPause.visible=this.syncEditor.btnPause.includeInLayout=false;
+				this.syncEditor.btnPlay.visible=this.syncEditor.btnPlay.includeInLayout=true;
+				this.mediaScreen.playIcon.visible=this.mediaScreen.playIcon.includeInLayout=true;
+				this._screenLocator.resizePlayIcon();
+				this._progressBarLocator.stop();
+			}
+			
+			public function onMouseMove():void{
+				
+//				if(this._model.isFullScreen){
+//					playBar.visible = playBar.includeInLayout = true;
+//					playBar.alpha = 1;
+//					this.monitorMouseMove();
+//				}
+			}
+			
+			private function monitorMouseMove():void{
+//				if(_timer){
+//					_timer.stop();
+//				}
+//				
+//				_timer = new Timer(3000);
+//				_timer.start();
+//				_timer.addEventListener(TimerEvent.TIMER,function(event:TimerEvent):void{
+//					var _fadeEffect:FadeEffect = new FadeEffect(playBar);
+//					_fadeEffect.fadeOut();
+//					playBar.setSounding.visible = playBar.setSounding.includeInLayout = false;
+//				});
+			}
+			
+			private function onDragEnter(event:DragEvent):void{
+				if(_model.isPlay){
+					this._progressBarLocator.temporaryPause();
+				}
+				if((event.currentTarget as List).dataProvider.getItemAt(0) && 
+					(event.currentTarget as List).dataProvider.getItemAt(0) as QuizExaminationBo){
+					this._syncQuizsLocator.quizThumbsDragEnter(event,quizList);
+				}else{
+					this._slidesLocator.slideThumbsDragEnter(event,slideList);
+				}
+			}
+			
+			private function onDragExit(event:DragEvent):void{
+				trace(this + "-----------onDragExit--------");
+				if((event.currentTarget as List).dataProvider.getItemAt(0) && 
+					(event.currentTarget as List).dataProvider.getItemAt(0) as QuizExaminationBo){
+					this._syncQuizsLocator.quizThumbsDragExit(event,quizList);
+				}else{
+					this._slidesLocator.slideThumbsDragExit(event,slideList);
+				}
+			}
+			
+			private function onDragComplete(event:DragEvent):void{
+				trace(this + "-----------onDragComplete--------");
+				if((event.currentTarget as List).dataProvider.getItemAt(0) && 
+					(event.currentTarget as List).dataProvider.getItemAt(0) as QuizExaminationBo){
+					
+					//validate the current time point whether has the sync poit, if so, popup up alert warning.
+					if(_syncQuizsLocator.isExistQuizPoint(this._progressBarLocator.currentDuration,(this.quizList.selectedItem as QuizExaminationBo).id)){
+						Alert.show("--------- 这个点不可以添加同步点 －－－－－－－－－－－");
+						this._syncQuizsLocator.quizThumbsDragComplete(event,quizList);
+						return;
+					}
+					var quiz:QuizExaminationBo = this.quizList.selectedItem as QuizExaminationBo;
+					var syncQuiz:PresentationSyncQuizsBo = this._syncQuizsLocator.getSyncPoint(quiz,this.presentationId,this._progressBarLocator.currentDuration);
+					this._syncQuizsLocator.syncQuizs.addItem(syncQuiz);
+					this._syncQuizsLocator.setParameterMap(_parameterMap,syncQuiz);
+					this._syncQuizsLocator.drawSyncPoint(_parameterMap,this.syncEditor.syncQuiz,syncQuiz);
+					this._syncQuizsLocator.quizThumbsDragComplete(event,quizList);
+					this._syncQuizsLocator.initQuizPointsUI();
+				}else{
+					
+					//validate the current time point whether has the sync poit, if so, popup up alert warning.
+					if(_syncPointsLocator.isExistSyncPoint(this._progressBarLocator.currentDuration,"-1")){
+						Alert.show("--------- 这个点不可以添加同步点 －－－－－－－－－－－");
+						this._slidesLocator.slideThumbsDragComplete(event,slideList);
+						return;
+					}
+					var syncSlide:PresentationSyncSlides = this.slideList.selectedItem as PresentationSyncSlides;
+					var syncPoint:PresentationSyncPoints = this._syncPointsLocator.getSyncPoint(syncSlide,this._progressBarLocator.currentDuration);
+					this._syncPointsLocator.syncPoints.addItem(syncPoint);
+					this._syncPointsLocator.setParameterMap(_parameterMap,syncPoint);
+					this._syncPointsLocator.drawSyncPoint(_parameterMap,this.syncEditor.syncPoint,syncPoint);
+					this._slidesLocator.slideThumbsDragComplete(event,slideList);
+				}
+				
+				
+				if(_model.isPlay){
+					this._progressBarLocator.temporaryResume();
+				}
+			}
+			
+			private function onDragDrop(event:DragEvent):void{
+				trace(this + "---------onDragDrop-----------");
+				if((event.currentTarget as List).dataProvider.getItemAt(0) && 
+					(event.currentTarget as List).dataProvider.getItemAt(0) as QuizExaminationBo){
+					this._syncQuizsLocator.quizThumbsDragDrop(event,quizList);
+				}else{
+					this._slidesLocator.slideThumbsDragDrop(event,slideList);
+				}
+			}
+			
+			private function onDragStart(event:DragEvent):void{
+				trace(this + "---------onDragStart-----------");
+				if((event.currentTarget as List).dataProvider.getItemAt(0) && 
+					(event.currentTarget as List).dataProvider.getItemAt(0) as QuizExaminationBo){
+					this._syncQuizsLocator.quizThumbsDragStart(event,quizList);
+				}else{
+					this._slidesLocator.slideThumbsDragStart(event,slideList);
+				}
+			}
+			
+			private function onProgressBarDragEnter(event:DragEvent):void{
+				trace(this + "---------onProgressBarDragEnter-----------");
+				this._progressBarLocator.progressBarDragEnter(event);
+			}
+			
+			private function onProgressBarDragDrop(event:DragEvent):void{
+				trace(this + "---------onProgressBarDragDrop-----------");
+				this._progressBarLocator.progressBarDragDrop(event);
+			}
+			
+			private function onProgressBarDragExit(event:DragEvent):void{
+				trace(this + "---------onProgressBarDragExit-----------");
+				this._progressBarLocator.progressBarDragExit(event);
+			}
+			
+			private function saveSyncPoints():void{
+				
+				_presentation.points = _syncPointsLocator.syncPoints;
+				_presentation.medias = new ArrayCollection();
+				_presentation.quizs = new ArrayCollection();
+				for each(var media:PresentationSyncMediaBo in _progressBarLocator.mediaPoints){
+					_presentation.medias.addItem(media.getInstance());
+				}
+				for each(var quiz:PresentationSyncQuizsBo in _syncQuizsLocator.syncQuizs){
+					_presentation.quizs.addItem(quiz.getInstance());
+				}
+				_presentationService.savePresentation(_presentation,function(event:ResultEvent):void{
+					_actionLocator.command(Constants.COMMAND_SAVE_SYNC_SUCCESS,"",null);
+				});
+			}
+			 
+			private function onChangeLayout():void{
+				if(this.mediaScreen.slidesCanvas.slideImage.visible == true){
+					this._model.isResizeSlideImage = true;
+					this.mediaScreen.slidesCanvas.slideImage.visible = false;
+				}
+				
+				if(this.mediaScreen.clipsCanvas.clipsImage.visible == true){
+					this._model.isResizeClipsImage = true;
+					this.mediaScreen.clipsCanvas.clipsImage.visible = false;
+				}
+				
+				if(this.mediaScreen.clipsCanvas.videoDisplay.visible == true){
+					this._model.isResizeClipsMedia = true;
+					this.mediaScreen.clipsCanvas.videoDisplay.visible = false;
+				}
+				
+				if(this.currentState == StateEnum.SHOW_STATE){
+					this.currentState = StateEnum.HIDE_STATE;
+				}else if(this.currentState == StateEnum.HIDE_STATE){
+					this.currentState = StateEnum.SHOW_STATE
+				}
+				this.addEventListener(FlexEvent.STATE_CHANGE_COMPLETE,function(event:FlexEvent):void{
+					mediaScreen.dispatchEvent(new MockEvent(MockEvent.MOCK_RESIZE_SCREEN,currentState));
+					playBar.dispatchEvent(new MockEvent(MockEvent.MOCK_RESIZE_SCREEN,currentState));
+					syncEditor.dispatchEvent(new MockEvent(MockEvent.MOCK_RESIZE_SCREEN,currentState));
+				});
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="showState"/>
+		<s:State name="hideState"/>
+		<s:State name="initState"/>
+	</s:states>
+	<s:transitions>
+		
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Resize target="{playBar}" widthFrom="1000" widthTo="802"/>
+					<s:Resize target="{syncEditor}" widthFrom="1000" widthTo="802"/>
+					<s:Resize target="{mediaScreen}" widthFrom="1000" widthTo="802"/>
+					<s:Resize target="{mediaScreen.clipsCanvas}" widthFrom="499" widthTo="400" heightFrom="304" heightTo="255"/>
+					<s:Resize target="{mediaScreen.slidesCanvas}" widthFrom="499" widthTo="400" heightFrom="304" heightTo="255"/>
+					<s:Move target="{mediaScreen.playIcon}" xFrom="462.5" xTo="365.5"/>
+					<s:Move target="{mediaScreen.clipsCanvas}" xFrom="500.5" xTo="401"/>
+					<s:Move target="{playBar}" yFrom="285" yTo="256"/>
+					<s:Fade target="{playBar}" alphaFrom="0" alphaTo="1"/>
+				</s:Parallel>
+				<s:Parallel>
+					<s:Move target="{slidePicker}" xFrom="-195" xTo="0"/>
+					<s:Resize target="{slidePicker}" widthFrom="0" widthTo="195"/>
+					<s:Move target="{mediaplayer}" xFrom="2" xTo="197"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState"  toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Move target="{slidePicker}" xFrom="0" xTo="-195"/>
+					<s:Move target="{mediaplayer}" xFrom="197" xTo="2"/>
+					<s:Resize target="{slidePicker}" widthFrom="195" widthTo="0"/>
+				</s:Parallel>
+				<s:Parallel>
+					<s:Resize target="{playBar}" widthFrom="802" widthTo="1000"/>
+					<s:Resize target="{syncEditor}" widthFrom="802" widthTo="1000"/>
+					<s:Resize target="{mediaScreen}" widthFrom="802" widthTo="1000"/>
+					<s:Resize target="{mediaScreen.clipsCanvas}" widthFrom="400" widthTo="499" heightFrom="255" heightTo="304"/>
+					<s:Resize target="{mediaScreen.slidesCanvas}" widthFrom="400" widthTo="499"  heightFrom="255" heightTo="304"/>
+					<s:Move target="{mediaScreen.clipsCanvas}" xFrom="401" xTo="500.5"/>
+					<s:Move target="{mediaScreen.playIcon}" xFrom="365.5" xTo="462.5"/>
+					<s:Move target="{playBar}" yFrom="256" yTo="285"/>
+					<s:Fade target="{playBar}" alphaFrom="1" alphaTo="0"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>		
+	</s:transitions>
+
+	<!--container:DVDividedBox width="1000" height="100%" dividerThickness="8" resizeToContent="true" dividerColor="#d8d8d8"-->
+	<mx:VBox width="100%" height="100%" verticalGap="2">
+		<mx:HBox id="content" horizontalGap="1">
+			<s:Group id="slidePicker" width.showState="195" width.hideState="0" height="578"  x.hideState="-195" x.showState="0">
+				<mx:Canvas id="sliderPickerContainer" width="100%" height="100%" backgroundColor="#3a3a3a"  horizontalScrollPolicy="off">
+					<s:TabBar id="slidePickerTabBar" labelField="label" fontFamily="yahei" skinClass="com.deodio.elearning.libs.skins.DTabBarSkin"  dataProvider="{viewstack}"/>
+					
+					<mx:ViewStack id="viewstack" creationPolicy="all">
+						<s:NavigatorContent width="100%" height="100%" label="Slides">
+							<s:List id="slideList" width="180" height="508" x="15" y="45" skinClass="com.deodio.elearning.libs.skins.DListSkin" verticalScrollPolicy="on" dataProvider="{_slidesLocator.slides}"  
+									dragEnabled="true" dragMoveEnabled="true" allowMultipleSelection="false"
+									dragEnter="onDragEnter(event)" dragExit="onDragExit(event)" dragComplete="onDragComplete(event)" dragDrop="onDragDrop(event)" dragStart="onDragStart(event)"/>
+						</s:NavigatorContent>
+						<s:NavigatorContent width="100%" height="100%" label="测验">
+							<s:List id="quizList" width="180" height="508" x="15" y="45" skinClass="com.deodio.elearning.libs.skins.DQuizListSkin" verticalScrollPolicy="on" 
+									dragEnabled="true" dragMoveEnabled="true" allowMultipleSelection="false"
+									dragEnter="onDragEnter(event)" dragExit="onDragExit(event)" dragComplete="onDragComplete(event)" dragDrop="onDragDrop(event)" dragStart="onDragStart(event)"/>
+						</s:NavigatorContent>
+					</mx:ViewStack>
+					
+					
+				</mx:Canvas>
+			</s:Group>
+			<s:Group id="mediaplayer" x.showState="197" x.hideState="2">
+				<media:SyncMediaScreen id="mediaScreen" width="100%" height="100%" mouseMove="onMouseMove()"/>
+				<playbar:SyncMediaPlayBar id="playBar"  y="256" width="802" height="48"/>
+				<!--playbar:SyncMediaFSPlayBar id="fsPlayBar" y="285" width="906" height="45" visible="false" includeInLayout="false"/-->
+				<playbar:RichPlayBarContainer id="syncEditor" y="305" width.showState="802" width.hideState="1000" dragEnter="onProgressBarDragEnter(event)" dragDrop="onProgressBarDragDrop(event)" dragExit="onProgressBarDragExit(event)"/>
+			</s:Group>
+		</mx:HBox>
+	</mx:VBox>
+	
+	<!--/container:DVDividedBox-->
+</s:Group>

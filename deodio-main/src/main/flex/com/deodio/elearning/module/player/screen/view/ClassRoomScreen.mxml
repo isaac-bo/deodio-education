@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:screen="com.deodio.elearning.module.player.screen.view.*"
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*" width="100%" height="100%" creationComplete="init()">
+	<fx:Declarations>
+		
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.utils.MediaUtils;
+			import com.deodio.elearning.module.plugin.ScreenModelLocator;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			
+			[Bindable]
+			public var syncPoints:ArrayCollection = new ArrayCollection();
+			
+			import com.deodio.elearning.model.ModelLocator;
+			
+			[Bindable]
+			public var _isShowMedia:Boolean=false;
+			
+			[Bindable]
+			public var _isSlideShow:Boolean = false;
+			
+			[Bindable]
+			public var _isDualScreen:Boolean = true;
+			
+			
+			[Bindable]
+			public var _width:Number = 0;
+			
+			[Bindable]
+			public var _height:Number = 0;
+			
+			[Bindable]
+			public var _isFullScreen:Boolean = false;
+			 
+			[Bindable]
+			private var _model:ModelLocator=ModelLocator.getInstance();
+			
+			[Bindable]
+			private var _timer:Timer;
+			
+			public function init():void{
+				this.currentState = "hideState";
+			}
+			public function showMedia():void {
+				_isShowMedia=true;
+			}
+			
+			public function showCover():void {
+				_isShowMedia=false;
+			}
+			
+			public function showCoverDetail():void {
+				
+			}
+			
+			public function onPlay():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PLAY));
+			}
+			
+			public function onRollOverFunc():void{
+				this.currentState = "showState";
+			}
+			
+			public function onRollOutFunc():void{
+				this.currentState = "hideState";
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="hideState"/>
+		<s:State name="showState"/>
+	</s:states>
+	<s:transitions>
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Move target="{playIcon}" yFrom="{this._height-93}" yTo="{this._height-131}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Move target="{playIcon}" yFrom="{this._height-131}" yTo="{this._height-93}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions>
+	 
+	<screen:Screen id="slidesCanvas" height="{this._isDualScreen ? (this._width*0.25 - 3)*9/16 : this._isSlideShow ? this._height-2 : 0}" 
+				   					 width="{this._isDualScreen ? (this._width*0.25 - 3): this._isSlideShow ? this._width - 2 : 0}" 
+									 _title="SLIDES SHOW"  y="1"  _borderVisible="false" 
+									 x="{this._isDualScreen ?  (this._width*0.75 + 2 ) : this._isSlideShow ? 1:1}" 
+									 visible="{this._isDualScreen? true : this._isSlideShow ? true : false}" 
+									 includeInLayout="{this._isDualScreen? true : this._isSlideShow ? true : false}"/>
+	<screen:Screen id="clipsCanvas"  height="{this._isDualScreen? (this._height-2) : this._isSlideShow ? 0 : (this._height - 2) }" 
+				   					 width="{this._isDualScreen? (this._width*0.75 ) : this._isSlideShow ? 0 : (this._width - 2) }" 
+									 _title="MULTIMEDIA" x="1"  y="1" _isSlide="false" _borderVisible="false"
+									 visible="{this._isDualScreen? true : this._isSlideShow ? false : true}" 
+									 includeInLayout="{this._isDualScreen? true : this._isSlideShow ? false : true}"/>
+	
+	<s:Image id="playIcon" source="@Embed('/assets/player/play_icon_btn.png')" x="20" y.hideState="{this._height - 93}" y.showState = "{this._height - 131}" buttonMode="true" click="onPlay()"/>
+	
+</s:Group>

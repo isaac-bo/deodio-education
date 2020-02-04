@@ -1,0 +1,33 @@
+/*-----------------------------------
+Description:    location页面CSS
+Author:         liujian
+Date:           2016-05-23
+------------------------------------*/
+/*reset*/
+.hdn{overflow: hidden;}
+.clb{clear: both;}
+.pt7{padding-top: 7px;}
+.w240{width: 240px;display: inline-block;vertical-align: middle;}
+.w240 .form-control{border:1px solid #d4d4d4 !important;}
+.b_top{border-top: 1px solid #e3e3e3;}
+.con800{width: 800px;margin:0 auto;}
+
+
+.t_box{border:1px solid #e1eaee;overflow: hidden;}
+.t_box:hover{ border: 1px solid #38a6b8; box-shadow: 4px 4px #eaeaea }
+/*.t_box img{width:150px;height:200px;}*/
+.t_box ul{overflow: hidden;width: 182px;}
+.t_box ul li{line-height: 2em;}
+.t_box ul li strong{color: #666;text-align: right;display: inline-block;}
+.t_box table{overflow: hidden;width: 182px;}
+.t_box table td{padding-bottom: 10px;vertical-align: top;}
+.t_box table td strong{color: #666;text-align: right;display: inline-block;}
+.kaochang{width:500px;overflow: hidden;position: relative;float: left;}
+.kaochang li{margin:15px 0 0 0;overflow: hidden;}
+.kaochang li .r_con{width:400px;float:left;}
+.kaochang li .r_con2{padding-left: 150px;font-size: 14px;line-height: 22px;}
+.kaochang li .w100{width:100px;}
+.kaochang li .w400{width:400px;}
+.kaochang li.rel{position: relative;}
+.kaochang li.rel button{position: absolute;right:2px;top:2px;background: #69c9ec;height: 36px;line-height: 36px;padding:0 15px;color:#fff;}
+.w340{width:340px;padding-top:15px;}

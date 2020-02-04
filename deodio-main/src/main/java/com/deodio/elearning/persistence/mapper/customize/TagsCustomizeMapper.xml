@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.TagsCustomizeMapper">
+ 
+	 <!-- 标签List添加 -->
+	 <insert id="insertTags" parameterType="java.util.List">
+ 		INSERT INTO t_tags (id,tag_name,tag_source,account_id,create_id,create_time)
+	    VALUES 
+	    <foreach collection="list" item="item"  separator="," >
+	        (#{item.id},#{item.tagName},#{item.tagSource},#{item.accountId},#{item.createId},#{item.createTime})
+	    </foreach>
+	 </insert>
+	 
+	 
+	 <select id="queryHotTagsList" parameterType="java.util.Map"  resultType="java.util.Map">
+	  	  SELECT
+				t2.tag_name,
+				t2. ID
+			FROM
+				t_tags t2
+			WHERE
+			    t2.account_id =#{accountId,jdbcType=SMALLINT} AND
+				t2.tag_name IN (
+					SELECT
+						t1.tag_name
+					FROM
+						(
+							SELECT DISTINCT
+								tag.tag_name,
+								COUNT (tag.tag_name) AS nums
+							FROM
+								(
+									SELECT
+										T.ID,
+										T.tag_name
+									FROM
+										t_tags_items_rel rel
+									LEFT JOIN t_tags T ON rel.tags_id = T . ID
+									WHERE 1 = 1
+									<if test="itemType != null">
+									AND	item_type = #{itemType,jdbcType=SMALLINT}
+									</if>
+									<if test="accountId != null">
+									AND	account_id = #{accountId,jdbcType=SMALLINT}
+									</if>
+								) tag
+							GROUP BY
+								tag.tag_name
+							ORDER BY
+								nums DESC
+							LIMIT 15
+						) t1
+					ORDER BY
+						random()
+					LIMIT 5
+				)
+  	</select>
+  	
+	 
+	 <!-- 添加关联list(标签) -->
+	 <insert id="insertTagsItemsRel" parameterType="java.util.List">
+ 		INSERT INTO t_tags_items_rel (id,item_id,item_type,tags_id,create_id,create_time)
+	    VALUES 
+	    <foreach collection="list" item="item"  separator="," >
+	        (#{item.id},#{item.itemId},#{item.itemType},#{item.tagsId},#{item.createId},#{item.createTime})
+	    </foreach>
+	 </insert>
+	 
+	 <!-- 更新Tags标签库 (暂时未用到)-->
+	 <update id="updateTags"  parameterType="java.util.List">
+       <foreach collection="list" item="item" index="index" open="begin" close="end;" separator=";">
+                update t_tags 
+                <set>
+                  tag_name = #{item.tagName},
+                </set>
+                <set>
+                  tag_source = #{item.tagSource},
+                </set>
+                 <set>
+                  account_id = #{item.accountId},
+                </set>
+                <set>
+                  update_id = #{item.updateId},
+                </set>
+                <set>
+                  update_time = #{item.updateTime},
+                </set>
+                where id = ${item.id}
+       </foreach>
+    </update>
+    
+    <!-- 删除tags标签库（暂时未用到） -->
+    <delete id="deleteTags" parameterType="String">
+	 	delete from t_tags where id in 
+	 	 (select rel.tags_id from t_tags_items_rel rel  where rel.item_id = #{itemId} and rel.item_type = #{itemType} )
+ 	</delete>
+ 	
+ 	<!-- 删除标签关联关系表 -->
+ 	<delete id="deleteTagsItemsRel" parameterType="String">
+	 	delete from t_tags_items_rel rel where rel.item_id = #{itemId} and rel.item_type = #{itemType} 
+ 	</delete>
+ 	
+ 	
+ 	  <!-- 课程标签查询 -->
+  <select id="queryItemTagsList" parameterType="java.util.Map"  resultType="java.util.Map">
+  	  SELECT distinct
+			tags.ID,
+			tags.tag_name,
+			tags.tag_source,
+			tags.account_id,
+			tags.create_id,
+			tags.create_time,
+			tags.update_id,
+			tags.update_time
+		FROM
+			t_tags tags,
+			t_tags_items_rel rel
+		WHERE
+			tags.ID  = rel.tags_id
+		and rel.item_id = #{itemId}
+		and rel.item_type = #{itemType}
+			
+  </select>
+  
+  
+  <select id="queryAccountAllTags" parameterType="java.util.Map"  resultType="java.util.Map">
+  		select distinct t1.id,t1.tag_name,t1.tag_source
+		  from (
+				select t_tags.id,t_tags.tag_name,t_tags.tag_source,t_tags_items_rel.item_id
+		  		  from t_tags,
+		  		       t_tags_items_rel
+		  		 where t_tags.id = t_tags_items_rel.tags_id
+		  		   and t_tags_items_rel.item_type = #{itemType}
+		
+				) t1,
+			<if test="itemType == 1">
+			  t_presentation
+			where t1.item_id = t_presentation.id
+			  and t_presentation.account_id = #{accountId}
+			</if>
+			<if test="itemType == 21 or itemType == 22 or itemType == 23">
+			  t_course
+			where t1.item_id = t_course.id
+			  and t_course.account_id = #{accountId}
+			</if>
+			<if test="itemType == 4">
+			  t_course_package
+			where t1.item_id = t_course_package.id
+			  and t_course_package.account_id = #{accountId}
+			</if>
+  </select>
+  
+  	<!-- 根据itemid查询选中的标签名称 -->
+	<select id="querySelectedTagsNameByItemId" parameterType="java.util.Map" resultType="String">
+		SELECT
+			string_agg(tgs.tag_name,',')
+		FROM
+			t_tags tgs
+		INNER JOIN
+			t_tags_items_rel tgsrel 
+		ON 
+			tgs.id = tgsrel.tags_id
+		and
+			tgsrel.item_id = #{itemId}
+		and
+			tgsrel.item_type = #{itemType}
+	</select>
+	
+	<!-- 根据itemid查询选中的标签 -->
+	<select id="querySelectedTagsByItemId" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			tgs.id,
+			tgs.tag_name
+		FROM
+			t_tags tgs
+		INNER JOIN
+			t_tags_items_rel tgsrel 
+		ON 
+			tgs.id = tgsrel.tags_id
+		and
+			tgsrel.item_id = #{itemId}
+		and
+			tgsrel.item_type = #{itemType}
+	</select>
+</mapper>

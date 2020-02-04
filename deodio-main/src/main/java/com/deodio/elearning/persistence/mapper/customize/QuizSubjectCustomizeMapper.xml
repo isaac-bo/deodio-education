@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.QuizSubjectCustomizeMapper">
+	<select id="findSubjectList" parameterType="java.util.Map" resultType="java.util.Map">
+
+		select t_quiz_subject.*,t_knowledge_points.knowledge_point_name
+		  from t_quiz_subject
+		 left join t_quiz_subject_knowledge_rel
+				on t_quiz_subject_knowledge_rel.quiz_subject_id = t_quiz_subject.id
+		 left join t_knowledge_points
+				on t_knowledge_points.id = t_quiz_subject_knowledge_rel.knowledge_point_id
+			WHERE
+			t_quiz_subject.account_id = #{accountId}
+	
+			<if test="quizBankId!=null">
+				and t_quiz_subject.quiz_bank_id=#{quizBankId}
+	
+			</if>
+	
+			<if test="keywords!=null">
+				and t_quiz_subject.quiz_subject_name like
+				CONCAT('%','${keywords}','%' )
+			</if>
+	
+			<if test="type != null">
+				and t_quiz_subject.quiz_subject_type =#{type}
+			</if>
+	
+			<if test="level!=null">
+				and t_quiz_subject.quiz_subject_level =#{level}
+			</if>
+	</select>
+
+	<sql id="commonQuizSubjectSql">
+		FROM
+		t_quiz_subject
+		WHERE
+		t_quiz_subject.account_id = #{accountId}
+
+		<if test="quizBankId!=null">
+			and t_quiz_subject.quiz_bank_id=#{quizBankId}
+
+		</if>
+
+		<if test="keywords!=null">
+			and t_quiz_subject.quiz_subject_name like
+			CONCAT('%','${keywords}','%' )
+		</if>
+
+		<if test="type != null">
+			and t_quiz_subject.quiz_subject_type =#{type}
+		</if>
+
+		<if test="level!=null">
+			and t_quiz_subject.quiz_subject_level =#{level}
+		</if>
+	</sql>
+
+	<select id="getSubjctCount" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT quiz_subject_type,
+		sum(typeCount) as sumnum
+		from (SELECT
+		quiz_bank_id,
+		quiz_subject_type,
+		count(quiz_subject_type) typeCount
+		FROM
+		t_quiz_subject
+		where quiz_bank_id in
+		<if test="bankIds!=null">
+		<foreach collection="bankIds" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+        </if>
+        and account_id =#{accountId}
+		GROUP BY
+		quiz_bank_id,
+		quiz_subject_type) t GROUP BY quiz_subject_type ORDER BY quiz_subject_type ASC
+
+	</select>
+
+	<select id="findSubjectByBanksId" parameterType="java.util.Map" resultType="java.util.Map">
+		select * from (
+
+		select id,quiz_subject_type,quiz_subject_name,quiz_subject_level,quiz_subject_score 
+		FROM
+		  t_quiz_subject 
+	    WHERE 
+	       quiz_subject_type = #{subjectType} 
+	       AND quiz_bank_id IN
+		   (SELECT bank_id FROM t_quiz_auto_rule_bank WHERE quiz_Id = #{quizId})
+		<if test="subjectArray!=null">
+            AND id NOT IN
+            <foreach collection="subjectArray" item="item" open="(" separator=","
+                close=")">
+                #{item}
+            </foreach>
+        </if>
+		<if test="subjectTile!=null">
+			and quiz_subject_name like CONCAT('%','${subjectTile}','%' )
+		</if>
+
+		<if test="subjectLevel!=null">
+			and quiz_subject_level = #{subjectLevel}
+		</if>
+		) t
+	</select>
+
+	<select id="getSubjectRandoms" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+		t1.id,
+		t1.quiz_subject_name,
+		t1.quiz_subject_type,
+		string_agg(t2.quiz_item_name,'#' order by t2.quiz_item_order ASC) as item_options,
+		string_agg (
+		to_char(t2.is_correct,'FM999MI'),
+		'#'
+		ORDER BY
+		t2.quiz_item_order ASC
+		) AS option_answer,
+		string_agg (
+		t2.id,
+		'#'
+		ORDER BY
+		t2.quiz_item_order ASC
+		) AS option_answer_id
+		FROM
+		t_quiz_subject t1,
+		t_quiz_items t2
+		WHERE
+		t1.id = t2.quiz_subject_id and t1.quiz_subject_type=#{subjectType}
+		<if test="list!=null">
+			AND t1.id NOT IN
+			<foreach collection="list" item="item" open="(" separator=","
+				close=")">
+				#{item}
+			</foreach>
+		</if>
+		AND t1.quiz_bank_id IN
+		(SELECT bank_id FROM t_quiz_auto_rule_bank WHERE quiz_Id = #{quizId})
+		GROUP BY t1.id,t1.quiz_subject_name,t1.quiz_subject_type
+
+		order by random() limit #{subjectCount}
+	</select>
+
+    <select id="queryAutoQuizSubjectList" parameterType="java.util.Map" resultType="java.util.Map">
+        SELECT
+        t1.id,
+        t1.quiz_subject_name,
+        t1.quiz_subject_type,
+        string_agg(t2.quiz_item_name,'#' order by t2.quiz_item_order ASC) as item_options,
+        string_agg (
+        to_char(t2.is_correct,'FM999MI'),
+        '#'
+        ORDER BY
+        t2.quiz_item_order ASC
+        ) AS option_answer,
+        string_agg (
+        t2.id,
+        '#'
+        ORDER BY
+        t2.quiz_item_order ASC
+        ) AS option_answer_id
+        FROM
+            t_quiz_subject_rel qsr 
+        LEFT JOIN 
+            t_quiz_subject t1 ON t1.id = qsr.quiz_subject_id
+        LEFT JOIN
+            t_quiz_items t2 ON t2.quiz_subject_id = qsr.quiz_subject_id
+        WHERE
+            qsr.quiz_id = #{quizId}
+            AND qsr.is_required = #{isRequired}
+        GROUP BY 
+            t1.quiz_subject_type, t1.id, t1.quiz_subject_name, qsr.quiz_subject_order
+        ORDER BY
+            qsr.quiz_subject_order
+    </select>
+
+	<select id="getSubjectDetail" parameterType="java.util.Map" resultType="java.util.Map">
+
+		SELECT
+		t1.id,
+		t1.quiz_subject_name,
+		string_agg(t2.quiz_item_name,'#' order by t2.quiz_item_order ASC) as item_options,
+		string_agg (
+		to_char(t2.is_correct,'FM999MI'),
+		'#'
+		ORDER BY
+		t2.quiz_item_order ASC
+		) AS option_answer,
+		string_agg (
+		t2.id,
+		'#'
+		ORDER BY
+		t2.quiz_item_order ASC
+		) AS option_answer_id
+		FROM
+		t_quiz_subject t1,
+		t_quiz_items t2
+		WHERE
+		t1.id = t2.quiz_subject_id
+
+		AND t1.id IN
+		<foreach collection="list" item="item" open="(" separator=","
+			close=")">
+			#{item}
+		</foreach>
+
+		GROUP BY t1.id,t1.quiz_subject_name
+
+	</select>
+
+	<select id="queryQuizSubjectList" resultType="java.util.Map">
+	SELECT
+ 		qs.id,
+		qs.quiz_subject_type,
+		qs.quiz_subject_name,
+		qs.quiz_subject_score,
+		qsr.quiz_subject_order,
+		string_agg (qi.attach_url,'#' ORDER BY qi.quiz_item_order ASC) AS attach_url,
+		string_agg (qi.quiz_item_name,'#' ORDER BY qi.quiz_item_order ASC) AS item_options
+	FROM t_quiz_subject_rel qsr
+	LEFT JOIN t_quiz_subject qs ON qs.id = qsr.quiz_subject_id
+	LEFT JOIN t_quiz_items qi ON qi.quiz_subject_id = qs.id 
+	WHERE qsr.quiz_id = #{quizId, jdbcType=VARCHAR}
+	GROUP BY
+		qs.id,
+		qs.quiz_subject_type,
+		qs.quiz_subject_name,
+		qsr.quiz_subject_order
+	ORDER BY
+		qsr.quiz_subject_order ASC
+	</select>
+	
+	<select id="queryQuizIsPublishBySubjectId" resultType="java.lang.Integer">
+		SELECT 
+		COUNT(*)
+		FROM t_quiz q
+		LEFT JOIN t_quiz_subject_rel qsr ON qsr.quiz_id = q.id
+		LEFT JOIN t_quiz_subject qs ON qs.id = qsr.quiz_subject_id
+		WHERE qs.id = #{subjectId, jdbcType=VARCHAR}
+		AND q.is_publish = 1
+	</select>
+	
+	<select id="insertBatchQuizSubject" parameterType="java.util.List">
+		INSERT INTO t_quiz_subject
+		(id, quiz_subject_name, create_time, create_id, update_time, update_id, account_id, quiz_subject_type,
+		quiz_bank_id, quiz_subject_level, quiz_subject_score, quiz_subject_expire_time, quiz_subject_visible,
+		quiz_subject_from)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.quizSubjectName},#{item.createTime},#{item.createId},#{item.updateTime},
+			#{item.updateId},#{item.accountId},#{item.quizSubjectType},#{item.quizBankId},#{item.quizSubjectLevel},
+			#{item.quizSubjectScore},#{item.quizSubjectExpireTime},#{item.quizSubjectVisible},#{item.quizSubjectFrom})
+		</foreach>
+	</select>
+	
+	<select id="insertBatchQuizSubjectRel" parameterType="java.util.List">
+		INSERT INTO t_quiz_subject_rel
+		(id, quiz_id, quiz_subject_id, account_id, create_time, create_id, update_time, update_id,
+		quiz_subject_order, is_required)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.quizId},#{item.quizSubjectId},#{item.accountId},#{item.createTime},
+			#{item.createId},#{item.updateTime},#{item.updateId},#{item.quizSubjectOrder},#{item.isRequired})
+		</foreach>
+	</select>
+	
+	<select id="insertBatchQuizItem" parameterType="java.util.List">
+		INSERT INTO t_quiz_items
+		(id, quiz_item_name, quiz_item_order, create_id, create_time, update_id, update_time,
+		quiz_subject_id, is_correct, attach_url)
+		VALUES
+		<foreach collection="list" item="item" separator=",">
+			(#{item.id},#{item.quizItemName},#{item.quizItemOrder},#{item.createId},#{item.createTime},
+			#{item.updateId},#{item.updateTime},#{item.quizSubjectId},#{item.isCorrect},#{item.attachUrl})
+		</foreach>
+	</select>
+	
+	<select id="queryQuizSubjectByQuizId" resultType="com.deodio.elearning.persistence.model.QuizSubject">
+		SELECT
+			qs.id AS id,
+			qs.quiz_subject_name AS quizSubjectName,
+			qs.create_time AS createTime,
+			qs.create_id AS createId,
+			qs.update_time AS updateTime,
+			qs.update_id AS updateId,
+			qs.account_id AS accountId,
+			qs.quiz_subject_type AS quizSubjectType,
+			qs.quiz_bank_id AS quizBankId,
+			qs.quiz_subject_level AS quizSubjectLevel,
+			qs.quiz_subject_score AS quizSubjectScore,
+			qs.quiz_subject_expire_time AS quizSubjectExpireTime,
+			qs.quiz_subject_visible AS quizSubjectVisible,
+			qs.quiz_subject_from AS quizSubjectFrom,
+			qs.quiz_subject_is_publish AS quizSubjectIsPublish
+		FROM t_quiz_subject qs 
+		LEFT JOIN t_quiz_subject_rel qsr ON qsr.quiz_subject_id = qs.id
+		WHERE qsr.quiz_id = #{quizId, jdbcType=VARCHAR}
+	</select>
+	
+	<select id="queryQuizItemById" resultType="com.deodio.elearning.persistence.model.QuizItems">
+		SELECT
+			qi.id AS id,
+			qi.quiz_item_name AS quizItemName,
+			qi.quiz_item_order AS quizItemOrder,
+			qi.create_id AS createId,
+			qi.create_time AS createTime,
+			qi.update_id AS updateId,
+			qi.update_time AS updateTime,
+			qi.quiz_subject_id AS quizSubjectId,
+			qi.is_correct AS isCorrect,
+			qi.attach_url AS attachUrl,
+			qi.is_publish AS isPublish
+		FROM t_quiz_items qi
+		LEFT JOIN t_quiz_subject qs ON qs.id = qi.quiz_subject_id
+		WHERE qs.id = #{id, jdbcType=VARCHAR}
+	</select>
+	
+</mapper>

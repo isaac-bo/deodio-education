@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:media="com.deodio.elearning.module.player.screen.view.*" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:playbar="com.deodio.elearning.module.player.playbar.view.*"
+		 width="900" height="500" creationComplete="init()">
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.event.CommonEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.AudioModelLocator;
+			import com.deodio.elearning.module.plugin.RecordModelLocator;
+			import com.deodio.elearning.service.PresentationRecordService;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			public var syncPointId:String = "1";
+			[Bindable]
+			public var clipsLength:Number = 45;
+			
+			[Bindable]
+			private var _presentationSyncRecords:ArrayCollection;
+			[Bindable]
+			private var _recordDictionary:Dictionary=new Dictionary();
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var _recordLocator:RecordModelLocator = RecordModelLocator.getInstance();
+			[Bindable]
+			private var _audioLocator:AudioModelLocator = AudioModelLocator.getInstance();
+	
+			private var _recordService:PresentationRecordService;
+			
+			private function init():void{
+				_recordService = new PresentationRecordService();
+				_model.presentationId =Application.application.parameters.presentationId;
+				_model.userId = Application.application.parameters.userId;
+				_model.syncPointId = Application.application.parameters.syncPointId;
+				
+				this.initModelLocators();
+				this._recordService.getPresentationSyncRecordsBo(_model.presentationId, function(event:ResultEvent):void{
+					_presentationSyncRecords = event.result as ArrayCollection;
+					_audioLocator.setItemsDuration(_presentationSyncRecords);
+					mediaScreen.initSyncPoint(_presentationSyncRecords);
+				});
+				
+//				this._recordLocator.onRecordSettingMedia();
+			}
+
+			private function initModelLocators():void{
+				this.initRecordLocator().initAudioLocator();
+			}
+			
+			private function initRecordLocator():Dubbing{
+				this._recordLocator.recordDictionary = this._recordDictionary;
+				this._recordLocator.init(playBar);
+				this._recordLocator.addEventListener(RecordEvent.RECORD_CREATE_COMPLETED,function(event:RecordEvent):void{
+					mediaScreen.refreshRecords();
+				});
+				  
+				this._recordLocator.addEventListener(RecordEvent.RECORD_PLAY_LENGTH,function(event:RecordEvent):void{
+					var recordLength:Number = event.data as Number;
+					playBar.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_MAXIMUM,recordLength));
+				});
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_PLAY_INIT,function(event:RecordEvent):void{
+					playBar.dispatchEvent(new CommonEvent(CommonEvent.SYNC_PROGRESSBAR_VALUE,0));
+				});
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_REMOVE_ALL,function(event:RecordEvent):void{
+					mediaScreen.refreshRecords();
+				});
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_REMOVE_ITEM,function(event:RecordEvent):void{
+					mediaScreen.refreshRecords();
+				});
+				this._recordLocator.addEventListener(MockEvent.MOCK_CHANGE_RECORD_LAYOUT,function(event:MockEvent):void{
+					mediaScreen.onShowRecordsPicker();
+//					mediaScreen.currentState == "hideRecordPicker"?
+//						playBar.leftToolBar.setStyle("backgroundColor","0x526c8d"):
+//							playBar.leftToolBar.setStyle("backgroundColor","0x000000");
+				});
+				
+				this._recordLocator.addEventListener(RecordEvent.RECORD_SET_MODEL,function(event:RecordEvent):void{
+					mediaScreen.onShowRecordSettings();
+				});
+				
+				return this;
+			}
+			
+			private function initAudioLocator():Dubbing{
+				this._audioLocator.recordDictionary = this._recordDictionary;
+				this._audioLocator.init(playBar);
+				return this;
+			}
+
+		]]>
+	</fx:Script>
+	
+	<media:DubbingScreen id="mediaScreen" width="100%" height="100%"/>
+	<playbar:DubbingPlayBar id="playBar" y="408" width="900" height="48"/>
+
+	
+	
+	
+</s:Group>

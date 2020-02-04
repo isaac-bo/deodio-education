@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   applicationComplete="init()"
+			   width="100"
+			   height="100" alpha="0">
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ToolTipEvent;
+			
+			[Bindable]
+			private var fileRef:FileReference=new FileReference();
+			
+			[Bindable]
+			private var urlrequest:URLRequest=null;
+			
+			[Bindable]
+			public var file:Object=new Object();
+			[Bindable]
+			private var requestUrl:String="";
+			[Bindable]
+			private var fileType:String="";
+			[Bindable]
+			private var componentId:String="";
+			[Bindable]
+			private var fileTypes:Array = ["*.jpg, *.jpeg, *.gif, *.png"];
+				
+			private function init():void{
+				Security.allowDomain("*");
+				fileRef.addEventListener(Event.SELECT, selectHandler);
+				fileRef.addEventListener(Event.CANCEL, cancelHandler);
+				fileRef.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				fileRef.addEventListener(Event.COMPLETE, completeHandler);
+				fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,uploadCompleteHandler);
+				fileRef.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void{
+					ExternalInterface.call("updateProgressing", componentId, event.bytesLoaded, event.bytesTotal);
+				});
+				fileRef.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, function(event:DataEvent):void{
+					ExternalInterface.call("updateProgressed", componentId);
+				});
+				//get upload url from jsp.
+				requestUrl=root.loaderInfo.parameters.requestUrl;
+				fileType=root.loaderInfo.parameters.fileType;
+				componentId=root.loaderInfo.parameters.componentId;
+			}
+			
+			
+			private function selectHandler(event:Event):void{
+				trace(this + "-- Select Handler ---- : Start");
+				var uuid:String =CommonUtils.createUID();
+				file.id = uuid;
+				file.cid = componentId;
+				file.fileRef = fileRef;
+				urlrequest=new URLRequest(requestUrl+'&fileId='+uuid);
+				fileRef.upload(urlrequest);
+			}
+			
+			
+			private function ioErrorHandler(event:IOErrorEvent):void{
+				trace(this + "-- IO Error Handler ---- : " + event.text);
+			}
+			
+			private function cancelHandler(event:Event):void{
+			}
+			
+			private function completeHandler(event:Event):void{
+				trace(this + "-- Complete Handler ---- : Complete");
+				
+			}
+			
+			private function uploadCompleteHandler(event:DataEvent):void{
+				trace(this + "-- Upload Complete Handler ---- : Complete");
+			}
+			
+			public function cancelUpload(uuid:String):void{
+				
+				if(file.id == uuid){
+					var f:FileReference = file.fileRef as FileReference;
+					f.cancel();
+				}
+			}
+			
+			private function selectFile():void{
+				
+				var fileType:FileFilter = new FileFilter("File Type(*.jpg, *.jpeg, *.gif, *.png, *.JPG, *.JPEG, *.GIF, *.PNG)","*.jpg, *.jpeg, *.gif, *.png, *.JPG, *.JPEG, *.GIF, *.PNG");
+				var allTypes:Array = new Array(fileType);
+				try{
+					fileRef.browse(allTypes);
+				}catch(e:Error){
+					trace(this + "-- Select File Error ---- : " + e.getStackTrace());
+				}
+			}
+		]]>
+	</fx:Script>
+	<s:Button id="selectFileButton"
+			  label="UPLOAD NEW"
+			  click="selectFile()"
+			  enabled="true"
+			  y="0"
+			  width="100"
+			  height="100"
+			  x="0" buttonMode="true" useHandCursor="true" toolTip=""/>
+</s:Application>

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:screen="com.deodio.elearning.module.player.screen.view.*"
+		 width="900" height="408" creationComplete="init()">
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.Media;
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.event.RecordEvent;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.EditorModelLocator;
+			import com.deodio.elearning.module.plugin.RecordModelLocator;
+			
+			import mx.controls.Alert;
+			
+			[Bindable]
+			private var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			private var _recordLocator:RecordModelLocator = RecordModelLocator.getInstance();
+			[Bindable]
+			private var _editorLocator:EditorModelLocator = EditorModelLocator.getInstance();
+			
+			
+			public function init():void{
+				this.currentState = StateEnum.EDIT_VIDEO_STATE;
+				this._editorLocator.addEventListener(MediaEvent.MEDIA_IS_EDIT_SCREEN,function(event:MediaEvent):void{
+					var media:Media = event.data as Media;
+					if(media != null){
+						if(media.mediaType == 3){
+							currentState = StateEnum.EDIT_AUDIO_STATE;
+							_model.recordMediaName = recordAMediaName.text = media.mediaName;
+							_model.recordMediaDesc = recordAMediaDesc.text = media.mediaDesc;
+							_recordLocator.setIsRecording(false);
+						}else{
+							currentState = StateEnum.EDIT_VIDEO_STATE;
+							_model.recordMediaName = recordVMediaName.text = media.mediaName;
+							_model.recordMediaDesc = recordVMediaDesc.text = media.mediaDesc;
+							_recordLocator.setIsRecording(true);
+							mediaScreen.createImage(media.mediaCover,false);
+						}
+					}
+				});
+				
+				this._editorLocator.addEventListener(MediaEvent.MEDIA_SWAP_MEDIA,function(event:MediaEvent):void{
+					
+					if(currentState == StateEnum.EDIT_VIDEO_STATE){
+						_model.isSwap ? _model.isSwap = false : _model.isSwap = true;
+						mediaScreen.swapMedia();
+					}else{
+						Alert.show("Audio can't be swaped!");
+					}
+				});
+			}
+			
+			public function recordMediaModel(state:String):void{
+				
+				if(this._model.isRecord != true && this._model.isPlay != true && this._model.isTrim != true){ 
+				
+					if(this.currentState == StateEnum.EDIT_VIDEO_STATE && state == StateEnum.EDIT_AUDIO_STATE){
+						this.currentState = StateEnum.EDIT_AUDIO_STATE;
+						this.clearRecordInfo();
+						this.dispatchEvent(new MockEvent(MockEvent.MOCK_CHNAGE_MODEL,false));
+					}else if(this.currentState == StateEnum.EDIT_AUDIO_STATE && state == StateEnum.EDIT_VIDEO_STATE){
+						this.currentState = StateEnum.EDIT_VIDEO_STATE;
+						this.clearRecordInfo();
+						this.dispatchEvent(new MockEvent(MockEvent.MOCK_CHNAGE_MODEL,true));
+					}
+				}
+			}
+			
+			public function clearRecordInfo():void{
+					
+//				this.recordVMediaName.text = "";
+//				this.recordVMediaDesc.text = "";
+//				this.recordAMediaDesc.text = "";
+//				this.recordAMediaName.text = "";
+			}
+			
+			public function onRecordName():void{
+				this.currentState == StateEnum.EDIT_VIDEO_STATE?
+					_model.recordMediaName = this.recordVMediaName.text:
+					_model.recordMediaName = this.recordAMediaName.text
+			}
+			
+			public function onRecordDesc():void{
+				this.currentState == StateEnum.EDIT_VIDEO_STATE?
+					_model.recordMediaDesc = this.recordVMediaDesc.text:
+					_model.recordMediaDesc = this.recordAMediaDesc.text
+			}
+			
+			private function onRecordMedia():void{
+				this._editorLocator.dispatchEvent(new RecordEvent(RecordEvent.REORD_CLICK_RECORD_MEDIA));
+			}
+			
+			public function onShowRecordSettings():void{
+				this.recordSettings.visible = this.recordSettings.includeInLayout = true;
+			}
+			
+			public function onCloseRecordSettings():void{
+				this.recordSettings.visible = this.recordSettings.includeInLayout = false;
+			}
+			
+			private function onCancelMedia():void{
+				
+			}
+			
+			private function onSaveMedia():void{
+				this._editorLocator.dispatchEvent(new RecordEvent(RecordEvent.RECORD_SAVE_MEDIA));
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	<s:states>
+		<s:State name="editVideo"/>
+		<s:State name="editAudio"/>
+	</s:states>
+	
+	
+	<s:Rect width="900" height="408" x="0" y="0">
+		<s:fill>
+			<s:SolidColor color="#3a3a3a"/>
+		</s:fill>
+	</s:Rect>
+	
+	<s:Group x="12" y="26" width="176" height="230" buttonMode="true" click="recordMediaModel(StateEnum.EDIT_VIDEO_STATE)">
+		
+		<s:Rect x="0" y="0" height="48" width="176" radiusX="2" radiusY="2">
+			<s:fill>
+				<s:SolidColor color.editVideo="0x526c8d" color.editAudio="0x6d6d6d"/>
+			</s:fill>
+		</s:Rect>
+		
+		<s:Image source="@Embed('/assets/player/playbar/video_default.png')" x="20" y="9"/>
+		<mx:Text text="录制视频" fontFamily="yahei" fontWeight="bold" fontSize="18" x="65" y="15" color.editVideo="0xed4e40" color.editAudio="#d0d0d0" selectable="false" useHandCursor="true" buttonMode="true"/>
+		
+		<s:Group width="100%" height="282" y="40" visible.editAudio="false" includeInLayout.editAudio="false">
+			
+			<s:Rect x="0" y="8" height="237" width="100%" bottomLeftRadiusX="2" bottomLeftRadiusY="2" bottomRightRadiusX="2" bottomRightRadiusY="2">
+				<s:fill>
+					<s:SolidColor color="#d0d0d0"/>
+				</s:fill>
+			</s:Rect>
+			
+			<mx:Text text="名称:" fontWeight="bold" fontFamily="yahei" width="40" x="10" y="17" color="0x3a3a3a" fontSize="14"/>
+			<s:TextInput id="recordVMediaName" skinClass="com.deodio.elearning.libs.skins.DTextInputSkin" fontSize="14" x="10" y="37" width="157" height="35" change="onRecordName()" />
+			
+			<mx:Text text="描述:" fontWeight="bold" fontFamily="yahei" width="40" x="10" y="82" color="0x3a3a3a" fontSize="14"/>
+			<s:TextArea id="recordVMediaDesc" skinClass="com.deodio.elearning.libs.skins.DTextAreaSkin" x="10" y="102" width="157" height="100" change="onRecordDesc()"/>
+			
+			<!--s:Button skinClass="com.deodio.elearning.libs.skins.DEMButtonSkin" label="录制" x="5" y="210"  width="55" height="26" click="onRecordMedia()"/-->
+			<s:Button skinClass="com.deodio.elearning.libs.skins.DEMButtonSkin" label="取消" x="12" y="213"  width="73" height="26" click="onCancelMedia()"/>
+			<s:Button skinClass="com.deodio.elearning.libs.skins.DEMButtonSkin" label="保存" x="93" y="213" height="26" width="73" click="onSaveMedia()"/>
+		
+		</s:Group>
+	</s:Group>
+	
+	<s:Group x="12" y.editVideo="320" y.editAudio="90" width="176" height="230" buttonMode="true" click="recordMediaModel(StateEnum.EDIT_AUDIO_STATE)">
+		
+		<s:Rect x="0" y="0" height="48" width="176" radiusX="2" radiusY="2">
+			<s:fill>
+				<s:SolidColor color.editAudio="0x526c8d" color.editVideo="0x6d6d6d"/>
+			</s:fill>
+		</s:Rect>
+		
+		<s:Image source="@Embed('/assets/player/playbar/audio_default.png')" x="20" y="9"/>
+		<mx:Text text="录制音频" fontFamily="yahei" fontWeight="bold" fontSize="18" x="65" y="15"  color.editVideo="#d0d0d0" color.editAudio="0xed4e40" selectable="false" useHandCursor="true" buttonMode="true"/>
+		
+		<s:Group width="100%" height="282" y="40"  visible.editVideo="false" includeInLayout.editVideo="false">
+			<s:Rect x="0"  y="8" height="237" width="100%" bottomLeftRadiusX="2" bottomLeftRadiusY="2" bottomRightRadiusX="2" bottomRightRadiusY="2">
+				<s:fill>
+					<s:SolidColor color="#d0d0d0"/>
+				</s:fill>
+			</s:Rect>
+			
+			<mx:Text text="名称:" fontWeight="bold" fontFamily="yahei" width="40" x="10" y="17" color="0x3a3a3a" fontSize="14"/>
+			<s:TextInput id="recordAMediaName" skinClass="com.deodio.elearning.libs.skins.DTextInputSkin" fontSize="14" x="10" y="37" width="157" height="35" change="onRecordName()" />
+			
+			<mx:Text text="描述:" fontWeight="bold" fontFamily="yahei" width="40" x="10" y="82" color="0x3a3a3a" fontSize="14"/>
+			<s:TextArea id="recordAMediaDesc" skinClass="com.deodio.elearning.libs.skins.DTextAreaSkin" x="10" y="102" width="157" height="100" change="onRecordDesc()"/>
+			
+			<!--s:Button skinClass="com.deodio.elearning.libs.skins.DEMButtonSkin" label="录制" x="5" y="210"  width="55" height="26" click="onRecordMedia()"/-->
+			<s:Button skinClass="com.deodio.elearning.libs.skins.DEMButtonSkin" label="取消" x="12" y="213"  width="73" height="26" click="onCancelMedia()"/>
+			<s:Button skinClass="com.deodio.elearning.libs.skins.DEMButtonSkin" label="保存" x="93" y="213" height="26" width="73" click="onSaveMedia()"/>
+			
+		</s:Group>
+	</s:Group>
+	
+	<s:Group width="700" height="408" x="200" y="0">
+		<s:Rect width="700" height="408" x="0" y="0">
+			<s:fill>
+				<s:SolidColor color="#e5e5e5"/>
+			</s:fill>
+		</s:Rect>
+		
+		<!--mx:VideoDisplay  id="mediaDisplay" x="1" y="1" width="531" height="301"/-->
+		<screen:Screen id="mediaScreen" width="644" height="364" x="27" y="22" _borderWeight="0" _isSlide="false" visible="{this.currentState == StateEnum.EDIT_VIDEO_STATE}" includeInLayout="{this.currentState == StateEnum.EDIT_VIDEO_STATE}"/>
+		<screen:AudioScreen id="audioScreen" width="644" height="364" x="27" y="22"  _borderWeight="0"  visible="{this.currentState == StateEnum.EDIT_AUDIO_STATE}" includeInLayout="{this.currentState == StateEnum.EDIT_AUDIO_STATE}"/>
+	</s:Group>
+	
+	
+	<s:BorderContainer id="recordSettings" visible="false" includeInLayout="false" x="{(900 -270 + 200)/2}" y="{(500 - 260 )/2}" borderColor="#a3a3a3" borderWeight="1" backgroundColor="#000000" width="270" height="130" alpha="0.7">
+		<s:Image source="@Embed('/assets/common/close.png')"  buttonMode="true" useHandCursor="true" x="245" y="7" click="onCloseRecordSettings()"/>
+		<mx:Text text="切换录音模式" fontFamily="yahei" width="100" height="25" fontSize="12" color="#ffffff" x="10" y="10" textAlign="left" selectable="false"/>
+		<s:Line width="260" y="30" x="5">
+			<s:stroke>
+				<s:SolidColorStroke color="#a3a3a3" weight="1" caps="square"/>
+			</s:stroke>
+		</s:Line>
+		
+		<s:Image source="@Embed('/assets/player/record_headset.png')"  buttonMode="true" x="100" y="52" 
+				 click="{_model.isHeadsetMicroPhone=true;onCloseRecordSettings();}"
+				 mouseOver="{tip_system_microphone.visible = tip_system_microphone.includeInLayout = false;tip_headset_microphone.visible = tip_headset_microphone.includeInLayout = true}" />
+		<s:Image source="@Embed('/assets/player/record_static.png')"  buttonMode="true" x="155" y="50" 
+				 click="{_model.isHeadsetMicroPhone=false;onCloseRecordSettings();}"
+				 mouseOver="{tip_system_microphone.visible = tip_system_microphone.includeInLayout = true;tip_headset_microphone.visible = tip_headset_microphone.includeInLayout = false}" />
+		
+		<mx:Text id="tip_headset_microphone"
+				 x="20"
+				 text="耳麦模式，耳麦模式能够提升声音质量和减少噪音。" fontFamily="yahei"
+				 width="240"
+				 height="40"
+				 y="76" selectable="false"
+				 visible="{_model.isHeadsetMicroPhone}"
+				 includeInLayout="{_model.isHeadsetMicroPhone}" color="#ffffff"/>
+		<mx:Text id="tip_system_microphone"
+				 x="20"
+				 text="系统模式，为了保证录音质量和减少噪音，建议单独使用外接话筒设备。" fontFamily="yahei"
+				 width="240"
+				 height="40"
+				 y="76" selectable="false"
+				 visible="{!_model.isHeadsetMicroPhone}"
+				 includeInLayout="{!_model.isHeadsetMicroPhone}" color="#ffffff"/>
+	</s:BorderContainer>
+	
+</s:Group>

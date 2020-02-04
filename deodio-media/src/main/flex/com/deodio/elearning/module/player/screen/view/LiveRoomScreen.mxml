@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:screen="com.deodio.elearning.module.player.screen.view.*"
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*" width="100%" height="100%" creationComplete="init()">
+	<fx:Declarations>
+		
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.service.MessageService;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.messaging.ChannelSet;
+			import mx.messaging.Consumer;
+			import mx.messaging.events.ChannelEvent;
+			import mx.messaging.events.MessageEvent;
+			import mx.messaging.events.MessageFaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			public var messageService:MessageService = new MessageService();
+			
+			[Bindable]
+			public var syncPoints:ArrayCollection = new ArrayCollection();
+			
+			import com.deodio.elearning.model.ModelLocator;
+			
+			[Bindable]
+			public var _isShowMedia:Boolean=false;
+			
+			[Bindable]
+			public var _isSlideShow:Boolean = false;
+			
+			[Bindable]
+			public var _isDualScreen:Boolean = true;
+			
+			
+			[Bindable]
+			public var _width:Number = 0;
+			
+			[Bindable]
+			public var _height:Number = 0;
+			
+			[Bindable]
+			public var _isFullScreen:Boolean = false;
+			
+			[Bindable]
+			private var _model:ModelLocator=ModelLocator.getInstance();
+			
+			[Bindable]
+			private var _timer:Timer;
+			
+			[Bindable]
+			public var isLivingShow:Boolean = false;
+			
+			public function init():void{
+//				this.currentState = "hideState";
+			}
+			public function showMedia():void {
+				_isShowMedia=true;
+			}
+			
+			public function showCover():void {
+				_isShowMedia=false;
+			}
+			
+			public function showCoverDetail():void {
+				
+			}
+			
+			public function onPlay():void{
+				messageService.getMemcacheValue(_model.presentationId+"_"+_model.presentationCreator,function(event:ResultEvent):void{
+					
+					isLivingShow = event.result as Boolean;
+					if(isLivingShow){
+						playIcon.visible = playIcon.includeInLayout = false;
+						dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PLAY));
+					}else{
+						Alert.show("------- Live can't start ------");
+					}
+				});
+			}
+			
+			public function onRollOverFunc():void{
+				this.currentState = "showState";
+			}
+			
+			public function onRollOutFunc():void{
+				this.currentState = "hideState";
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<!--s:states>
+		<s:State name="hideState"/>
+		<s:State name="showState"/>
+	</s:states>
+	<s:transitions>
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Move target="{playIcon}" yFrom="{this._height-93}" yTo="{this._height-131}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Move target="{playIcon}" yFrom="{this._height-131}" yTo="{this._height-93}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions -->
+	
+	<screen:Screen id="clipsCanvas" height="{(this._width*0.25 - 3)*9/16}" 
+				   width="{(this._width*0.25 - 3)}" 
+				   _title="SLEF SHOW"  y="1" _isSlide="false"  _borderVisible="false" 
+				   x="{(this._width*0.75 + 2 )}" 
+				   visible="true" 
+				   includeInLayout="true"/>
+	<screen:Screen id="liveCanvas"  height="{(this._height-2)}" 
+				   width="{(this._width*0.75 )}" 
+				   _title="LIVE SHOW" x="1"  y="1" _isSlide="false" _borderVisible="false"
+				   visible="true" 
+				   includeInLayout="true"/>
+	
+	<s:Image id="playIcon" source="@Embed('/assets/player/play_icon_btn.png')" x="20" y="{this._height - 93}" buttonMode="true" click="onPlay()"/>
+	
+</s:Group>

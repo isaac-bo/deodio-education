@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.QuizExaminationCustomizeMapper">
+ 
+	 <select id="findQuizExaminationList" parameterType="java.util.Map" resultType="java.util.Map">
+	 	SELECT t_quiz.*, 
+	 		   CASE WHEN 
+	 		   		t_user.nick_name IS NULL THEN concat (t_user.first_name, '.', t_user.last_name)
+			   ELSE
+					t_user.nick_name
+			   END AS username,
+		       COUNT (t_quiz_subject_rel.quiz_id) AS quiznum,
+		       COALESCE (SUM (t_quiz_subject.quiz_subject_score),0) AS score
+		FROM t_quiz
+  INNER JOIN t_user ON t_user. ID = t_quiz.create_id
+		AND t_quiz.account_id = #{accountId}
+		<if test="quizCategory!=0">
+			and t_quiz.quiz_category=#{quizCategory}
+		</if>
+
+		<if test="keywords!=null">
+			and t_quiz.quiz_name like CONCAT('%','${keywords}','%' )
+		</if>
+		LEFT JOIN t_quiz_subject_rel ON t_quiz. ID = t_quiz_subject_rel.quiz_id
+		LEFT JOIN t_quiz_subject ON t_quiz_subject. ID = t_quiz_subject_rel.quiz_subject_id
+		GROUP BY
+			t_quiz. ID,
+			username
+	    ORDER BY t_quiz.create_time DESC
+	 </select>
+
+</mapper>

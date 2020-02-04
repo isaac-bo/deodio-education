@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<s:SparkButtonSkin xmlns:fx="http://ns.adobe.com/mxml/2009" 
+				   xmlns:s="library://ns.adobe.com/flex/spark" 
+				   xmlns:fb="http://ns.adobe.com/flashbuilder/2009"
+				   alpha.disabledStates="0.5">
+	
+	<!-- host component -->
+	<fx:Metadata>
+		<![CDATA[ 
+		/** 
+		* @copy spark.skins.spark.ApplicationSkin#hostComponent
+		*/
+		[HostComponent("spark.components.ToggleButton")]
+		]]>
+	</fx:Metadata>
+	
+	<!-- states -->
+	<s:states>
+		<s:State name="up" />
+		<s:State name="over" stateGroups="overStates" />
+		<s:State name="down" stateGroups="downStates" />
+		<s:State name="disabled" stateGroups="disabledStates" />
+		<s:State name="upAndSelected" stateGroups="selectedStates, selectedUpStates" />
+		<s:State name="overAndSelected" stateGroups="overStates, selectedStates" />
+		<s:State name="downAndSelected" stateGroups="downStates, selectedStates" />
+		<s:State name="disabledAndSelected" stateGroups="selectedUpStates, disabledStates, selectedStates" />
+	</s:states>
+	
+	<!-- layer 2: fill -->
+	<!--- @private -->
+	<s:Rect id="fill" left="1" right="1" top="1" bottom="1" radiusX="0">
+		<s:fill>
+			<s:LinearGradient rotation="90">
+				<s:GradientEntry color="0x292929"
+								 alpha="1"/>
+			</s:LinearGradient>
+		</s:fill>
+	</s:Rect>
+	
+	<!-- layer 7: border - put on top of the fill so it doesn't disappear when scale is less than 1 -->
+	<!--- @private -->
+	<s:Rect id="border" left="0" right="0" top="0" bottom="0" radiusX="0">
+		<s:stroke>
+			<s:LinearGradientStroke rotation="90" weight="1">
+				<s:GradientEntry color="0x292929" 
+								 alpha="1"/>
+			</s:LinearGradientStroke>
+		</s:stroke>
+	</s:Rect>
+	
+	<!-- layer 8: text -->
+	<!--- @copy spark.components.supportClasses.ButtonBase#labelDisplay -->
+	<s:Label id="labelDisplay"  textAlign="center" horizontalCenter="0" verticalCenter="0" fontSize="12" fontFamily="yahei" fontWeight="normal" 
+			 color="#d0d0d0"
+			 color.over="#ed4e40"
+			 color.down="#ed4e40"
+			 color.selectedStates="#ed4e40">
+	</s:Label>
+	<!--s:BitmapImage top="5" width="32" height="32"
+	horizontalCenter="0" smooth="true" source="@Embed('/images/depot_admin.png')"/-->
+</s:SparkButtonSkin>

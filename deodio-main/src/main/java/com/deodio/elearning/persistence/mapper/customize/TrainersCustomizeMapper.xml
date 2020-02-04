@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.TrainersCustomizeMapper">
+	
+	<select id="getTrainerList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			t_trainers.*
+		FROM
+			t_trainers
+		WHERE
+			t_trainers.account_id = #{accountId}
+		<if test="keywords!=null">
+			and t_trainers.trainer_name like CONCAT('%','${keywords}','%' )
+		</if>
+		<if test="trainerType!=null">
+			and t_trainers.trainer_type =#{trainerType}
+		</if>
+		ORDER BY t_trainers.trainer_name, t_trainers.create_time DESC
+	</select>
+	
+	<select id="findTrainerList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			t_trainers.*,
+			#{userId} as current_user_id
+		FROM
+			t_trainers
+		WHERE
+			t_trainers.account_id = #{accountId}
+		<if test="keywords!=null">
+			and t_trainers.trainer_name like CONCAT('%','${keywords}','%' )
+		</if>
+		ORDER BY convert_to(trainer_name , 'gbk') asc,
+				 t_trainers.create_time DESC
+	</select>
+	
+	<delete id="delAllTrainers" parameterType="java.util.List">
+		DELETE FROM t_trainers
+		WHERE t_trainers.id in (
+			<foreach collection="list" item="item" separator=",">
+				#{item.id}
+			</foreach>
+		)
+	</delete>
+	
+	<!-- 获取学员课程 考试、调查问卷及作业 列表 -->
+	<select id="getTrainerCourseRelate" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			t_course_homework."id",
+			t_course_homework.course_id,
+			t_course_homework.homework_name AS name,
+			'60' AS type,  <!-- 课后作业60；考试61；调查问卷62  附件63 -->
+			case WHEN t_trainee_course_homework."id" is NULL then '1' ELSE '3' END AS status  <!-- 1未完成；2已提交；3已完成 -->
+		FROM
+			t_course_homework
+		LEFT JOIN t_trainee_course_homework 
+		ON t_trainee_course_homework.course_id = t_course_homework.course_id
+		AND t_trainee_course_homework.account_id = t_course_homework.account_id 
+		AND t_trainee_course_homework.group_id = #{groupId}
+		AND t_trainee_course_homework.trainee_id = #{traineeId}
+		WHERE
+			t_course_homework.course_id = #{courseId} AND t_course_homework.account_id = #{accountId}
+		UNION ALL
+			SELECT
+				t_course_quiz.quiz_id,
+				t_course_quiz.course_id,
+				t_course_quiz.quiz_name,
+				'61' AS TYPE,
+				case WHEN t_trainee_exam_record."id" is NULL then '1' ELSE '3' END
+			FROM
+				t_course_quiz
+			LEFT JOIN t_trainee_exam_record 
+			ON t_trainee_exam_record.course_id = t_course_quiz.course_id
+			AND t_trainee_exam_record.account_id = t_course_quiz.account_id 
+			AND t_trainee_exam_record.trainee_id = #{traineeId}
+			AND t_trainee_exam_record.group_id = #{groupId}
+			WHERE
+				t_course_quiz.course_id = #{courseId} AND t_course_quiz.account_id = #{accountId}
+			UNION ALL
+				SELECT
+					t_course_survey.survey_id,
+					t_course_survey.course_id,
+					t_course_survey.survey_name,
+					'62' AS TYPE,
+					case WHEN t_trainee_exam_record."id" is NULL then '1' ELSE '3' END
+				FROM
+					t_course_survey
+				LEFT JOIN t_trainee_exam_record 
+				ON t_trainee_exam_record.course_id = t_course_survey.course_id
+				AND t_trainee_exam_record.account_id = t_course_survey.account_id 
+				AND t_trainee_exam_record.trainee_id = #{traineeId}
+				AND t_trainee_exam_record.group_id = #{groupId}
+				WHERE
+					t_course_survey.course_id = #{courseId} AND t_course_survey.account_id = #{accountId}
+			UNION ALL
+				SELECT
+					t_course_material."id",
+					t_course_material.course_id,
+					t_course_material.material_name,
+					'64' AS type,
+					'' as status
+				FROM
+					t_course_material
+				WHERE
+					t_course_material.course_id = #{courseId} AND t_course_material.account_id = #{accountId}
+	</select>
+		
+    <select id="findLecturerList" resultType="java.util.Map">
+        SELECT
+        u.id,
+        u.nick_name AS nickName,
+        u.user_mail AS userMail
+        FROM t_user u
+        LEFT JOIN t_user_account_rel uar ON uar.user_id = u.id
+        LEFT JOIN t_group_role_user_rel grur ON grur.user_id = u.id
+        LEFT JOIN t_group_role gr ON gr.id = grur.group_role_id
+        WHERE gr.name = 'Content Creator'
+        AND uar.account_id = #{accountId, jdbcType=VARCHAR}
+        AND u.id != #{createId, jdbcType=VARCHAR}
+        AND grur.group_id = #{groupId, jdbcType=VARCHAR}
+        AND grur.active_status = 1
+        <if test="keyWord != null">
+            AND ( u.nick_name like CONCAT('%',#{keyWord},'%' )
+            OR u.user_mail like CONCAT('%',#{keyWord},'%' ))
+        </if>
+        GROUP BY u.id
+    </select>
+	
+</mapper>

@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<project name="deodio" default="dist" basedir=".">
+	<import file="properties.xml" />
+
+	<target name="build-env" description="Echos the 'build.env' property value and values of properties derived from it.">
+		<echo message="build.env: '${build.env}'" />
+	</target>
+
+	<target name="deploy" depends="clean,build,mxmlc,test,codereview,doc,java2html,jar,war">
+		<echo>+-------------------------------+</echo>
+		<echo>|  ___  ___ ___ _    _____   __ |</echo>
+		<echo>| |   \| __| _ \ |  / _ \ \ / / |</echo>
+		<echo>| | |) | _||  _/ |_| (_) \ V /  |</echo>
+		<echo>| |___/|___|_| |____\___/ |_|   |</echo>
+		<echo>+-------------------------------+</echo>
+	</target>
+
+	<target name="dist" depends="clean,build,jar,war">
+		<echo>+---------------------+</echo>
+		<echo>|  ___ ___ ___ _____  |</echo>
+		<echo>| |   \_ _/ __|_   _| |</echo>
+		<echo>| | |) | |\__ \ | |   |</echo>
+		<echo>| |___/___|___/ |_|   |</echo>
+		<echo>+---------------------+</echo>
+	</target>
+
+	<target name="codereview" depends="pmd,checkstyle,findbugs">
+		<echo>+-----------------------------------------------------+</echo>
+		<echo>|   ___ ___  ___  ___ ___ _____   _____ _____      __ |</echo>
+		<echo>|  / __/ _ \|   \| __| _ \ __\ \ / /_ _| __\ \    / / |</echo>
+		<echo>| | (_| (_) | |) | _||   / _| \ V / | || _| \ \/\/ /  |</echo>
+		<echo>|  \___\___/|___/|___|_|_\___| \_/ |___|___| \_/\_/   |</echo>
+		<echo>+-----------------------------------------------------+</echo>
+	</target>
+
+	<!-- clean -->
+	<target name="clean">
+		<echo>+----------------------------+</echo>
+		<echo>|   ___ _    ___   _   _  _  |</echo>
+		<echo>|  / __| |  | __| /_\ | \| | |</echo>
+		<echo>| | (__| |__| _| / _ \| .` | |</echo>
+		<echo>|  \___|____|___/_/ \_\_|\_| |</echo>
+		<echo>+----------------------------+</echo>
+	</target>
+
+	<!-- build -->
+	<target name="build" depends="clean">
+		<echo>+-------------------------+</echo>
+		<echo>|     _  ___   ___   ___  |</echo>
+		<echo>|  _ | |/_\ \ / /_\ / __| |</echo>
+		<echo>| | || / _ \ V / _ \ (__  |</echo>
+		<echo>|  \__/_/ \_\_/_/ \_\___| |</echo>
+		<echo>+-------------------------+</echo>
+
+	</target>
+
+	<!-- compile a mxml/as file -->
+	<target name="mxmlc" depends="clean">
+		<echo>+-------------------------------+</echo>
+		<echo>|  __  ____  ____  __ _    ___  |</echo>
+		<echo>| |  \/  \ \/ /  \/  | |  / __| |</echo>
+		<echo>| | |\/| |>  /| |\/| | |_| (__  |</echo>
+		<echo>| |_|  |_/_/\_\_|  |_|____\___| |</echo>
+		<echo>+-------------------------------+</echo>
+
+		<delete dir="${flex.bin}"/>
+		<mkdir dir="${flex.bin}" />
+
+		<for param="file">
+
+			<path>
+				<fileset dir="${flex.src}" includes="*.mxml" />
+			</path>
+			
+			<sequential>
+				<propertyregex override="yes" property="program" input="@{file}" regexp=".*flex[/\\]([^\.]*)\.mxml" select="\1" casesensitive="false" />
+				<copy todir="${flex.thirdparty}">
+					<fileset dir="${flex.libs}" includes="**/*.swc" />
+				</copy>
+				<copy todir="${flex.bin}">
+					<fileset dir="${flex.rsls}" includes="*" />
+				</copy>
+				<exec executable="${flex.mxmlc}">
+					<arg value="@{file}" />
+					<!--arg value="-load-config=${flex.conf}/flex-config.xml" /-->
+					<arg value="-compiler.source-path=${flex.src}" />
+					<arg value="-compiler.services=${basedir}/src/main/webapp/WEB-INF/flex/services-config.xml" />
+					<arg value="-compiler.context-root=/${app.name}" />
+					<arg value="-output=${flex.bin}/${program}.swf" />
+				</exec>
+			</sequential>
+		</for>
+	</target>
+
+	<!-- test-->
+	<target name="test">
+		<echo>+-----------------------------+</echo>
+		<echo>|     _ _   _ _  _ ___ _____  |</echo>
+		<echo>|  _ | | | | | \| |_ _|_   _| |</echo>
+		<echo>| | || | |_| | .` || |  | |   |</echo>
+		<echo>|  \__/ \___/|_|\_|___| |_|   |</echo>
+		<echo>+-----------------------------+</echo>
+	</target>
+
+	<target name="jar">
+		<echo>+-----------------+</echo>
+		<echo>|     _  _   ___  |</echo>
+		<echo>|  _ | |/_\ | _ \ |</echo>
+		<echo>| | || / _ \|   / |</echo>
+		<echo>|  \__/_/ \_\_|_\ |</echo>
+		<echo>+-----------------+</echo>
+	</target>
+
+	<target name="war">
+		<echo>+--------------------+</echo>
+		<echo>| __      ___   ___  |</echo>
+		<echo>| \ \    / /_\ | _ \ |</echo>
+		<echo>|  \ \/\/ / _ \|   / |</echo>
+		<echo>|   \_/\_/_/ \_\_|_\ |</echo>
+		<echo>+--------------------+</echo>
+	</target>
+
+
+	<target name="java2html">
+		<echo>+-------------------------------------------------+</echo>
+		<echo>|     _  ___   ___    ___ _  _ _____ __  __ _     |</echo>
+		<echo>|  _ | |/_\ \ / /_\  |_  ) || |_   _|  \/  | |    |</echo>
+		<echo>| | || / _ \ V / _ \  / /| __ | | | | |\/| | |__  |</echo>
+		<echo>|  \__/_/ \_\_/_/ \_\/___|_||_| |_| |_|  |_|____| |</echo>
+		<echo>+-------------------------------------------------+</echo>
+	</target>
+
+	<target name="doc">
+		<echo>+-------------------+</echo>
+		<echo>|  ___   ___   ___  |</echo>
+		<echo>| |   \ / _ \ / __| |</echo>
+		<echo>| | |) | (_) | (__  |</echo>
+		<echo>| |___/ \___/ \___| |</echo>
+		<echo>+-------------------+</echo>
+	</target>
+
+	<target name="pmd">
+		<echo>+-------------------+</echo>
+		<echo>|  ___ __  __ ___   |</echo>
+		<echo>| | _ \  \/  |   \  |</echo>
+		<echo>| |  _/ |\/| | |) | |</echo>
+		<echo>| |_| |_|  |_|___/  |</echo>
+		<echo>+-------------------+</echo>
+	</target>
+
+	<target name="checkstyle">
+		<echo>+---------------------------------------------------+</echo>
+		<echo>|   ___ _  _ ___ ___ _  _____ _______   ___    ___  |</echo>
+		<echo>|  / __| || | __/ __| |/ / __|_   _\ \ / / |  | __| |</echo>
+		<echo>| | (__| __ | _| (__| ' /\__ \ | |  \ V /| |__| _|  |</echo>
+		<echo>|  \___|_||_|___\___|_|\_\___/ |_|   |_| |____|___| |</echo>
+		<echo>+---------------------------------------------------+</echo>
+	</target>
+
+	<target name="findbugs" depends="jar">
+		<echo>+----------------------------------------+</echo>
+		<echo>|  ___ ___ _  _ ___  ___ _   _  ___ ___  |</echo>
+		<echo>| | __|_ _| \| |   \| _ ) | | |/ __/ __| |</echo>
+		<echo>| | _| | || .` | |) | _ \ |_| | (_ \__ \ |</echo>
+		<echo>| |_| |___|_|\_|___/|___/\___/ \___|___/ |</echo>
+		<echo>+----------------------------------------+</echo>
+	</target>
+
+</project>

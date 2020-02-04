@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.PresentationSyncCustomizeMapper">
+
+	<resultMap type="com.deodio.elearning.persistence.model.customize.AttachmentSlidesItemBo" id="brMap"
+	 extends="com.deodio.elearning.persistence.mapper.AttachmentSlidesItemMapper.BaseResultMap">
+	
+	</resultMap>
+
+
+<select id="getAttachmentSlidesItemByPresentationId" resultMap="brMap" parameterType="java.lang.String">
+	select 
+		t1.* 
+	from 
+		t_attachment_slides_item t1,t_slides t2 
+	where 
+		t1.slide_id = t2.id and t2.presentation_id=#{presentationId} 
+	order by  t1.slide_id,t1.slide_order asc
+
+</select>
+
+
+
+</mapper>

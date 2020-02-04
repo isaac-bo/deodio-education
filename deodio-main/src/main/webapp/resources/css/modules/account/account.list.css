@@ -1,0 +1,184 @@
+body{
+	background: #eaedf2;
+}
+h1,h2,h3,h4,h5,h6{
+	display: block;
+}
+.header{
+	height: 145px;
+	background-image: url(../../../img/header-img-4.jpg);
+}
+
+.header .logo{
+	margin: 60px auto 0;
+}
+
+.content .head-title{
+	
+	height: 200px;
+	border: 1px solid #3073ad;
+	margin-top: 20px;
+	border-radius: 2px;
+	background: #fff;
+}
+.content .head-title h1{
+	height: 40px;
+	background: #3073ad;
+	padding-left: 20px;
+	font-size: 18px;
+	line-height: 40px;
+}
+.content .head-title .head-content{
+	
+	height: 158px;
+	overflow: hidden;
+}
+
+.content .head-title .head-content .head-pic{
+	width: 202px;
+	height: 118px;
+	margin: 20px 0 0 200px;
+	border-right: 1px solid #d1d9dc;
+	text-align: center;
+	float: left;
+}
+.content .head-title .head-content .head-pic img{
+	border: 1px solid #d1d9dc;
+	border-radius: 4px;
+}
+.content .head-title .head-content .head-pic a{
+	width:100%;
+	color:#000;
+}
+.content .head-title .head-content .head-list{
+	float: right;
+	margin-top: 24px;
+	width: 480px;
+	height: auto;
+}
+.content .joined-account{
+	width: 100%;
+	height: 440px;
+	background: #fff;
+	border: 1px solid #b7dcf5;
+	margin-top: 10px;
+	overflow: hidden;
+	margin-bottom: 152px;
+	border-radius: 2px;
+}
+
+.content .joined-account h1{
+	height: 40px;
+	line-height: 40px;
+	font-size: 18px;
+	padding-left: 20px;
+	background: #aad8f6;
+	
+}
+.content .joined-account .joined-account-roll{
+	height: 360px;
+	position: relative;
+	overflow: hidden;
+}
+.content .joined-account .joined-account-roll .joined-content{
+	width: 100%;
+	height: 100%;
+	padding: 10px;
+}
+.content .joined-account .joined-account-roll .joined-content .joined-content-item{
+	width: 50%;
+	height: 50%;
+	padding: 10px;
+	float: left;
+	overflow: hidden;
+}
+.content .joined-account .joined-account-roll .joined-content>div.show-two{
+	width: 100%;
+	height: 50%;
+}
+.content .joined-account .joined-account-roll .joined-content>div.show-three{
+	width: 33.333333333333333333333%;
+	height: 100%
+}
+
+.content .joined-account .joined-account-roll .joined-content .joined-content-item > div {
+	background: #e9f3fa none repeat scroll 0 0;
+	height: 147px;
+	width: 100%;
+}
+
+.content .joined-account .joined-account-roll .joined-content .joined-content-item>div .j-c-i-pic{
+	width: 48%;
+	height: 100%;
+	float: left;
+	text-align: center;
+	line-height: 35px;
+}
+.content .joined-account .joined-account-roll .joined-content .joined-content-item>div>div.show-three{
+	width: 100%;
+	height: auto;
+}
+.content .joined-account .joined-account-roll .joined-content .joined-content-item>div>div.padding-left{
+	padding-left: 55px;
+}
+.content .joined-account .joined-account-roll .joined-content .joined-content-item>div .j-c-i-pic img{
+	margin-top: 20px;
+	border: 1px solid #d1d9dc;
+	border-radius: 4px;
+}
+.content .joined-account .joined-account-roll .joined-content .joined-content-item>div .j-c-i-list{
+	width: 52%;
+	height: auto;
+	float: left;
+	margin-top: 26px;
+	line-height: 16px;
+}
+.content .joined-account .joined-scroll{
+	width: 70px;
+	height: 12px;
+	margin: 0 auto;
+}
+.content .joined-account .joined-scroll>li{
+	background: url(../../../img/icon.png) no-repeat;
+	background-position: -5px -375px;
+	width: 12px;
+	height: 12px;
+	float: left;
+	margin-left: 7px;
+	cursor: pointer;
+}
+.content .joined-account .joined-scroll>li.on{
+	background-position: -21px -375px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

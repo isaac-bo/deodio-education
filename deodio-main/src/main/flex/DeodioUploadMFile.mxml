@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   applicationComplete="init()"
+			   width="165"
+			   height="23" alpha="0">
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.utils.CommonUtils;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.ToolTipEvent;
+			
+			[Bindable]
+			private var fileRefs:FileReferenceList=new FileReferenceList();
+			[Bindable]
+			private var urlrequest:URLRequest=null;
+			
+			[Bindable]
+			public var filesDataProvider:ArrayCollection=new ArrayCollection();
+			[Bindable]
+			public var selectedFiles:ArrayCollection=new ArrayCollection();
+			
+			public var fileGason:String="";
+			
+			[Bindable]
+			private var requestUrl:String="";
+			[Bindable]
+			private var uploadType:String=""
+			
+			private var _count:int = 0;
+			private var _separator:String=":";
+			private var _fileSeparator:String="::";
+			
+			private function init():void{
+				Security.allowDomain("*");
+				fileRefs.addEventListener(Event.SELECT, selectHandler);
+				fileRefs.addEventListener(Event.CANCEL, cancelHandler);
+				fileRefs.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				fileRefs.addEventListener(Event.COMPLETE, completeHandler);
+				fileRefs.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA,uploadCompleteHandler);
+				this.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+				//get upload url from jsp.
+				requestUrl=root.loaderInfo.parameters.requestUrl;
+				uploadType=root.loaderInfo.parameters.uploadType;
+//				//urlrequest=new URLRequest(requestUrl);
+				ExternalInterface.addCallback("cancelUpload", cancelUpload);
+//				
+//				ExternalInterface.call("resetClass",uploadType);
+			}
+			
+			
+			private function selectHandler(event:Event):void{
+				trace(this + "-- Select Handler ---- : Start");
+				selectedFiles = new ArrayCollection();
+				//ExternalInterface.call("hidePopupMenu",uploadType);
+				for each (var f:FileReference in fileRefs.fileList){
+					selectedFiles.addItem(f);
+					buildFrontEndDataProviderHandler(f);
+				}
+				
+				if (selectedFiles.length > 0){
+					ExternalInterface.call("buildRowsForNotSupportHtml5", fileGason,uploadType);
+				}				
+				fileGason="";
+				uploadSynchronizeFile();
+				trace(this + "-- Select Handler ---- : End");
+			}
+			
+			
+			private function uploadSynchronizeFile():void{
+				for each (var f:FileReference in selectedFiles){
+					try{
+						var uuid :String="";
+						for each (var file:Object in filesDataProvider){
+							if (f == file.fileReference){
+								uuid = file.id;
+								break;
+							}
+						}
+						urlrequest=new URLRequest(requestUrl +'&fileId='+uuid + '&fileType=' + uploadType);
+						f.upload(urlrequest);
+					}
+					catch (e:Error){
+						trace(e.message);
+					}
+				}
+			}
+			
+			private function buildFrontEndDataProviderHandler(f:FileReference):void{
+				var file:Object=new Object();
+				file.name=f.name;
+				file.fileReference=f;
+				file.size=f.size;
+				file.id=CommonUtils.createUID();
+				
+				filesDataProvider.addItem(file);
+				fileGason=fileGason + file.name + this._separator + file.size + this._separator + file.id + this._fileSeparator;
+				f.addEventListener(ProgressEvent.PROGRESS, function(event:ProgressEvent):void{
+					ExternalInterface.call("updataProgressing", file.id, event.bytesLoaded, event.bytesTotal);
+				});
+				f.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, function(event:DataEvent):void{
+					_count += 1;
+//					if(_count == selectedFiles.length){
+//						ExternalInterface.call("hidePopupMenu",uploadType);
+//					}
+					ExternalInterface.call("updataProgressed", file.id,uploadType);
+				});
+				
+			}
+			
+			
+			private function ioErrorHandler(event:IOErrorEvent):void{
+//				ExternalInterface.call("hidePopupMenu",uploadType);
+				trace(this + "-- IO Error Handler ---- : " + event.text);
+			}
+			
+			private function cancelHandler(event:Event):void{
+//				ExternalInterface.call("hidePopupMenu",uploadType);
+//				ExternalInterface.call("hidePopupMenu");
+//				ExternalInterface.call("setFlgForMakePresentationButton", "false");
+			}
+			
+			private function completeHandler(event:Event):void{
+//				ExternalInterface.call("hidePopupMenu",uploadType);
+				trace(this + "-- Complete Handler ---- : Complete");
+			}
+			
+			private function uploadCompleteHandler(event:DataEvent):void{
+//				ExternalInterface.call("hidePopupMenu",uploadType);
+				trace(this + "-- Upload Complete Handler ---- : Complete");
+			}
+			
+			public function cancelUpload(uuid:String):void{
+				
+				//Alert.show(uuid);
+				for each (var file:Object in filesDataProvider){
+					if (file.id == uuid){
+						var f:FileReference=file.fileReference as FileReference;
+						f.cancel();
+					}
+				}
+			}
+			
+			private function selectFile():void{
+				if('slides'==uploadType){
+					fileRefs.browse([new FileFilter("SLIDES(*.png, *.jpg, *.gif, *.tif, *.ppt, *.pptx,*.PNG, *.JPG, *.GIF, *.TIF, *.PPT, *.PPTX)", "*.png; *.jpg; *.gif; *.tif; *.ppt; *.pptx;*.PNG; *.JPG; *.GIF; *.TIF; *.PPT; *.PPTX")]);
+				}else{
+					fileRefs.browse([new FileFilter("MULTIMEDIA(*.flv,*.avi,*.mpeg,*.wmv,*.mpg,*.mov,*.mp4,*.3pg,*.mp3,*.wav,*.wma,*.f4v,*.m4v,*.3gp,*.FLV,*.AVI,*.MPEG,*.WMV,*.MPG,*.MOV,*.MP4,*.3PG,*.MP3,*.WAV,*.WMA,*.F4V,*.M4V,*.3GP)", "*.flv;*.avi;*.mpeg;*.wmv;*.mpg;*.mov;*.mp4;*.3pg;*.MP3;*.WAV;*.WMA;*.F4V;*.M4V;*.3GP;*.FLV;*.AVI;*.MPEG;*.WMV;*.MPG;*.MOV;*.MP4;*.3PG;*.MP3;*.WAV;*.WMA;*.F4V;*.M4V;*.3GP")]);
+				}
+				//ExternalInterface.call("setFlgForMakePresentationButton","true");
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Button id="selectFileButton"
+			   label="UPLOAD NEW"
+			   click="selectFile()"
+			   enabled="true"
+			   y="1"
+			   width="160"
+			   height="22"
+			   x="3" buttonMode="true" useHandCursor="true"/>
+</s:Application>

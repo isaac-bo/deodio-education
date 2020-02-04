@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.QuizBanksCustomizeMapper">
+
+	<select id="getQuizBankListBase" parameterType="java.util.Map" resultType="java.util.Map">
+		select t_quiz_banks.*,t_classification.classification_name
+		<include refid="commonQuizBankSql"></include>
+		<include refid="pageinationSql"></include>
+	</select>
+
+	<select id="getQuizBankListCount" parameterType="java.util.Map" resultType="java.lang.Integer">
+		select count(t_quiz_banks.*)
+		<include refid="commonQuizBankSql"></include>
+	</select>
+	
+	<select id="findQuizBankList" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			t_quiz_banks.*,
+			t_classification.classification_name,
+				(
+					SELECT
+						COUNT (*)
+					<include refid="commonQuizBankSql"></include>
+				) AS COUNT
+		FROM
+			t_quiz_banks,
+			t_classification
+		WHERE
+			t_classification. ID = t_quiz_banks.classification_id
+		AND t_quiz_banks.account_id = #{accountId}
+		AND t_quiz_banks.classification_id = #{classificationId}
+	</select>
+
+	<sql id="commonQuizBankSql">
+		FROM
+		t_quiz_banks,
+		t_classification
+		WHERE
+		t_quiz_banks.account_id = #{accountId}
+
+		<if test="classificationId!=null">
+			and t_quiz_banks.classification_id=#{classificationId}
+			and t_quiz_banks.classification_id = t_classification.id
+		</if>
+
+		<if test="keywords!=null">
+			and t_quiz_banks.quiz_bank_name like CONCAT('%','${keywords}','%' )
+		</if>
+	</sql>
+	
+	<sql id="pageinationSql">
+		<if test="end!=null">
+			LIMIT #{end} OFFSET #{start}
+		</if>
+	</sql>
+
+</mapper>

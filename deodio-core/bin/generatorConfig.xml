@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN" "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd" >  <generatorConfiguration>
+	<classPathEntry location="/Users/isaac/.m2/repository/org/postgresql/postgresql/9.2-1003-jdbc4/postgresql-9.2-1003-jdbc4.jar"/>
+	<context id="DB2Tables"
+			 targetRuntime="MyBatis3">
+			 
+		 <jdbcConnection driverClass="org.postgresql.Driver"
+	        connectionURL="jdbc:postgresql://210.83.216.71:5432/deodio_pro"
+	        userId="dbuser"
+	        password="123456">
+	    </jdbcConnection>
+
+
+		<javaTypeResolver>
+			<property name="forceBigDecimals"
+					  value="false"/>
+		</javaTypeResolver>
+
+		<javaModelGenerator targetPackage="com.deodio.elearning.persistence.model"
+							targetProject="deodio-core/src/main/java">
+			<property name="enableSubPackages"
+					  value="true"/>
+			<property name="trimStrings"
+					  value="true"/>
+		</javaModelGenerator>
+
+		<sqlMapGenerator targetPackage="com.deodio.elearning.persistence.mapper"
+						 targetProject="deodio-core/src/main/resources">
+			<property name="enableSubPackages"
+					  value="true"/>
+		</sqlMapGenerator>
+
+		<javaClientGenerator type="XMLMAPPER"
+							 targetPackage="com.deodio.elearning.persistence.mapper"
+							 targetProject="deodio-core/src/main/java">
+			<property name="enableSubPackages"
+					  value="true"/>
+		</javaClientGenerator>
+
+		<!--table tableName="T_ACCOUNT" domainObjectName="Account"/>
+		<table tableName="T_COMPANY" domainObjectName="Company"/>
+		<table tableName="T_Course" domainObjectName="Course"/>
+		<table tableName="T_Course_items" domainObjectName="CourseItems"/>
+		<table tableName="T_FUNCTION" domainObjectName="Function"/>
+		<table tableName="T_LESSON" domainObjectName="Lesson"/>
+		<table tableName="T_LESSON_FINAL_MEDIA" domainObjectName="LessonFinalMedia"/>
+		<table tableName="T_LESSON_FINAL_RECORD" domainObjectName="LessonFinalRecord"/>
+		<table tableName="T_LESSON_QUIZ" domainObjectName="LessonQuiz"/>
+		<table tableName="T_LESSON_SYNC_MEDIA" domainObjectName="LessonSyncMedia"/>
+		<table tableName="T_LESSON_SYNC_POINTS" domainObjectName="LessonSyncPoints"/>
+		<table tableName="T_LESSON_SYNC_RECORD" domainObjectName="LessonSyncRecord"/>
+		<table tableName="T_LESSON_SYNC_SLIDES" domainObjectName="LessonSyncSlides"/>
+		<table tableName="T_QUIZ" domainObjectName="Quiz"/>
+		<table tableName="T_Quiz_items" domainObjectName="QuizItems"/>
+		<table tableName="T_Quiz_results" domainObjectName="QuizResults"/>
+		<table tableName="T_Role" domainObjectName="Role"/>
+		<table tableName="T_Role_func_rel" domainObjectName="RoleFuncRel"/>
+		<table tableName="T_template" domainObjectName="Template"/>
+		<table tableName="T_USER" domainObjectName="User"/>
+		<table tableName="T_USER_COURSE_REL" domainObjectName="UserCourseRel"/>
+		<table tableName="t_user_group" domainObjectName="UserGroup"/>
+		<table tableName="t_user_group_rel" domainObjectName="UserGroupRel"/>
+		<table tableName="t_user_lesson_playback" domainObjectName="UserLessonPlayback"/>
+		<table tableName="t_user_quiz" domainObjectName="UserQuiz"/>
+		<table tableName="T_LESSON_SYNC_SLIDES" domainObjectName="LessonSyncSlides"/>
+		<table tableName="T_LESSON_SYNC_MEDIA" domainObjectName="LessonSyncMedia"/>
+		<table tableName="T_USER" domainObjectName="User"/>
+		<table tableName="T_COMPANY" domainObjectName="Company"/>
+		<table tableName="T_USER_ACCOUNT_REL" domainObjectName="UserAccountRel"/>
+		<table tableName="T_COMPANY" domainObjectName="Company"/>
+		<table tableName="T_ACCOUNT" domainObjectName="Account"/>
+		<table tableName="t_group_capability_rel" domainObjectName="GroupCapabilityRel"/>
+		<table tableName="t_capability" domainObjectName="Capability"/>
+		<table tableName="t_group_role" domainObjectName="GroupRole"/>
+		<table tableName="t_group_function" domainObjectName="GroupFunction"/>
+		<table tableName="t_group_role_func_rel" domainObjectName="GroupRolFuncRel"/>
+		<table tableName="t_group_role_user_rel" domainObjectName="GroupRoleUserRel"/>
+			
+		<table tableName="t_user_role_rel" domainObjectName="UserRoleRel"/-->
+		<table tableName="t_quiz_subject" domainObjectName="QuizSubject"/>
+		
+	</context>
+</generatorConfiguration>

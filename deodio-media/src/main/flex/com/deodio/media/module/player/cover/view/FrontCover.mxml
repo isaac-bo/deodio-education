@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<c:ICover xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:c="com.deodio.media.module.player.cover.view.*" creationComplete="init()"
+		 width="100%" height="100%" >
+	
+	
+	<fx:Declarations>
+		<fx:Array id="coverTemplates">
+			<fx:String>assets/template/cover/front_cover_1.png</fx:String>
+			<fx:String>assets/template/cover/front_cover_2.png</fx:String>
+			<fx:String>assets/template/cover/front_cover_3.png</fx:String>
+			<fx:String>assets/template/cover/front_cover_4.png</fx:String>
+		</fx:Array>
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			[Bindable]
+			public var _template:Number = 0;
+			
+			[Bindable]
+			public var _title:String = "This is the First Lesson";
+			
+			[Bindable]
+			public var _author:String = "Isaac";
+			
+			public function init():void{
+				this.currentState = "template_1";
+				this.coverImg.source = coverTemplates[0];
+			}
+		]]>
+	</fx:Script>
+	
+	
+	<c:states>
+		<s:State name="template_1"/>
+		<s:State name="template_2"/>
+		<s:State name="template_3"/>
+		<s:State name="template_4"/>
+	</c:states>
+	<s:BorderContainer width="100%" height="100%">
+		<s:Image id="coverImg" x="0" y="0" width="100%" height="100%"/>
+		
+		<s:Group x.template_1="190" y.template_1="200" x.template_2="60" y.template_2="40" x.template_3="60" y.template_3="100" x.template_4="80" y.template_4="125" >
+			<s:Label text="{_title}" fontSize="25" fontWeight="bold"/>
+		</s:Group>
+		<!--s:Label text="Author：{_author}" fontSize="14" x.template_1="190" y.template_1="230"/>
+		<s:Label text="Create Date:" fontSize="14" x.template_1="190" y.template_1="250"/-->
+	</s:BorderContainer>
+</c:ICover>

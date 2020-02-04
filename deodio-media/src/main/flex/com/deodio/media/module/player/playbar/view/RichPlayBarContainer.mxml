@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 xmlns:p="com.deodio.media.module.player.playbar.view.*" width="400" height="300">
+	
+	<fx:Script>
+		<![CDATA[
+			[Bindable]
+			public var progressWidth:Number = 114*20;
+		]]>
+	</fx:Script>
+	<s:Line height="273" x="0" y="0" >
+		<s:stroke> 
+			<s:SolidColorStroke color="0xd8d8d8" weight="1"/> 
+		</s:stroke> 
+	</s:Line>
+	
+	<s:Line height="273" x="90" y="0" >
+		<s:stroke> 
+			<s:SolidColorStroke color="0xd8d8d8" weight="1"/> 
+		</s:stroke> 
+	</s:Line>
+	
+	<s:HGroup width="100%" height="100%" gap="0">		
+		<s:VGroup width="90" height="100%" gap="0">		
+			<mx:Canvas width="90" height="45" backgroundColor="#535353">
+				<s:Image source="@Embed('assets/player/zoom_edit.png')" y="12" x="10"/>
+			</mx:Canvas>
+			<s:Group width="90" height="70">
+				<s:layout>
+					<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('assets/player/media_black_edit.png')"/>
+			</s:Group>
+			<s:Line width="90" x="0" y="71" >
+				<s:stroke> 
+					<s:SolidColorStroke color="0xd8d8d8" weight="1"/> 
+				</s:stroke> 
+			</s:Line>
+			<s:Group width="90" height="70">
+				<s:layout>
+					<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('assets/player/slides_black_edit.png')"/>
+			</s:Group>
+			<s:Line width="90" x="0" y="141" >
+				<s:stroke> 
+					<s:SolidColorStroke color="0xd8d8d8" weight="1"/> 
+				</s:stroke> 
+			</s:Line>
+			<s:Group width="90" height="71">
+				<s:layout>
+					<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center"/>
+				</s:layout>
+				<s:Image source="@Embed('assets/player/quiz_black_edit.png')"/>
+			</s:Group>
+			<mx:Canvas width="90" height="15" backgroundColor="#535353">
+				
+			</mx:Canvas>
+		</s:VGroup>
+		
+		
+		<s:Scroller width="698" height="273" horizontalScrollPolicy="on" verticalScrollPolicy="off">
+		<s:Group  width="100%" height="100%">
+			<s:VGroup width="2409" height="100%" gap="0">
+				<mx:Canvas width="2409" height="45" backgroundColor="#535353">
+				</mx:Canvas>
+				<s:Group width="2409" height="70">
+					<s:layout>
+						<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center"/>
+					</s:layout>
+					<s:Image source="@Embed('assets/common/text_media.png')"/>
+				</s:Group>
+				<s:Line width="2409" x="0" y="71" >
+					<s:stroke> 
+						<s:SolidColorStroke color="0xd8d8d8" weight="1"/> 
+					</s:stroke> 
+				</s:Line>
+				<s:Group width="2409" height="70">
+					<s:layout>
+						<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center"/>
+					</s:layout>
+					<s:Image source="@Embed('assets/common/text_slides.png')"/>
+				</s:Group>
+				<s:Line width="2409" x="0" y="141" >
+					<s:stroke> 
+						<s:SolidColorStroke color="0xd8d8d8" weight="1"/> 
+					</s:stroke> 
+				</s:Line>
+				<s:Group width="2409" height="71">
+					<s:layout>
+						<s:HorizontalLayout verticalAlign="middle" horizontalAlign="center"/>
+					</s:layout>
+					<s:Image source="@Embed('assets/common/text_quiz.png')"/>
+				</s:Group>
+				<mx:Canvas width="2409" height="15" backgroundColor="#535353">
+					
+				</mx:Canvas>
+			</s:VGroup>
+			
+			<p:RichPlayBar width="2409" height="100%" sliderWidth="{progressWidth}" left="2" buttonMode="true"/>
+		</s:Group>
+		</s:Scroller>
+		<mx:Canvas backgroundColor="#535353" width="15" height="273"/>
+		
+	</s:HGroup>
+	
+</s:Group>

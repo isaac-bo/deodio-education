@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:screen="com.deodio.elearning.module.player.screen.view.*"
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*" width="801" height="255" creationComplete="init()">
+	<fx:Declarations>
+		
+		
+	</fx:Declarations>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.libs.enum.StateEnum;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.utils.MediaUtils;
+			import com.deodio.elearning.module.plugin.ScreenModelLocator;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			
+			[Bindable]
+			public var syncPoints:ArrayCollection = new ArrayCollection();
+			
+			import com.deodio.elearning.model.ModelLocator;
+			
+			[Bindable]
+			public var _isShowMedia:Boolean=false;
+			
+			[Bindable]
+			public var _isFullScreen:Boolean = false;
+			
+			[Bindable]
+			private var _model:ModelLocator=ModelLocator.getInstance();
+			
+			[Bindable]
+			private var _screenLocator:ScreenModelLocator=ScreenModelLocator.getInstance();
+			
+			[Bindable]
+			private var _timer:Timer;
+			
+			public function init():void{
+				this.currentState = StateEnum.HIDE_STATE;
+				this._screenLocator.mediaScreen = this;
+				
+				this.addEventListener(MockEvent.MOCK_RESIZE_SCREEN,function(event:MockEvent):void{
+					
+					var parentState:String = event.data as String;
+					if(parentState == StateEnum.HIDE_STATE){
+						clipsCanvas.width = slidesCanvas.width = 499;
+						clipsCanvas.height = slidesCanvas.height = 304;
+						clipsCanvas.x = 500.5;
+						playIcon.x = 462.5;
+//						toolbar.height =265; 
+						_screenLocator.resizeScreen(499,304,499,304);
+					}else{
+						clipsCanvas.width = slidesCanvas.width = 400;
+						clipsCanvas.height = slidesCanvas.height = 255;
+						clipsCanvas.x = 401;
+						playIcon.x = 362.5;
+//						toolbar.height = 216;
+						_screenLocator.resizeScreen(400,225,400,225);
+					}
+					
+					if(_model.isResizeSlideImage == true){
+						_model.isResizeSlideImage = false;
+						slidesCanvas.slideImage.visible = true;
+					}
+					
+					if(_model.isResizeClipsImage == true){
+						_model.isResizeClipsImage = false;
+						clipsCanvas.clipsImage.visible = true;
+					}
+					
+					if(_model.isResizeClipsMedia == true){
+						_model.isResizeClipsMedia = false;
+						clipsCanvas.videoDisplay.visible = true;
+					}
+					
+//					toolbar.visible = true;
+//					toolbar.includeInLayout = true;
+					
+				});
+				
+			}
+			
+			
+			
+			
+			public function showMedia():void {
+				_isShowMedia=true;
+			}
+			
+			public function showCover():void {
+				_isShowMedia=false;
+			}
+			
+			public function showCoverDetail():void {
+				
+			}
+			
+			public function onPlay():void{
+				this.dispatchEvent(new MediaEvent(MediaEvent.MEDIA_PLAY));
+			}
+			
+//			public function onMouseMove():void{
+//				_model.isSettingSound ||  _model.isFullScreen?currentState = "hideState": currentState="showState";
+//				if(currentState == "showState"){
+//					if(_timer){
+//						_timer.stop();
+//					}
+//					_timer = new Timer(3000);
+//					_timer.start();
+//					_timer.addEventListener(TimerEvent.TIMER,function(event:TimerEvent){
+//						currentState = "hideState";
+//					});
+//					
+//				}else{
+//					currentState = "hideState";
+//					if(_timer){
+//						_timer.stop();
+//					}
+//				}
+//			}
+//			
+//			public function onRollOut():void{
+//				this.currentState = "hideState";
+//				if(_timer){
+//					_timer.stop();
+//				}
+//			}
+			
+		]]>
+	</fx:Script>
+	
+	<!--s:transitions>
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0.7"/>
+				</s:Parallel>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" widthFrom="0" widthTo="86" />
+					<s:Move target="{toolbar}" xFrom="{clipsCanvas.width==400?798:996}" xTo="{clipsCanvas.width==400?712:908}"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{toolbar}" widthFrom="86" widthTo="0" />
+					<s:Move target="{toolbar}" xFrom="{clipsCanvas.width==400?712:908}" xTo="{clipsCanvas.width==400?798:996}"/>
+				</s:Parallel>
+				
+				<s:Parallel>
+					<s:Fade target="{toolbar}" alphaTo="0"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions-->
+	
+	<s:states>
+		<s:State name="hideState"/>
+		<s:State name="showState"/>
+	</s:states>
+	
+	<screen:Screen id="slidesCanvas" height="255" width="400" _title="SLIDES SHOW" _borderVisible="false" x="0" y="0" _isTitle="true" />
+	<screen:Screen id="clipsCanvas" height="255" width="400" _title="MULTIMEDIA" _borderVisible="false" x="401" y="0" _isTitle="true" _isSlide="false"/>
+	
+	<!--mx:VBox id="toolbar" x.showState="{clipsCanvas.width==400?712:908}" x.hideState="{clipsCanvas.width==400?798:996}" y="5" width.showState="86" width.hideState="0" alpha="0.7"
+			 height="216" backgroundColor="#526c8d" verticalAlign="middle" horizontalAlign="center" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<s:Image source="@Embed('/assets/player/slides_edit.png')" alpha="2" buttonMode="true"/>
+		<mx:Text text="编辑Slides" fontWeight="bold" color="#FFFFFF" alpha="1.5" buttonMode="true" useHandCursor="true"/>
+		<s:Image source="@Embed('/assets/player/media_edit.png')" alpha="2" buttonMode="true"/>
+		<mx:Text text="编辑Media" fontWeight="bold" color="#FFFFFF" alpha="1.5" buttonMode="true" useHandCursor="true"/>
+		<s:Image source="@Embed('/assets/player/quiz_edit.png')" alpha="2" buttonMode="true"/>
+		<mx:Text text="编辑测试" fontWeight="bold" color="#FFFFFF" alpha="1.5" buttonMode="true" useHandCursor="true"/>
+	</mx:VBox-->
+	
+	<!--mx:VBox id="soundBar" x="712" y="5" width="86" alpha="0.7" visible="false" includeInLayout="false"
+			 height="216" backgroundColor="#00a7f5" verticalAlign="middle" horizontalAlign="center" horizontalScrollPolicy="off" verticalScrollPolicy="off">
+		<c:DVSlider id="soundSlider" x="5" y="20" width="4" height="200"  minimum="0" maximum="20" snapInterval="0.001" showDataTip="true" allowTrackClick="false"
+					skinClass="com.deodio.elearning.libs.skins.DVSliderSkin"/>
+	</mx:VBox-->
+	
+	<s:Image id="playIcon" source="@Embed('/assets/player/play_icon_btn.png')" x="365.5" y="75.5" buttonMode="true" click="onPlay()"/>
+
+</s:Group>

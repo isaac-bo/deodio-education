@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:media="com.deodio.elearning.module.player.screen.view.*" 
+		 xmlns:c="com.deodio.elearning.libs.containers.slider.*"
+		 xmlns:playbar="com.deodio.elearning.module.player.playbar.view.*"
+		 xmlns:container="com.deodio.elearning.libs.containers.*" creationComplete="init()" initialize="initApplication()">	
+	
+	<fx:Script>
+		<![CDATA[
+			import com.deodio.elearning.domain.customize.PresentationBo;
+			import com.deodio.elearning.libs.effects.FadeEffect;
+			import com.deodio.elearning.libs.event.MediaEvent;
+			import com.deodio.elearning.libs.event.MockEvent;
+			import com.deodio.elearning.libs.stream.VideoStreamController;
+			import com.deodio.elearning.model.ModelLocator;
+			import com.deodio.elearning.module.plugin.CommandModelLocator;
+			import com.deodio.elearning.module.plugin.ProgressBarModelLocator;
+			import com.deodio.elearning.module.plugin.ScreenModelLocator;
+			import com.deodio.elearning.module.plugin.SyncPointsModelLocator;
+			import com.deodio.elearning.module.plugin.SyncQuizsModelLocator;
+			import com.deodio.elearning.module.plugin.SyncSlidesModelLocator;
+			import com.deodio.elearning.service.PresentationService;
+			
+			import mx.controls.Alert;
+			import mx.core.Application;
+			import mx.events.DragEvent;
+			import mx.events.FlexEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			[Bindable]
+			public var lessonId:String = "";
+			[Bindable]
+			public var _timer:Timer;
+			[Bindable]
+			public var _model:ModelLocator = ModelLocator.getInstance();
+			[Bindable]
+			public var _parameterMap:Dictionary = new Dictionary();
+			[Bindable]
+			public var _screenLocator:ScreenModelLocator = ScreenModelLocator.getInstance();
+			[Bindable]
+			public var _commandLocator:CommandModelLocator = CommandModelLocator.getInstance();
+			[Bindable]
+			public var _slidesLocator:SyncSlidesModelLocator = SyncSlidesModelLocator.getInstance();
+			[Bindable]
+			public var _syncPointsLocator:SyncPointsModelLocator = SyncPointsModelLocator.getInstance();
+			[Bindable]
+			public var _syncQuizsLocator:SyncQuizsModelLocator = SyncQuizsModelLocator.getInstance();
+			[Bindable]
+			public var _progressBarLocator:ProgressBarModelLocator = ProgressBarModelLocator.getInstance();
+			
+			[Bindable]
+			private var _presentation:PresentationBo = new PresentationBo();
+			
+			[Bindable]
+			private var _presentationService:PresentationService = new PresentationService();
+			
+			private function init():void{
+//				lessonId=Application.application.parameters.lessonId;
+//				_presentationService.getPresentation(lessonId,getPresentationFunc);
+				this.currentState = "hideState";
+				initModelLocators();
+			}
+			
+			private function initApplication():void{
+				//				initEvents();
+			}
+			
+			
+			private function initModelLocators():void{
+				this.initProgressBarLocator().initSyncPointLocator().initQuizPointLocator().initCommandLocator().initScreenLocator();
+				
+			}
+//			private function initSlidesLocator():ClassRoom{
+//				_slidesLocator.slides = _presentation.syncSlides;
+//				Alert.show("---1-----" + _slidesLocator.slides.length);
+//				return this;
+//			}
+//			
+			private function initSyncPointLocator():ClassRoom{
+//				_syncPointsLocator.syncPoints = _presentation.points;
+//				_syncPointsLocator.isSlides = _slidesLocator.slides != null && _slidesLocator.slides.length > 0 ? true : false;
+//				_syncPointsLocator.initPointDictionary(_parameterMap,_slidesLocator.slides);
+				return this;
+			}
+			
+			private function initQuizPointLocator():ClassRoom{
+//				if(_presentation.quizs != null){
+//					_syncQuizsLocator.quizs = _presentation.quizs;
+//					_syncQuizsLocator.syncQuizs = _presentation.quizs;
+//					_syncQuizsLocator.initPointDictionary(_parameterMap);
+//				}
+				return this;
+			}
+			
+			private function initProgressBarLocator():ClassRoom{
+				
+				//INFO: Init the events for _progressBarLocator.
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_DESTORY_MEDIA_COVER,function(event:MediaEvent):void{
+					mediaScreen.clipsCanvas.destoryImage(false);
+				});
+				
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_CREATE_MEDIA_ITEM,function(event:MediaEvent):void{
+					var stream:VideoStreamController = event.data as VideoStreamController;
+//					mediaScreen.clipsCanvas.createMedia(stream,false);
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_CREATE_MEDIA_COVER,function(event:MediaEvent):void{
+					if (mediaScreen.clipsCanvas.clipsImage.data == null) {
+						var coverUrl:String = event.data as String;
+						mediaScreen.clipsCanvas.createImage(coverUrl,false);
+					}
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_EXEC_COMMAND,function(event:MediaEvent):void{
+					_commandLocator.executeCommand(_parameterMap,event.data as Number);
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_SCREEN_FULL_SCREEN,onMouseSwitchFullScreen);
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_VOLUMN,function(event:MediaEvent):void{
+//					_progressBarLocator.videoStream.setSound(_model.sound);
+				});
+				
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_PLAY, function(event:MediaEvent):void{
+					onPlay();
+				});
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_PAUSE, function(event:MediaEvent):void{
+					onPause();
+				});
+				_progressBarLocator.addEventListener(MediaEvent.MEDIA_STOP, function(event:MediaEvent):void{
+					onStop();
+				});
+				
+				
+				playBar.addEventListener(MediaEvent.MEDIA_VOLUMN_CHANGE,function(event:MediaEvent):void{
+				});
+				
+				_progressBarLocator.mediaPoints = _presentation.medias;
+				_progressBarLocator.initMedia(this.playBar,null);
+				
+				return this;
+			}
+			
+			private function initCommandLocator():ClassRoom{
+				_commandLocator.container = this;
+				_commandLocator.executeCommand(_parameterMap,0);
+				return this;
+			}
+			
+			private function initScreenLocator():ClassRoom{
+				
+				_screenLocator.addEventListener(MediaEvent.MEDIA_PLAY, function(event:MediaEvent):void{
+					onPlay();
+				});
+				_screenLocator.mediaScreen = this.mediaScreen;
+				_screenLocator.initScreen();
+				return this;
+			}
+			
+			private function getPresentationFunc(event:ResultEvent):void{
+				_presentation = event.result as PresentationBo;
+				initModelLocators();
+			}
+			
+			
+			public function getSlidesContainer():Group {
+				return this.mediaScreen.slidesCanvas;
+			}
+			
+			public function onMouseSwitchFullScreen(event:MediaEvent):void{
+				if(this._model.isFullScreen){
+					this.closeFullScreen();
+					if(_timer){
+						_timer.stop();
+					}
+					this.currentState = "showState";
+				}else{
+					this.showFullScreen(this._progressBarLocator.isMedia());
+					this.monitorMouseMove();
+				}
+			}
+			
+			public function showFullScreen(isMedia:Boolean):void {
+				_model.isFullScreen=true;
+				
+				for (var index:Number=0; index < mediaplayer.numElements; index++) { // 
+					if (!(mediaplayer.getElementAt(index) is ClassRoomScreen) && !(mediaplayer.getElementAt(index) is ClassRoomPlayBar)) {
+						mediaplayer.getElementAt(index).visible=!_model.isFullScreen;
+						mediaplayer.getElementAt(index).includeInLayout=!_model.isFullScreen;
+					}
+				}
+				
+				this._screenLocator.switchScreen(isMedia);
+				this._screenLocator.resizePlayIcon();
+				
+				isMedia?this.width=mediaScreen.clipsCanvas.width=mediaScreen.clipsCanvas.width=flash.system.Capabilities.screenResolutionX:this.width=mediaScreen.slidesCanvas.width=mediaScreen.slidesCanvas.width=flash.system.Capabilities.screenResolutionX;
+				isMedia?this.height=mediaScreen.clipsCanvas.height=mediaScreen.clipsCanvas.height=flash.system.Capabilities.screenResolutionY:this.height=mediaScreen.slidesCanvas.height=mediaScreen.slidesCanvas.height=flash.system.Capabilities.screenResolutionY;
+				
+				this.playBar.x=(flash.system.Capabilities.screenResolutionX - this.playBar.width) / 2;
+				this.playBar.y=flash.system.Capabilities.screenResolutionY - 40 - this.playBar.height;
+				this.playBar.visible = this.playBar.includeInLayout = true;
+				this.stage.addEventListener(FullScreenEvent.FULL_SCREEN, onKeyBoardSwitchFullScreen);
+				this.stage.displayState=StageDisplayState.FULL_SCREEN;
+			}
+			
+			public function closeFullScreen():void {
+				_model.isFullScreen=false;
+				if(_timer){
+					_timer.stop();
+				}
+				
+				for (var index:Number=0; index < mediaplayer.numChildren; index++) {
+					mediaplayer.getElementAt(index).visible=!_model.isFullScreen;
+					mediaplayer.getElementAt(index).includeInLayout=!_model.isFullScreen;
+				}
+				this.width=this.width - 195;
+				this.height=this.height;
+				this._screenLocator.resumeScreen();
+				this._screenLocator.resizePlayIcon();
+				this.playBar.x=0;
+				this.playBar.y=227;
+				this.playBar.visible = playBar.includeInLayout = true;
+				this.playBar.alpha = 1;
+				this.stage.removeEventListener(FullScreenEvent.FULL_SCREEN, onKeyBoardSwitchFullScreen);
+				this.stage.displayState=StageDisplayState.NORMAL;
+				
+				
+			}
+			
+			public function onKeyBoardSwitchFullScreen(event:FullScreenEvent):void{
+				//IINFO: 0 point can't be do any thing.
+				if (event.fullScreen) {
+					/* Do something specific here if we switched to full screen mode. */
+					this.showFullScreen(this._progressBarLocator.isMedia());
+				} else {
+					/* Do something specific here if we switched to normal mode. */
+					this.closeFullScreen();
+					if(_timer){
+						_timer.stop();
+					}
+					//					this.currentState = "showState";
+				}
+			}
+			
+			public function onPlay():void{
+				this.playBar.btnPause.visible=this.playBar.btnPause.includeInLayout=true;
+				this.playBar.btnPlay.visible=this.playBar.btnPlay.includeInLayout=false;
+				this.mediaScreen.playIcon.visible = this.mediaScreen.playIcon.includeInLayout = false;
+				this._progressBarLocator.play();
+			}
+			
+			public function onPause():void{
+				this.playBar.btnPause.visible=this.playBar.btnPause.includeInLayout=false;
+				this.playBar.btnPlay.visible=this.playBar.btnPlay.includeInLayout=true;
+				this.mediaScreen.playIcon.visible=this.mediaScreen.playIcon.includeInLayout=true;
+//				this._screenLocator.resizePlayIcon();
+				
+				this._progressBarLocator.pause();
+			}
+			
+			
+			public function onStop():void{
+				this.playBar.btnPause.visible=this.playBar.btnPause.includeInLayout=false;
+				this.playBar.btnPlay.visible=this.playBar.btnPlay.includeInLayout=true;
+				this.mediaScreen.playIcon.visible=this.mediaScreen.playIcon.includeInLayout=true;
+//				this._screenLocator.resizePlayIcon();
+				this._progressBarLocator.stop();
+			}
+			
+			public function onMouseMove():void{
+				
+				if(this._model.isFullScreen){
+					playBar.visible = playBar.includeInLayout = true;
+					playBar.alpha = 1;
+					this.monitorMouseMove();
+				}
+			}
+			
+			private function monitorMouseMove():void{
+				if(_timer){
+					_timer.stop();
+				}
+				
+				_timer = new Timer(3000);
+				_timer.start();
+				_timer.addEventListener(TimerEvent.TIMER,function(event:TimerEvent):void{
+					var _fadeEffect:FadeEffect = new FadeEffect(playBar);
+					_fadeEffect.fadeOut();
+					playBar.setSounding.visible = playBar.setSounding.includeInLayout = false;
+				});
+			}
+			
+			private function onDragEnter(event:DragEvent):void{
+				if(_model.isPlay){
+					this._progressBarLocator.temporaryPause();
+				}
+			}
+			
+			private function onDragExit(event:DragEvent):void{
+				trace(this + "-----------onDragExit--------");
+				
+			}
+			
+			private function onDragComplete(event:DragEvent):void{
+				trace(this + "-----------onDragComplete--------");
+			}
+			
+			private function onDragDrop(event:DragEvent):void{
+				trace(this + "---------onDragDrop-----------");
+			}
+			
+			private function onDragStart(event:DragEvent):void{
+				trace(this + "---------onDragStart-----------");
+			}
+			
+			private function onProgressBarDragEnter(event:DragEvent):void{
+				trace(this + "---------onProgressBarDragEnter-----------");
+				this._progressBarLocator.progressBarDragEnter(event);
+			}
+			
+			private function onProgressBarDragDrop(event:DragEvent):void{
+				trace(this + "---------onProgressBarDragDrop-----------");
+				this._progressBarLocator.progressBarDragDrop(event);
+			}
+			
+			private function onProgressBarDragExit(event:DragEvent):void{
+				trace(this + "---------onProgressBarDragExit-----------");
+				this._progressBarLocator.progressBarDragExit(event);
+			}
+			
+			private function onRollOverFunc(event:MouseEvent):void{
+				this.currentState = "showState";
+				this.playBar._isStandardPlayPanel = true;
+				this.mediaScreen.onRollOverFunc();  
+			}
+			
+			private function onRollOutFunc(event:MouseEvent):void{
+				this.currentState = "hideState";
+				this.playBar._isStandardPlayPanel = false;
+				this.mediaScreen.onRollOutFunc();
+			}
+			
+			
+		]]>
+	</fx:Script>
+	
+	
+	
+	<s:states>
+		<s:State name="hideState"/>
+		<s:State name="showState"/>
+	</s:states>
+	<s:transitions>
+		<s:Transition fromState="hideState" toState="showState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Resize target="{playBar}" heightFrom="6" heightTo="48"/>
+					<s:Move target="{playBar}" yFrom="{this.height-55}" yTo="{this.height-96}"/>
+					<s:Fade target="{playBar}" alphaTo="1"/>
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		<s:Transition fromState="showState" toState="hideState">
+			<s:Sequence>
+				<s:Parallel>
+					<s:AddAction/>
+					<s:Fade target="{playBar}" alphaTo="1"/>
+					<s:Move target="{playBar}" yFrom="{this.height-96}" yTo="{this.height-55}"/>
+					<s:Resize target="{playBar}" heightFrom="48" heightTo="6" />
+				</s:Parallel> 
+			</s:Sequence>
+		</s:Transition>
+	</s:transitions>
+	
+	<!--container:DVDividedBox width="1000" height="100%" dividerThickness="8" resizeToContent="true" dividerColor="#a3a3a3"-->
+	<mx:VBox width="{this.width}" height="{this.height}" verticalScrollPolicy="off" horizontalScrollPolicy="off" verticalGap="2" backgroundColor="#a3a3a3" rollOver="onRollOverFunc(event)" rollOut="onRollOutFunc(event)">
+		<s:Group id="mediaplayer" x="2">
+			<media:ClassRoomScreen id="mediaScreen" _width="{this.width}" _height="{this.height-55}" width="100%" height="100%" mouseMove="onMouseMove()"/>
+			<mx:HBox y="{(this.width*0.25-3)*9/16 + 2}" x="{this.width*0.75 + 2}" width="{this.width*0.25 - 3}"  height="{this.height - 58 - (this.width*0.25 - 3)*9/16}" backgroundColor="#292929" visible="{this.mediaScreen._isDualScreen}" includeInLayout="{this.mediaScreen._isDualScreen}">
+			</mx:HBox>
+			<playbar:ClassRoomPlayBar id="playBar" alpha.showState="1" alpha.hideState="1"  y.showState="{this.height-96}" y.hideState="{this.height-55}" width="{this.width}" height.showState="48" height.hideState="6"/>
+			<mx:HBox id="toolBar" visible="false" includeInLayout="false" y="{this.height - 55 + 7}" width="{this.width}" height="48" backgroundColor="#292929" horizontalGap="0" verticalGap="0" verticalAlign="middle">
+				<s:ToggleButton icon="@Embed('/assets/player/playbar/introduce.png')" label="内容介绍" width="100" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMButtonSkin"/>
+				<s:ToggleButton icon="@Embed('/assets/player/playbar/share.png')" label="分享" width="80" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMButtonSkin"/>
+				<s:ToggleButton icon="@Embed('/assets/player/playbar/report.png')" label="报告问题" width="100" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMButtonSkin"/>
+				<mx:Canvas width="{this.width - 520}" height="100%"/>
+				<s:ToggleButton icon="@Embed('/assets/player/playbar/question.png')" label="有疑问" width="80" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMcButtonSkin"/>
+				<s:ToggleButton icon="@Embed('/assets/player/playbar/important.png')" label="重要" width="80" height="100%" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMcButtonSkin"/>
+				<mx:Canvas width="80" height="100%">
+					<s:ToggleButton label="已学过" width="60" height="28" x="10" y="10" buttonMode="true" useHandCursor="true" skinClass="com.deodio.elearning.libs.skins.DCMbButtonSkin"/>
+				</mx:Canvas>
+			</mx:HBox>
+		</s:Group>
+	</mx:VBox>
+	
+	<!--/container:DVDividedBox-->
+</s:Group>

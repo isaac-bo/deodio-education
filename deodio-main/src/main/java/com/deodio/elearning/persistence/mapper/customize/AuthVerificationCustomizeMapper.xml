@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deodio.elearning.persistence.mapper.customize.AuthVerificationCustomizeMapper">
+
+	<!-- 查询小组 用户是否有进行某些操作的权限 -->
+	<select id="getValidateInfoForGroupUser" parameterType="java.util.Map" resultType="java.util.Map">
+		SELECT
+			COUNT(sys_action."id") as is_restrict,
+			COUNT(t_group_role_user_rel.user_id) as  is_auth
+		FROM
+		<!--  action url 数据 -->
+		sys_action
+		INNER JOIN
+		<!-- 查询 与actioin 关联的group function --> 
+		t_group_function_action_rel  on sys_action."id" = t_group_function_action_rel.action_id
+		LEFT JOIN
+		<!-- 查询 与 group function 关联的 group role 数据 -->
+		t_group_role_func_rel  on t_group_function_action_rel.group_function_id = t_group_role_func_rel.function_id
+			and t_group_role_func_rel.group_id = #{groupId}
+		LEFT JOIN
+		<!-- 查询对应的小组用户信息 -->
+		t_group_role_user_rel  ON   t_group_role_func_rel.group_role_id = t_group_role_user_rel.group_role_id
+			AND t_group_role_func_rel.group_id = t_group_role_user_rel.group_id
+			AND  t_group_role_user_rel.user_id = #{userId}
+	</select>
+	
+	
+</mapper>

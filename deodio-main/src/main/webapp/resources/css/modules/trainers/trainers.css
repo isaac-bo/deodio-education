@@ -1,0 +1,47 @@
+/*-----------------------------------
+Description:    Trainerҳ��CSS
+Author:         liujian
+Date:           2016-05-23
+------------------------------------*/
+/*reset*/
+.hdn{overflow: hidden;}
+.clb{clear: both;}
+
+.pt7{padding-top: 7px;}
+.w240{width: 240px;display: inline-block;vertical-align: middle;}
+.w240 .form-control{border:1px solid #d4d4d4 !important;}
+
+.b_top{border-top: 1px solid #e3e3e3;}
+
+.shezhi{padding:0 0 20px 0;border-bottom: 1px solid #e3e3e3;overflow: hidden;}
+.b_none{border-bottom: 0;}
+.shezhi li{margin:15px 0 0 0;overflow: hidden;}
+.shezhi li .r_con{width:800px;float:left;}
+.shezhi li .r_con2{padding-left: 150px;font-size: 14px;line-height: 22px;}
+.shezhi li .text{background: #f6f6f6;padding:0 15px;border:1px solid #b5b5b5;border-radius: 2px !important;height:22px;width:50px;display: inline-block;margin:0 3px;}
+.shezhi li .w100{width:100px;}
+.shezhi li.w400{width:400px;display: inline-block;}
+.shezhi li.w400 .w300{width:300px;}
+.shezhi li .w700{width:700px;}
+.t_box{border:1px solid #eaeaea;overflow: hidden;border-radius: 2px; border-bottom:5px solid #43b4c6;}
+.t_box img{width:90px;height:120px;position: absolute;}
+.t_box ul{overflow: hidden;padding-left:100px;}
+.t_box ul li{line-height: 2em;color:#888;}
+.t_box ul li strong{color: #666;width: 80px;text-align: right;display: inline-block;font-weight: normal;}
+.img{border: 1px solid #e3e3e3; width: 160px; height: 90px; float: left; overflow: hidden; }
+.user-item{height: 100px; position: relative; display: inline-block; margin-left: 5px; }
+.user-buttons{float: left; margin-left: 5px; }
+.user-buttons span{margin-bottom: 53px; }
+.user-card,.certify,.up_del{height: 34px; padding: 0 15px; color: #fff; }
+.user-card{background-color: #69c9ec;}
+.up_del{background-color: #ee625d;margin-top: -16px;display: inline-block;position: absolute;margin-left: 10px;}
+.update-bar{width:293px; height: 6px; bottom: 16px; position: absolute; background-color: #dadada; overflow: hidden; }
+.update-bar .bar{width: 60%; height: 6px;background:#12aece;}
+.border_hover .img-border{ height: 100px; width: 100px; border-radius: 50%; }
+.border_hover:hover .img-border{width: 100px; height: 100px; border:1px solid #38a6b8;}
+.p2{ padding: 2px;}
+.border_hover:hover{border:1px solid #38a6b8;box-shadow: 4px 4px #eaeaea}
+.border_hover:hover .p2{ background: #fff!important;}
+.border_hover:hover .b_top{ background: #38a6b8;}
+/*.border_hover:hover .p20{background:#e3e3e3 ;}*/
+.img-border .b_top {border-top: 1px solid #e3e3e3;}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:VGroup implements="com.deodio.media.module.player.screen.ac.IScreen" 
+		  xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		  xmlns:s="library://ns.adobe.com/flex/spark"
+		  xmlns:mx="library://ns.adobe.com/flex/mx" width="{_width}" height="{_height}" gap="0" creationComplete="init()">
+	
+	<fx:Script>
+		<![CDATA[ 
+			
+			[Bindable]
+			public var _width:Number = 0;
+			
+			[Bindable]
+			public var _height:Number = 0;
+			
+			[Bindlable]
+			public var _title:String = "";	
+			
+			[Bindable]
+			public var _borderColor:uint = 0xd8d8d8;
+			
+			[Bindable]
+			public var _borderStyle:String = "inset";
+			
+			[Bindable]
+			public var _borderWeight:Number = 4;
+			
+			[Bindable]
+			public var _isSlide:Boolean = true;
+			
+			public function init():void{
+				
+			}
+			
+		]]>
+	</fx:Script>
+	<s:BorderContainer x="0" y="0" width="{_width}" height="{_height}" borderColor="{_borderColor}" borderStyle="{_borderStyle}" borderWeight="{_borderWeight}">
+		<s:VideoDisplay id="videoDisplay" width="100%" height="100%" autoPlay="false" 
+						source="http://192.168.122.97/vod/sample2_1000kbps.f4v" visible="{!_isSlide}" includeInLayout="{!_isSlide}"/>
+		<!--s:Image id="clipsImage" width="100%" height="100%" source="@Embed('test.jpg')" visible="{!_isSlide}" includeInLayout="{!_isSlide}"/-->
+		<s:Image id="slideImage" width="100%" height="100%" source="@Embed('test.jpg')" visible="{_isSlide}" includeInLayout="{_isSlide}"/>
+	</s:BorderContainer>
+</s:VGroup>
