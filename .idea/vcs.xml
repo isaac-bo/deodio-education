@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deodio" vcs="svn" />
+    <mapping directory="$PROJECT_DIR$/deodio-components" vcs="svn" />
+    <mapping directory="$PROJECT_DIR$/deodio-convert" vcs="svn" />
+    <mapping directory="$PROJECT_DIR$/deodio-core" vcs="svn" />
+    <mapping directory="$PROJECT_DIR$/deodio-main" vcs="svn" />
+  </component>
+</project>
